@@ -1,2 +1,2 @@
 # react-is-native
-That Node.js project that transfering React.js project ino React Native.
+It's Node.js project that allow to transfer React.js project ino React Native with css and the same document structure

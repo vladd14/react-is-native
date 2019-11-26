@@ -3,7 +3,7 @@ const fs = require('fs');
 const { transformVariables, transformStyles, transformMediaMax, transformObjectToString } = require('./styles');
 const { exportConnectionTransform, importNotRequired, historyToNavigationTransform, removeFormTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
-    addScreenDimensionListener, replaceStyleAfterFlowFunction } = require('./codeTransformations');
+    addScreenDimensionListener, replaceStyleAfterFlowFunction, addStatusBarHeight } = require('./codeTransformations');
 
 const path_from = '../insarm-front/src/';
 const path_to = '../insarmApp/';
@@ -55,11 +55,12 @@ const copyMainApps = () => {
                 fileBuffer = exportConnectionTransform(fileBuffer);
                 fileBuffer = importNotRequired(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
                 fileBuffer = historyToNavigationTransform(fileBuffer);
-                fileBuffer = removeFunctionCall(fileBuffer, 'actions.setPageTitle');
+                // fileBuffer = removeFunctionCall(fileBuffer, 'actions.setPageTitle');
                 fileBuffer = removeFormTags(fileBuffer, ['form',]);
                 fileBuffer = platformTransforms(fileBuffer);
                 if (folder === 'apps' || folder === 'components') {
                     if (file_in_folder === 'PageHeader.js') {
+                        fileBuffer = addStatusBarHeight(fileBuffer);
                         fileBuffer = addScreenDimensionListener(fileBuffer);
                     }
                     fileBuffer = addFlowTags(fileBuffer);
@@ -93,7 +94,7 @@ const transferStyles = () => {
     const dir_scss = 'scss';
     const dir_css = 'scss/css';
     const scss_variables = '_variables';
-    const css_files = ['container', 'header', 'links', 'components', 'modifiers', ];
+    const css_files = ['container', 'header', 'links', 'cards', 'components', 'modifiers', ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media'];
     const modifiers_file = 'modifiers';
@@ -139,19 +140,16 @@ const transferStyles = () => {
             let fileBufferAtMedia = transformMediaMax(fileBuffer, `${scss_file_name}_at_media`);
             if (fileBufferAtMedia) {
                 at_media_chanks.push(fileBufferAtMedia);
-                // fs.writeFileSync(fileTo(dirTo(`${main_folder}/at_media`),  js_file_name), fileBufferAtMedia);
             }
         }
     });
+    // console.log('at_media_chanks=',at_media_chanks);
     let at_media_merged = at_media_chanks.reduce((accumulator, value) => {
-        Object.keys(accumulator).forEach((key) => {
+        Object.keys(value).forEach((key) => {
             accumulator[key] = {...accumulator[key], ...value[key]};
         });
         return accumulator;
     });
-    // console.log('at_media_file=',at_media_merged);
-
-
     let at_media_merged_string = transformObjectToString(at_media_merged, 'at_media');
     fs.writeFileSync(fileTo(dirTo(`${main_folder}/at_media`),  `${at_media_file}.js`), at_media_merged_string);
     //create index.js for styles
@@ -193,7 +191,6 @@ const transferStyles = () => {
         fs.writeFileSync(fileTo(dirTo(`${main_folder}`),  'index.js'), fileBufferIndexJs);
     }
 };
-
 
 copyMainApps();
 createAppFile();

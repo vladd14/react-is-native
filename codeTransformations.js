@@ -1,3 +1,4 @@
+const { space_symbol, tab_symbol, } = require('./constants');
 const {remove_blank_lines_regexp, function_flow_string} = require('./regexps');
 const {cutImport, insertImport, cutImportAndGetArray, addImportLine, addImportArray, initImports} = require('./imports');
 
@@ -82,6 +83,16 @@ const removeFunctionCall = (str, name) => {
     return str;
 };
 
+const wrapUpSetPageTitle = (str) => {
+    const replacer = (match, p1, p2) => {
+        return '';
+    };
+    const regExp = new RegExp(`\\s*${name}\\((\\s*\\w*\\W[^)]*\\W[^;]*);`, 'mig');
+    str = str.replace(regExp, replacer);
+
+    return str;
+};
+
 const changeTagName = (str, name, attr_to_replace) => {
     // console.log(name);
     const replacer = (match, p1, p2) => {
@@ -138,7 +149,31 @@ const addScreenDimensionListener = (str) => {
     // console.log(str);
     return str;
 };
+const addStatusBarHeight = (str) => {
+    initImports();
+    const dimension_listener = `if (!appState.status_bar_height) {
+        const { StatusBarManager } = NativeModules;
+        StatusBarManager.getHeight(({ height }) => actions.setStatusBarHeight(height));
+    }`;
+    const import_line = `import { NativeModules } from 'react-native';`;
+    const replacer = (match, p1) => {
+        // console.log(`match='${match}'`);
+        match += dimension_listener + p1;
+        return match;
+    };
 
+    if (str) {
+        str = cutImport(str);
+        const regExp = /const\s+PageHeader\s*=\s*\(.+\)\s*.+{(\s*)/ig;
+        str = str.replace(regExp, replacer);
+        // Clean file of blanks lines
+        str = str.replace(remove_blank_lines_regexp, '');
+        addImportLine(import_line);
+        str = insertImport(str);
+    }
+    // console.log(str);
+    return str;
+};
 const changePlatform = (str) => {
     const replacer = (match, p1, p2, p3) => {
         return p1 + 'mobile' + p3;
@@ -231,7 +266,7 @@ const platformTransforms = (str) => {
         if (tokens.indexOf(name_import) === (-1)) {
             tokens.push(name_import);
         }
-        return 'navigation.navigate(';
+        return 'navigation.push(';
     };
 
     if (str) {
@@ -257,8 +292,18 @@ const platformTransforms = (str) => {
         str = str.replace(regExp, changeHistoryToNavigate);
 
         //history.location.pathname
-        regExp = /(history.location.pathname)/mig;
-        str = str.replace(regExp, 'navigation.state.routeName');
+        regExp = /(get\()*(history.location.pathname)/mig;
+        // str = str.replace(regExp, 'navigation.state.routeName');
+        str = str.replace(regExp, (match, p1, p2)=> {
+            p2 = 'navigation.state.routeName';
+            if (p1) {
+                p2 = p1 + `appUrlReversed.get(${p2})`;
+                if (tokens.indexOf('appUrlReversed') === (-1)) {
+                    tokens.push('appUrlReversed');
+                }
+            }
+            return p2
+        });
 
         //change onClick with onPress;
         regExp = /(onClick={)/mig;
@@ -270,7 +315,6 @@ const platformTransforms = (str) => {
         //Clean file of blanks lines
         str = str.replace(remove_blank_lines_regexp, '');
         if (tokens.length) {
-            // imports.push('import { ' + tokens.join(', ') + ' } from \'../platformTransforms\';');
             addImportLine('import { ' + tokens.join(', ') + ' } from \'../platformTransforms\';');
         }
         str = insertImport(str);
@@ -278,20 +322,27 @@ const platformTransforms = (str) => {
     // console.log('str=', str);
     return str;
 };
-
+const stack_navigator_settings = [{
+    setting: 'headerMode',
+    param: `'none'`,
+},];
 const createRootStack = (apps) => {
-
     const createObjectStr = (key, value) => {
         let str = `${key}: ${value},`;
         return str
     };
 
-    let str = 'const RootStack = createStackNavigator(\n\t{';
+    let str = `const RootStack = createStackNavigator(\n${tab_symbol}{`;
     Object.keys(apps).forEach((key) => {
-        str += key !== 'initialRouteName' ?
-            '\n\t\t' + createObjectStr(key, apps[key])
-            : '\n\t},\n\t{\n\t\t' + createObjectStr(key, apps[key]) + '\n\t},';
+        str += key !== 'initialRouteName'
+            ? `\n${tab_symbol}${tab_symbol}` + createObjectStr(key, apps[key])
+            : `\n${tab_symbol}},\n${tab_symbol}{\n${tab_symbol}${tab_symbol}` + createObjectStr(key, apps[key]);
     });
+
+    stack_navigator_settings.forEach((item) => {
+        str += `\n${tab_symbol}${tab_symbol}` + createObjectStr(item.setting, item.param) + `\n${tab_symbol}`
+    });
+    str += '},';
 
     str += '\n);';
     str += '\nlet Navigation = createAppContainer(RootStack);';
@@ -382,4 +433,5 @@ module.exports = {
     changeTagName,
     addScreenDimensionListener,
     replaceStyleAfterFlowFunction,
+    addStatusBarHeight,
 };

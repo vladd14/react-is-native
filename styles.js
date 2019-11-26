@@ -1,3 +1,4 @@
+const { space_symbol, tab_symbol, } = require('./constants')
 const {variable_expression_regexp, variable_expression_string, change_dash_to_underscore, remove_excess_scss_directives,
     remove_excess_css_directives, class_name_regexp, class_name_string, style_expression_regexp, style_expression_string,
     property_expression_regexp, property_expression_string, media_expression_string, calc_expression_string } = require('./regexps');
@@ -8,8 +9,8 @@ const camelCaseProperties = ['border-radius', 'border-color', 'background-color'
     'max-height',
     'padding-left', 'padding-right', 'padding-top', 'padding-bottom', 'z-index',
     'align-items', 'justify-content', 'min-height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-    'text-transform', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'object-fit', 'text-align' ];
-const complicatedProperties = ['transition'];
+    'text-transform', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'box-shadow', 'object-fit', 'text-align',];
+const complicatedProperties = ['transition', 'text-shadow', 'box-shadow'];
 
 let variables = {};
 const removeExcessCssDirectives = (str) => {
@@ -34,7 +35,6 @@ const changeDashToUnderscore = (str) => {
     return str
 };
 
-const tab = '    ';
 let tabs = [];
 const transformPropertyToString = (object) => {
 
@@ -44,7 +44,7 @@ const transformPropertyToString = (object) => {
             return_value += `\n${tabs.join('')}${key}: ${object[key]},`;
         }
         else {
-            return_value += `\n${tabs.join('')}${key}: ${transformPropertyToString(object[key], tabs.push(tab))}`;
+            return_value += `\n${tabs.join('')}${key}: ${transformPropertyToString(object[key], tabs.push(tab_symbol))}`;
         }
     });
     tabs.pop();
@@ -55,7 +55,7 @@ const transformPropertyToString = (object) => {
 const transformObjectToString = (obj, name) => {
 
     let string_view = `export const ${name} = `;
-    string_view += `${transformPropertyToString(obj, tabs.push(tab))}\n`;
+    string_view += `${transformPropertyToString(obj, tabs.push(tab_symbol))}\n`;
     string_view += `};`;
     return string_view;
 };
@@ -116,7 +116,7 @@ const calcExpression = (expression) => {
     }
     return expression;
 };
-const unsupported_css_properties = ['textShadow', 'objectFit', 'white_space', 'list_style', 'outline'];
+const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'outline'];
 const force_stringify_value = ['fontWeight'];
 const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
 
@@ -220,7 +220,7 @@ const propertiesSplitter = (property, number_value, value_string) => {
     else if (property === 'padding' || property === 'margin') {
         let array = [];
         array = value_string.split(' ');
-        console.log(array);
+        // console.log(array);
         if (array.length === 4) {
             object[`${property}Top`] =  splitVariable(array[0]); // all properties are variables like 0.5rem and etc or 0
             object[`${property}Right`] = splitVariable(array[1]);
@@ -240,11 +240,11 @@ const propertiesSplitter = (property, number_value, value_string) => {
 };
 const changeSecondsToMs = (str) => {
     const replacer = (match, p1, p2, p3, p4) => {
-        console.log('match=', match);
-        console.log('p1=', p1);
-        console.log('p2=', p2);
-        console.log('p3=', p3);
-        console.log('p4=', p4);
+        // console.log('match=', match);
+        // console.log('p1=', p1);
+        // console.log('p2=', p2);
+        // console.log('p3=', p3);
+        // console.log('p4=', p4);
         p2 = p3.toLowerCase() === 's' ? p2 * 1000 : p2;
         return p1 + p2 + p4;
     };
@@ -263,6 +263,7 @@ const propertiesInnerCorrections = (property, number_value, value_string) => {
         const regexp = new RegExp(`${target_property}`, 'gi');
         value_string = value_string.replace(regexp, replacer);
         value_string = changeSecondsToMs(value_string);
+        value_string = splitVariable(value_string);
     });
     return value_string;
 };
@@ -287,7 +288,14 @@ const getProperty = (str, object) => {
             })
         }
         else if (complicatedProperties.indexOf(p1) !== -1) {
+            if (camelCaseProperties.indexOf(p1) === -1) {
+                p1 = changeDashToUnderscore(p1);
+            }
+            else {
+                p1 = changeDashToCamelCase(p1);
+            }
             p4 = propertiesInnerCorrections(p1, p3, p4);
+            console.log('p1=', p1);
             object = getVariableExpression(object, p1, p3, p4);
         }
         else {

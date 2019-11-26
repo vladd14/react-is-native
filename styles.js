@@ -295,7 +295,6 @@ const getProperty = (str, object) => {
                 p1 = changeDashToCamelCase(p1);
             }
             p4 = propertiesInnerCorrections(p1, p3, p4);
-            console.log('p1=', p1);
             object = getVariableExpression(object, p1, p3, p4);
         }
         else {

@@ -83,16 +83,6 @@ const removeFunctionCall = (str, name) => {
     return str;
 };
 
-const wrapUpSetPageTitle = (str) => {
-    const replacer = (match, p1, p2) => {
-        return '';
-    };
-    const regExp = new RegExp(`\\s*${name}\\((\\s*\\w*\\W[^)]*\\W[^;]*);`, 'mig');
-    str = str.replace(regExp, replacer);
-
-    return str;
-};
-
 const changeTagName = (str, name, attr_to_replace) => {
     // console.log(name);
     const replacer = (match, p1, p2) => {
@@ -109,6 +99,18 @@ const changeTagName = (str, name, attr_to_replace) => {
     const regExp = new RegExp( `<\\s*(${name})\\s+(\\s*(\\w*)=\\w*\\W[^>]*)*\/>`, 'mig');
 
     str = str.replace(regExp, replacer);
+    return str;
+};
+
+const SimplifyEmptyTags = (str) => {
+    const replacer = (match, p1, p2) => {
+        console.log(match);
+        console.log('p1=', p1);
+        console.log('p2=', p2);
+        return `${p1} />`
+    };
+    str = str.replace(/(<\s*.[^/>]+)\s*>(<\/\s*.[^/>]+>)/gi, replacer);
+
     return str;
 };
 
@@ -434,4 +436,5 @@ module.exports = {
     addScreenDimensionListener,
     replaceStyleAfterFlowFunction,
     addStatusBarHeight,
+    SimplifyEmptyTags,
 };

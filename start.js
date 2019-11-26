@@ -3,7 +3,8 @@ const fs = require('fs');
 const { transformVariables, transformStyles, transformMediaMax, transformObjectToString } = require('./styles');
 const { exportConnectionTransform, importNotRequired, historyToNavigationTransform, removeFormTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
-    addScreenDimensionListener, replaceStyleAfterFlowFunction, addStatusBarHeight } = require('./codeTransformations');
+    addScreenDimensionListener, replaceStyleAfterFlowFunction, addStatusBarHeight,
+    SimplifyEmptyTags, } = require('./codeTransformations');
 
 const path_from = '../insarm-front/src/';
 const path_to = '../insarmApp/';
@@ -57,6 +58,7 @@ const copyMainApps = () => {
                 fileBuffer = historyToNavigationTransform(fileBuffer);
                 // fileBuffer = removeFunctionCall(fileBuffer, 'actions.setPageTitle');
                 fileBuffer = removeFormTags(fileBuffer, ['form',]);
+                fileBuffer = SimplifyEmptyTags(fileBuffer);
                 fileBuffer = platformTransforms(fileBuffer);
                 if (folder === 'apps' || folder === 'components') {
                     if (file_in_folder === 'PageHeader.js') {

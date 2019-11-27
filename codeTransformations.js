@@ -104,9 +104,6 @@ const changeTagName = (str, name, attr_to_replace) => {
 
 const SimplifyEmptyTags = (str) => {
     const replacer = (match, p1, p2) => {
-        console.log(match);
-        console.log('p1=', p1);
-        console.log('p2=', p2);
         return `${p1} />`
     };
     str = str.replace(/(<\s*.[^/>]+)\s*>(<\/\s*.[^/>]+>)/gi, replacer);
@@ -226,6 +223,7 @@ const withoutTypeTag = ['redirect', 'link', 'img', 'div'];
 const platformTransforms = (str) => {
     initImports();
     let tokens = [];
+    let htmlForArray = [];
     const tokenModify = (match, p1, p2, p3, p4) => {
         let type = p1 !== '</' && withoutTypeTag.indexOf(p3.toLowerCase()) === -1 ? ` tagType={'${p3}'}` : '';
 
@@ -264,6 +262,34 @@ const platformTransforms = (str) => {
             tokens.push(name_import);
         }
         return 'navigation.push(';
+    };
+    const getHtmlForIds = (match, p1, p2) => {
+        // console.log(`match='${match}'`);
+        // console.log(`p1='${p1}'`);
+        p1 = p1.replace(/['"`]/ig, '');
+        const replacer = `@@onFocus_${p1}_here@@`;
+        const eventObject = {
+            id: p1,
+            replacer: replacer,
+            eventString:'',
+        };
+        htmlForArray.push(eventObject);
+        return match + replacer + p2;
+    };
+    const extractEventString = (match, p1) => {
+        let onFocus = '';
+        console.log(`match='${match}'`);
+        console.log(`p1='${p1}'`);
+        match.replace(/onFocus=(\{.[^}]+})/ig, (match2, p1) => {
+            console.log(match2);
+            console.log(p1);
+            onFocus = p1;
+        });
+        console.log('onFocus=', onFocus);
+    };
+    const addOnFocusEventToLabel = (match, p1) => {
+        console.log(`match='${match}'`);
+        console.log(`p1='${p1}'`);
     };
 
     if (str) {
@@ -307,6 +333,46 @@ const platformTransforms = (str) => {
         //Change onKeyDown with onChangeText;
         regExp = /<SimpleCustomField\s*(\w*\W[^={\/]*)(\W[^{\/]*(\w*\W[^}\/]*})+)\s*\/>/mig;
         str = str.replace(regExp, textInputOnChange);
+        //addOnFocusEventToLabel
+        regExp = /htmlFor=\{(.[^}]+)}(\s*)/mig;
+
+        str = str.replace(regExp, getHtmlForIds);
+
+        // <Input
+        // tagType={'input'}
+        // id={'password_id'}
+        // className={'form_group__input'}
+        // type={'password'}
+        // value={loginState.password.value}
+        // // placeholder={'password'}
+        // required={'required'}
+        // onKeyDown={(event) => handleEnterPress(event)}
+        // onChange={(event) => handlePassword(event)}
+        // onFocus={(event) => handleFocus_2(event)}
+        // onBlur={(event) => handleBlur_2(event)}
+        // />
+        htmlForArray.forEach((element) => {
+            // regExp = new RegExp(`<.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+/>`, 'i');
+            regExp = new RegExp(`<.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+/>`, 'i');
+            console.log(regExp);
+            // console.log(arr);
+            str.replace(regExp, (match) => {
+                console.log(match);
+                match.replace(/onFocus=(\{.[^}]+})/ig, (match2, p1) => {
+                    console.log(match2);
+                    console.log(p1);
+                    element.eventString = `onPress=${p1}`;
+                });
+            });
+            str = str.replace(element.replacer, element.eventString);
+        });
+
+        // if (htmlForArray.length) {
+        //     console.log(str);
+        //     console.log('htmlForArray=',htmlForArray);
+        // }
+
+        // str.replace(regExp, addOnFocusEventToLabel);
 
         //Clean file of blanks lines
         str = str.replace(remove_blank_lines_regexp, '');
@@ -414,7 +480,6 @@ const createAppJs = (str) => {
     // console.log(str);
     return str;
 };
-
 
 module.exports = {
     exportConnectionTransform,

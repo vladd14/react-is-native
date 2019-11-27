@@ -199,10 +199,6 @@ const replaceStyleAfterFlowFunction = (str) => {
         'let merged_styles = { ...style, ...style_at_media, ...style_modifiers };',
     ];
     const replacer = (match, p1, p2, p3, p4) => {
-        // console.log(`match='${match}'`);
-        // console.log(`p1='${p1}'`);
-        // console.log(`p3='${p3}'`);
-
         functionsArray[0] = p2 + functionsArray[0];
         const return_array = functionsArray.map((element) => {
             element = element.replace('className', p4);
@@ -231,7 +227,7 @@ const platformTransforms = (str) => {
     initImports();
     let tokens = [];
     const tokenModify = (match, p1, p2, p3, p4) => {
-        let type = p1 !== '</' && withoutTypeTag.indexOf(p3.toLowerCase()) === -1 ? `tagType={'${p3}'}` : '';
+        let type = p1 !== '</' && withoutTypeTag.indexOf(p3.toLowerCase()) === -1 ? ` tagType={'${p3}'}` : '';
 
         if (divTags.indexOf(p3.toLowerCase()) !== -1) {
             p3 = 'Div';
@@ -274,7 +270,8 @@ const platformTransforms = (str) => {
         const htmlTokens = divTags.concat(divTags, textTags, inputsType, withoutTypeTag);
         let regExp;
         htmlTokens.forEach((token) => {
-            regExp = new RegExp(`(<)(\\s*)(${token})(\\s*)`, 'mgi');
+            // regExp = new RegExp(`(<|<\\/)(\\s*)(` + token + `)(\\s*)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mig');
+            regExp = new RegExp(`(<|<\\/)(\\s*)(${token})(\\s*)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mgi');
             str = str.replace(regExp, tokenModify);
         });
 

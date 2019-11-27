@@ -230,23 +230,22 @@ const withoutTypeTag = ['redirect', 'link', 'img', 'div'];
 const platformTransforms = (str) => {
     initImports();
     let tokens = [];
-    const tokenModify = (match, p1, p2, p3) => {
-        // const divTags = ['li', 'ul', 'header', 'section', 'footer'];
-        // const withoutTagType = ['redirect', 'link', 'img'];
-        const type = p1 !== '</' && withoutTypeTag.indexOf(p2.toLowerCase()) === -1 ? ` tagType={'${p2}'}` : '';
+    const tokenModify = (match, p1, p2, p3, p4) => {
+        let type = p1 !== '</' && withoutTypeTag.indexOf(p3.toLowerCase()) === -1 ? `tagType={'${p3}'}` : '';
 
-        if (divTags.indexOf(p2.toLowerCase()) !== -1) {
-            p2 = 'Div';
-        } else if (textTags.indexOf(p2.toLowerCase()) !== -1) {
-            p2 = 'TextTag'
-        } else if (inputsType.indexOf(p2.toLowerCase()) !== -1) {
-            p2 = 'Input'
+        if (divTags.indexOf(p3.toLowerCase()) !== -1) {
+            p3 = 'Div';
+        } else if (textTags.indexOf(p3.toLowerCase()) !== -1) {
+            p3 = 'TextTag'
+        } else if (inputsType.indexOf(p3.toLowerCase()) !== -1) {
+            p3 = 'Input'
         }
-        p2 = p2.charAt(0).toUpperCase() + p2.slice(1);
-        if (tokens.indexOf(p2) === (-1)) {
-            tokens.push(p2);
+        p3 = p3.charAt(0).toUpperCase() + p3.slice(1);
+        if (tokens.indexOf(p3) === (-1)) {
+            tokens.push(p3);
         }
-        return p1 + p2 + type;
+        type = type ? type + p4 : '';
+        return p1 + p3 + p4 + type;
     };
 
     const urlsReplace = (match, p1, p2) => {
@@ -272,12 +271,10 @@ const platformTransforms = (str) => {
     };
 
     if (str) {
-        // const htmlTokens = ['div', 'img', 'section', 'header', 'footer', 'li', 'redirect', 'link', 'h1', 'h2', 'h3',
-        //     'span', 'p', 'li', 'ul', 'label'];
         const htmlTokens = divTags.concat(divTags, textTags, inputsType, withoutTypeTag);
         let regExp;
         htmlTokens.forEach((token) => {
-            regExp = new RegExp(`(<|<\\/)(\\s*` + token + `)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mig');
+            regExp = new RegExp(`(<)(\\s*)(${token})(\\s*)`, 'mgi');
             str = str.replace(regExp, tokenModify);
         });
 

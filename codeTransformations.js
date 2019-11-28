@@ -150,10 +150,8 @@ const addScreenDimensionListener = (str) => {
 };
 const addStatusBarHeight = (str) => {
     initImports();
-    const dimension_listener = `if (!appState.status_bar_height) {
-        const { StatusBarManager } = NativeModules;
-        StatusBarManager.getHeight(({ height }) => actions.setStatusBarHeight(height));
-    }`;
+    const dimension_listener = `const { StatusBarManager } = NativeModules;
+    StatusBarManager.getHeight(({ height }) => actions.setStatusBarHeight(height));\n`;
     const import_line = `import { NativeModules } from 'react-native';`;
     const replacer = (match, p1) => {
         // console.log(`match='${match}'`);

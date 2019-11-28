@@ -250,19 +250,19 @@ const replaceHtmlForWithFocus = (str) => {
     str = str.replace(regExp, getHtmlForIds);
     htmlForArray.forEach((element) => {
         regExp = new RegExp(`<(\\w+)(\\s*)(.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+)/>`, 'i');
-        console.log(regExp);
+        // console.log(regExp);
         str = str.replace(regExp, (match,p1, p2, rest) => {
-            console.log(match);
-            console.log(p1);
+            // console.log(match);
+            // console.log(p1);
             let regExpInner = /ref=(\{.[^}]+})/ig;
             // console.log(regExpInner);
             if (match.search(regExpInner) === -1) {
-                console.log('ref not found and we go over');
+                // console.log('ref not found and we go over');
                 useStateObject.hook_using = !useStateObject.hook_using ? true : useStateObject.hook_using;
                 const element_property = WrapElementsFor.indexOf(p1) !== (-1) ? 'Ref' : 'ref';
-                const reference_string = `{(component) => {${useStateObject.hook_name}['${element.id}'] = component; } }`;
+                const reference_string = `{(component) => {${p2+tab_symbol}${useStateObject.hook_name}['${element.id}'] = component;${p2}}}`;
                 p1 += `${p2}${element_property}=${reference_string}${p2}`;
-                element.eventString = `onPress={(event) => {${useStateObject.hook_name} && ${useStateObject.hook_name}['${element.id}'] && ${useStateObject.hook_name}['${element.id}'].focus ? ${useStateObject.hook_name}['${element.id}'].focus() : null; } }`;
+                element.eventString = `onPress={(event) => {${p2.replace(tab_symbol, '')}${useStateObject.hook_name} && ${useStateObject.hook_name}['${element.id}'] && ${useStateObject.hook_name}['${element.id}'].focus${p2}? ${useStateObject.hook_name}['${element.id}'].focus()${p2}: null;${p2.replace(tab_symbol+tab_symbol, '')}}}`;
             }
             return '<' + p1 + rest +'/>';
         });
@@ -272,9 +272,9 @@ const replaceHtmlForWithFocus = (str) => {
         const regExp = new RegExp(`(${function_flow_string})`, 'gim');
         if (str.search(regExp) !== -1) {
              str = str.replace(regExp, (match, p1, p2) => {
-                console.log(match);
-                console.log(p1);
-                console.log(p2);
+                // console.log(match);
+                // console.log(p1);
+                // console.log(p2);
                 match += functionsArray.join(p2) + p2;
                 return match;
             });

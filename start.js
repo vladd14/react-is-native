@@ -4,7 +4,7 @@ const { transformVariables, transformStyles, transformMediaMax, transformObjectT
 const { exportConnectionTransform, importNotRequired, historyToNavigationTransform, removeFormTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction, addStatusBarHeight,
-    SimplifyEmptyTags, } = require('./codeTransformations');
+    SimplifyEmptyTags, replaceHtmlForWithFocus, } = require('./codeTransformations');
 
 const path_from = '../insarm-front/src/';
 const path_to = '../insarmApp/';
@@ -66,6 +66,7 @@ const copyMainApps = () => {
                         fileBuffer = addScreenDimensionListener(fileBuffer);
                     }
                     fileBuffer = addFlowTags(fileBuffer);
+                    fileBuffer = replaceHtmlForWithFocus(fileBuffer);
                     fileBuffer = replaceStyleAfterFlowFunction(fileBuffer);
                 }
                 if (folder === 'reducers' && file_in_folder === 'app.js') {

@@ -220,10 +220,72 @@ const divTags = ['div', 'section', 'header', 'footer', 'li', 'ul', ];
 const textTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'p', 'label'];
 const inputsType = ['input'];
 const withoutTypeTag = ['redirect', 'link', 'img', 'div'];
+const WrapElementsFor = ['Input'];
+
+const replaceHtmlForWithFocus = (str) => {
+    let useStateObject = {
+        hook_name: 'References',
+        hook_setter: 'addToReferences',
+        hook_using: false,
+    };
+    const functionsArray = [
+        `const [${useStateObject.hook_name}, ${useStateObject.hook_setter}] = useState({});`,
+    ];
+    let htmlForArray = [];
+    const getHtmlForIds = (match, p1, p2) => {
+        // console.log(`match='${match}'`);
+        // console.log(`p1='${p1}'`);
+        // console.log(`p1='${p2}'`);
+        p1 = p1.replace(/['"`]/ig, '');
+        const replacer = `@@onFocus_${p1}_here@@`;
+        const eventObject = {
+            id: p1,
+            replacer: replacer,
+            eventString:'',
+        };
+        htmlForArray.push(eventObject);
+        return match + replacer + p2;
+    };
+    let regExp = /htmlFor=\{(.[^}]+)}(\s*)/mig;
+    str = str.replace(regExp, getHtmlForIds);
+    htmlForArray.forEach((element) => {
+        regExp = new RegExp(`<(\\w+)(\\s*)(.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+)/>`, 'i');
+        console.log(regExp);
+        str = str.replace(regExp, (match,p1, p2, rest) => {
+            console.log(match);
+            console.log(p1);
+            let regExpInner = /ref=(\{.[^}]+})/ig;
+            // console.log(regExpInner);
+            if (match.search(regExpInner) === -1) {
+                console.log('ref not found and we go over');
+                useStateObject.hook_using = !useStateObject.hook_using ? true : useStateObject.hook_using;
+                const element_property = WrapElementsFor.indexOf(p1) !== (-1) ? 'Ref' : 'ref';
+                const reference_string = `{(component) => {${useStateObject.hook_name}['${element.id}'] = component; } }`;
+                p1 += `${p2}${element_property}=${reference_string}${p2}`;
+                element.eventString = `onPress={(event) => {${useStateObject.hook_name} && ${useStateObject.hook_name}['${element.id}'] && ${useStateObject.hook_name}['${element.id}'].focus ? ${useStateObject.hook_name}['${element.id}'].focus() : null; } }`;
+            }
+            return '<' + p1 + rest +'/>';
+        });
+        str = str.replace(element.replacer, element.eventString);
+    });
+    if (useStateObject.hook_using) {
+        const regExp = new RegExp(`(${function_flow_string})`, 'gim');
+        if (str.search(regExp) !== -1) {
+             str = str.replace(regExp, (match, p1, p2) => {
+                console.log(match);
+                console.log(p1);
+                console.log(p2);
+                match += functionsArray.join(p2) + p2;
+                return match;
+            });
+        }
+    }
+    return str;
+};
+
 const platformTransforms = (str) => {
     initImports();
     let tokens = [];
-    let htmlForArray = [];
     const tokenModify = (match, p1, p2, p3, p4) => {
         let type = p1 !== '</' && withoutTypeTag.indexOf(p3.toLowerCase()) === -1 ? ` tagType={'${p3}'}` : '';
 
@@ -263,19 +325,7 @@ const platformTransforms = (str) => {
         }
         return 'navigation.push(';
     };
-    const getHtmlForIds = (match, p1, p2) => {
-        // console.log(`match='${match}'`);
-        // console.log(`p1='${p1}'`);
-        p1 = p1.replace(/['"`]/ig, '');
-        const replacer = `@@onFocus_${p1}_here@@`;
-        const eventObject = {
-            id: p1,
-            replacer: replacer,
-            eventString:'',
-        };
-        htmlForArray.push(eventObject);
-        return match + replacer + p2;
-    };
+
     const extractEventString = (match, p1) => {
         let onFocus = '';
         console.log(`match='${match}'`);
@@ -333,46 +383,6 @@ const platformTransforms = (str) => {
         //Change onKeyDown with onChangeText;
         regExp = /<SimpleCustomField\s*(\w*\W[^={\/]*)(\W[^{\/]*(\w*\W[^}\/]*})+)\s*\/>/mig;
         str = str.replace(regExp, textInputOnChange);
-        //addOnFocusEventToLabel
-        regExp = /htmlFor=\{(.[^}]+)}(\s*)/mig;
-
-        str = str.replace(regExp, getHtmlForIds);
-
-        // <Input
-        // tagType={'input'}
-        // id={'password_id'}
-        // className={'form_group__input'}
-        // type={'password'}
-        // value={loginState.password.value}
-        // // placeholder={'password'}
-        // required={'required'}
-        // onKeyDown={(event) => handleEnterPress(event)}
-        // onChange={(event) => handlePassword(event)}
-        // onFocus={(event) => handleFocus_2(event)}
-        // onBlur={(event) => handleBlur_2(event)}
-        // />
-        htmlForArray.forEach((element) => {
-            // regExp = new RegExp(`<.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+/>`, 'i');
-            regExp = new RegExp(`<.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+/>`, 'i');
-            console.log(regExp);
-            // console.log(arr);
-            str.replace(regExp, (match) => {
-                console.log(match);
-                match.replace(/onFocus=(\{.[^}]+})/ig, (match2, p1) => {
-                    console.log(match2);
-                    console.log(p1);
-                    element.eventString = `onPress=${p1}`;
-                });
-            });
-            str = str.replace(element.replacer, element.eventString);
-        });
-
-        // if (htmlForArray.length) {
-        //     console.log(str);
-        //     console.log('htmlForArray=',htmlForArray);
-        // }
-
-        // str.replace(regExp, addOnFocusEventToLabel);
 
         //Clean file of blanks lines
         str = str.replace(remove_blank_lines_regexp, '');
@@ -496,4 +506,5 @@ module.exports = {
     replaceStyleAfterFlowFunction,
     addStatusBarHeight,
     SimplifyEmptyTags,
+    replaceHtmlForWithFocus,
 };

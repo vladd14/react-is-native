@@ -223,6 +223,10 @@ const withoutTypeTag = ['redirect', 'link', 'img', 'div'];
 const WrapElementsFor = ['Input'];
 
 const replaceHtmlForWithFocus = (str) => {
+    initImports();
+    const importsArray = [
+        `import { useState } from 'react';`
+    ];
     let useStateObject = {
         hook_name: 'References',
         hook_setter: 'addToReferences',
@@ -233,9 +237,6 @@ const replaceHtmlForWithFocus = (str) => {
     ];
     let htmlForArray = [];
     const getHtmlForIds = (match, p1, p2) => {
-        // console.log(`match='${match}'`);
-        // console.log(`p1='${p1}'`);
-        // console.log(`p1='${p2}'`);
         p1 = p1.replace(/['"`]/ig, '');
         const replacer = `@@onFocus_${p1}_here@@`;
         const eventObject = {
@@ -246,6 +247,7 @@ const replaceHtmlForWithFocus = (str) => {
         htmlForArray.push(eventObject);
         return match + replacer + p2;
     };
+    str = cutImport(str);
     let regExp = /htmlFor=\{(.[^}]+)}(\s*)/mig;
     str = str.replace(regExp, getHtmlForIds);
     htmlForArray.forEach((element) => {
@@ -272,14 +274,15 @@ const replaceHtmlForWithFocus = (str) => {
         const regExp = new RegExp(`(${function_flow_string})`, 'gim');
         if (str.search(regExp) !== -1) {
              str = str.replace(regExp, (match, p1, p2) => {
-                // console.log(match);
-                // console.log(p1);
-                // console.log(p2);
                 match += functionsArray.join(p2) + p2;
                 return match;
             });
         }
     }
+    importsArray.forEach((element) => {
+        addImportLine(element);
+    });
+    str = insertImport(str);
     return str;
 };
 

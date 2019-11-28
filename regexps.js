@@ -1,5 +1,8 @@
-const remove_blank_lines_regexp = /^\n+/mig; //Clean file of blanks lines
-const take_import_line_regexp =  /^\s*(import\s*\w*\W*[^;]*;)/mig; //Get imports lines;
+// const remove_blank_lines_regexp = /^\s*\n+/mig; //Clean file of blanks lines
+const remove_blank_lines_string = `(^\\s*\\n){2,}`;
+const remove_blank_lines_regexp = /(^\s*\n){2,}/gim; //Clean file of blanks lines
+// const take_import_line_regexp =  /^\s*(import\s*\w*\W*[^;]*;)/mig; //Get imports lines;
+const take_import_line_regexp =  /^\s*(import\s*(\w*\W*[^;]*)\s+from\s+(.[^;]+);)/mig; //Get imports lines;
 const variable_expression_regexp = /\$(\D[^;:]+):\s*((\d*\.*\d*)(.*);)/ig;
 const variable_expression_string = '\\$(\\D[^;:]+):\\s*((\\d*\\.*\\d*)(.*);)';
 const property_expression_regexp = /\s*(\D[^;:]+):\s*((\d*\.*\d*)(.*);)/ig;

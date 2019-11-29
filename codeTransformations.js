@@ -35,11 +35,6 @@ const importNotRequired = (str, replace_string) => {
 const historyToNavigationTransform = (str) => {
 
     const replacer = (match, p1, p2, p3) => {
-        // match
-        // console.log('match=',match);
-        // console.log('p1=',p1);
-        // console.log('p2=',p2);
-        // console.log('p3=',p3);
         return p1 + 'navigation' + p3;
     };
 
@@ -53,23 +48,33 @@ const historyToNavigationTransform = (str) => {
 
 const removeFormTags = (str, tags_array) => {
     const replacer = (match, p1, p2) => {
-        let arr = p1.split('\n');
-
-        arr = arr.map((element) => { //removing excess tab;
-            element = element.replace(/\s{4}/i,'');
-            return element;
-        });
-
-        return arr.join('\n');
+        console.log(`match='${match}'`);
+        console.log(`p1='${p1}'`);
+        // let arr = p1.split('\n');
+        //
+        // arr = arr.map((element) => { //removing excess tab;
+        //     element = element.replace(/\s{4}/i,'');
+        //     return element;
+        // });
+        //
+        // return arr.join('\n');
 
     };
-    if (str && Array.isArray(tags_array) && tags_array.length) {
-        let regExp;
-        for (let a=0; a<tags_array.length; a++) {
-            regExp = new RegExp(`<${tags_array[a]}>\\s*(\\s*<\\W*(\\w*\\s*\\W[^>]*>)+)(\\s*\\W*${tags_array[a]}>)`, 'mig');
-            str = str.replace(regExp, replacer);
-        }
-    }
+    // if (str && Array.isArray(tags_array) && tags_array.length) {
+        // for (let a=0; a<tags_array.length; a++) {
+        //     const regExp = new RegExp(`<${tags_array[a]}>\\s*(\\s*<\\W*(\\w*\\s*\\W[^>]*>)+)(\\s*\\W*${tags_array[a]}>)`, 'mig');
+        //     str = str.replace(regExp, replacer);
+        // }
+        tags_array.forEach((element) => {
+            // const regExp = new RegExp(`<${element}>\\s+((.+\\s+){1,150})</${element}>`, 'i');
+            const regExp = new RegExp(`(<${element}>)\\s+((<\\w*|\\{|\\{\/\\*<)(.[^<>]+\\s*)[>}]\\s+)+`, 'i');
+            console.log(regExp);
+            // console.log(str);
+            // console.log(str.replace(regExp, replacer));
+            str.replace(regExp, replacer);
+            // str = str.replace(regExp, replacer);
+        });
+    // }
     return str;
 };
 

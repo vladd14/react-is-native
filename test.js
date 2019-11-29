@@ -8,73 +8,240 @@ const {
 } = require('./codeTransformations');
 
 let mainApp = `
-/**
- * @format
- * @flow
- */
-import React from 'react';
-import { withNavigation } from 'react-navigation';
+import React, { useState, useEffect } from 'react';
+import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import { sendRequest } from '../helpers/network';
 import PageHeader from '../components/PageHeader';
-import { PageContainer } from '../containers/PageContainers';
+import SimpleButton from '../elements/SimpleButton';
+import SectionDelimiterWithLabel from '../components/SectionDelimiterWithLabel';
+import ActionLink from '../components/ActionLink';
 import * as userActions from '../reducers/user';
 import * as loginActions from '../reducers/login';
 import * as appActions from '../reducers/app';
 import { getUserProfile } from '../helpers/authorization';
-import SimpleButton from '../elements/SimpleButton';
-import { urls } from '../urls';
-import { redirect_if_not_logged } from '../settings';
-import { Div, Redirect, Link, TextTag } from '../platformTransforms';
-import { Screen } from '../platformTransforms';
-// import useScreenDimensions from '../platformTransforms/Screen';
+import { translator } from '../helpers/translate';
+import { urls, requests } from '../urls';
+import { space_symbol } from '../helpers/constants';
+import { PageContainer, PageGlobalContainer } from '../containers/PageContainers';
 
-const Main: () => React$Node = ({ appState, userState, loginState, actions, navigation, ...props }) => {
-    const login_state = !userState.is_authenticated ? 'You are NOT authorized' : 'You are authorized';
-    let body = userState.is_authenticated ? (
-        <>
-            <Div tagType={'div'} className={'container container_background_grey'}>
-                <Div tagType={'div'} className={'container__limited'}>
-                    <SimpleButton onPress={(event) => getUserProfile(event)} title={'getUserProfile'} />
-                    <TextTag tagType={'h1'}>{'Mobile'}</TextTag>
-                </Div>
-            </Div>
-        </>
-    ) : (
-        <>
-            {appState.platform === 'web' ? (
-                <Div tagType={'div'} className={'container container_background_grey'}>
-                    <Div tagType={'div'} className={'container__limited'}>
-                        <TextTag tagType={'h1'}>{login_state}</TextTag>
-                        <Link to={urls.login.path}>
-                            {'Goto Login'}
-                        </Link>
-                    </Div>
-                </Div>
-            ) : (
-                <Div tagType={'div'} className={'container container_background_grey'}>
-                    <Div tagType={'div'} className={'container__limited'}>
-                        <TextTag tagType={'h1'}>{'Mobile 2'}</TextTag>
-                        <TextTag tagType={'h1'}>{appState.screen_data.width}</TextTag>
-                    </Div>
-                </Div>
-            )}
-        </>
-    );
-    if (appState.platform !== 'web' && userState.checkin && !userState.is_authenticated && redirect_if_not_logged) {
-        body = (
-            <>
-                <Redirect to={urls.login.path} />
-            </>
-        );
-    }
+const Login = ({ appState, userState, loginState, actions, history, ...props }) => {
+    const [additional_class, setAdditionalClass] = useState({
+        control_1: '',
+        control_2: '',
+    });
+    const parseErrors = (errors) => {
+        for (let key in errors) {
+            let error_message = '';
+            if (errors.hasOwnProperty(key) && Array.isArray(errors[key])) {
+                errors[key].forEach((element, index) => {
+                    if (index) {
+                        error_message += '\\n';
+                    }
+                    error_message += element;
+                });
+            }
+            if (error_message.length) {
+                actions.setLoginState({
+                    name: key || '',
+                    state_error: true,
+                    additional_text: error_message,
+                });
+            }
+        }
+    };
+    const requestCallBack = (receivedData) => {
+        if (receivedData && receivedData.data) {
+            if (receivedData.data.hasOwnProperty('errors')) {
+                return parseErrors(receivedData.data.errors);
+            }
+
+            const { user_auth_id, token } = receivedData.data;
+
+            if (user_auth_id) {
+                actions.setUserAuthId(user_auth_id);
+            }
+            if (token) {
+                actions.setAuthToken(token);
+                getUserProfile(appState, actions).then(() => {
+                    actions.clearLoginValues();
+                    history.push(urls.main.path);
+                });
+            }
+        }
+    };
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        console.log('submit form');
+        const { url, method } = requests.login;
+        const sendData = {
+            email: loginState.email.value,
+            password: loginState.password.value,
+        };
+        sendRequest(url, sendData, requestCallBack, method, appState, actions);
+    };
+    const handleEnterPress = (event) => {
+        if (event && event.hasOwnProperty('key') && event.key === 'Enter') {
+            handleSubmit(event);
+        }
+    };
+    const handleEmail = (event) => {
+        if (event && event.target && event.target.hasOwnProperty('value')) {
+            actions.setLoginValue({
+                name: 'email',
+                value: event.target.value,
+            });
+        }
+    };
+    const handlePassword = (event) => {
+        if (event && event.target && event.target.hasOwnProperty('value')) {
+            actions.setLoginValue({
+                name: 'password',
+                value: event.target.value,
+            });
+        }
+    };
+    const handleClick = (event) => {
+        handleSubmit(event);
+    };
+    const handleFocus_1 = (event) => {
+        // setAdditionalClass('input_focused');
+
+        setAdditionalClass({ ...additional_class, ...{ control_1: 'selected' } });
+    };
+    const handleBlur_1 = (event) => {
+        // setAdditionalClass('');
+        setAdditionalClass({ ...additional_class, ...{ control_1: '' } });
+    };
+    const handleFocus_2 = (event) => {
+        // setAdditionalClass('input_focused');
+        setAdditionalClass({ ...additional_class, ...{ control_2: 'selected' } });
+    };
+    const handleBlur_2 = (event) => {
+        // setAdditionalClass('');
+        setAdditionalClass({ ...additional_class, ...{ control_2: '' } });
+    };
     return (
         <>
-            <PageHeader avatar_url={'/agent-avatar-change'} {...props} />
-            {body}
+            <PageGlobalContainer className={'container container_background_grey'}>
+            <PageHeader avatar_url={'/agent-avatar-change'} human_page_name={'Вход'} {...props} />
+                <PageContainer className={'container container_background_grey'}>
+                <div className={'container__limited'}>
+                    <form>
+                        <div className={'d-flex justify-content-center align-items-center'}>
+                            <div className={'card client-search-form fixed-width'}>
+                                <div className={'card-body justify-content-between'}>
+                                    <SectionDelimiterWithLabel>
+                                        {translator('Введите e-mail и пароль', appState.language)}
+                                    </SectionDelimiterWithLabel>
+                                    <div>
+                                        {/*<SimpleCustomField*/}
+                                        {/*    placeholder={'e-mail'}*/}
+                                        {/*    type={appState.platform !== 'web' ? 'email-address' : 'email'}*/}
+                                        {/*    {...loginState.email}*/}
+                                        {/*    onChange={(event) => handleEmail(event)}*/}
+                                        {/*    onKeyDown={(event) => handleEnterPress(event)}*/}
+                                        {/*/>*/}
+                                        {/*<SimpleCustomField*/}
+                                        {/*    type={'password'}*/}
+                                        {/*    placeholder={translator('Пароль', appState.language)}*/}
+                                        {/*    {...loginState.password}*/}
+                                        {/*    onChange={(event) => handlePassword(event)}*/}
+                                        {/*    onKeyDown={(event) => handleEnterPress(event)}*/}
+                                        {/*/>*/}
+                                        <div className={'form_group form_group_styled'}>
+                                            <label
+                                                htmlFor={'email_id'}
+                                                className={[
+                                                    'form_group__label',
+                                                    'input_styled_label',
+                                                    \`label_{additional_class.control_1}\`,
+                                                ].join(space_symbol)}>
+                                                {'e-mail'}
+                                            </label>
+                                            <div
+                                                className={[
+                                                    'form_group__control_container',
+                                                    \`input_{additional_class.control_1}\`,
+                                                ].join(space_symbol)}>
+                                                <div
+                                                    className={[
+                                                        \`form_group__control input_{additional_class.control_1}\`,
+                                                    ].join(space_symbol)}>
+                                                    <input
+                                                        id={'email_id'}
+                                                        className={'form_group__input'}
+                                                        type={appState.platform !== 'web' ? 'email-address' : 'email'}
+                                                        value={loginState.email.value}
+                                                        // placeholder={'e-mail'}
+                                                        required={'required'}
+                                                        onKeyDown={(event) => handleEnterPress(event)}
+                                                        onChange={(event) => handleEmail(event)}
+                                                        onFocus={(event) => handleFocus_1(event)}
+                                                        onBlur={(event) => handleBlur_1(event)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span className={'grp-addon'}>{loginState.email.additional_text}</span>
+                                        <div className={'form_group form_group_styled'}>
+                                            <label
+                                                htmlFor={'password_id'}
+                                                className={[
+                                                    'form_group__label',
+                                                    'input_styled_label',
+                                                    \`label_{additional_class.control_2}\`,
+                                                ].join(space_symbol)}>
+                                                {translator('Пароль', appState.language)}
+                                            </label>
+                                            <div
+                                                className={[
+                                                    'form_group__control_container',
+                                                    \`input_{additional_class.control_2}\`,
+                                                ].join(space_symbol)}>
+                                                <div
+                                                    className={[
+                                                        \`form_group__control input_{additional_class.control_2}\`,
+                                                    ].join(space_symbol)}>
+                                                    <input
+                                                        id={'password_id'}
+                                                        className={'form_group__input'}
+                                                        type={'password'}
+                                                        value={loginState.password.value}
+                                                        // placeholder={'password'}
+                                                        required={'required'}
+                                                        onKeyDown={(event) => handleEnterPress(event)}
+                                                        onChange={(event) => handlePassword(event)}
+                                                        onFocus={(event) => handleFocus_2(event)}
+                                                        onBlur={(event) => handleBlur_2(event)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span className={'grp-addon'}>{loginState.email.additional_text}</span>
+                                        <ActionLink to={urls.main.path}>
+                                            {translator('Зарегистрироваться', appState.language)}
+                                        </ActionLink>
+                                    </div>
+                                    <div className={'text-centered extern-offset bottom st-x2'}>
+                                        <SimpleButton
+                                            onClick={(event) => handleClick(event)}
+                                            title={translator('Войти  ', appState.language)}
+                                            additional_class={'small size-changing blue'}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </PageContainer>
+            </PageGlobalContainer>
         </>
     );
 };
+
 const mapStateToProps = (state) => ({
     appState: state.app,
     userState: state.user,
@@ -83,12 +250,8 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => ({
     actions: bindActionCreators({ ...appActions, ...userActions, ...loginActions }, dispatch),
 });
-export default withNavigation(
-    connect(
-        mapStateToProps,
-        mapDispatchToProps,
-    )(Main),
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Login));
+
 
 `;
 
@@ -193,8 +356,5 @@ export default SectionDelimiterWithLabel;
 
 let str_3 = 'borderColor 1000 ease-in, backgroundColor 1000 ease-in';
 
-str_3.replace(/\s*(.[^,]+)(,|$)/gi, (match, p1,p2,p3)=> {
-    console.log(match);
-    console.log('p1=', p1);
-});
+removeFormTags(mainApp, ['form']);
 

@@ -50,28 +50,37 @@ const copyMainApps = () => {
         }
 
         files_in_dir.forEach((file_in_folder) => {
-
-            let fileBuffer = fs.readFileSync(fileFrom(dirFrom(folder), file_in_folder), 'utf-8');
-            if (fileBuffer) {
-                fileBuffer = exportConnectionTransform(fileBuffer);
-                fileBuffer = importNotRequired(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
-                fileBuffer = historyToNavigationTransform(fileBuffer);
-                // fileBuffer = removeFunctionCall(fileBuffer, 'actions.setPageTitle');
-                fileBuffer = removeFormTags(fileBuffer, ['form',]);
-                fileBuffer = SimplifyEmptyTags(fileBuffer);
-                fileBuffer = platformTransforms(fileBuffer);
-                if (folder === 'apps' || folder === 'components') {
-                    if (file_in_folder === 'Main.js') {
-                        fileBuffer = addScreenDimensionListener(fileBuffer, 'Main');
+            if ( !file_in_folder.startsWith('.')) {
+                console.log('file_in_folder=',file_in_folder);
+                let fileBuffer = fs.readFileSync(fileFrom(dirFrom(folder), file_in_folder), 'utf-8');
+                if (fileBuffer) {
+                    console.log('start exportConnectionTransform');
+                    fileBuffer = exportConnectionTransform(fileBuffer);
+                    console.log('start importNotRequired');
+                    fileBuffer = importNotRequired(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
+                    console.log('start historyToNavigationTransform');
+                    fileBuffer = historyToNavigationTransform(fileBuffer);
+                    console.log('start SimplifyEmptyTags');
+                    fileBuffer = SimplifyEmptyTags(fileBuffer);
+                    console.log('start removeFormTags');
+                    fileBuffer = removeFormTags(fileBuffer, ['form']);
+                    console.log('start platformTransforms');
+                    fileBuffer = platformTransforms(fileBuffer);
+                    if (folder === 'apps' || folder === 'components') {
+                        if (file_in_folder === 'Main.js') {
+                            fileBuffer = addScreenDimensionListener(fileBuffer, 'Main');
+                        }
+                        fileBuffer = addFlowTags(fileBuffer);
+                        fileBuffer = replaceHtmlForWithFocus(fileBuffer);
+                        fileBuffer = replaceStyleAfterFlowFunction(fileBuffer);
                     }
-                    fileBuffer = addFlowTags(fileBuffer);
-                    fileBuffer = replaceHtmlForWithFocus(fileBuffer);
-                    fileBuffer = replaceStyleAfterFlowFunction(fileBuffer);
+                    console.log('start changePlatform');
+                    if (folder === 'reducers' && file_in_folder === 'app.js') {
+                        fileBuffer = changePlatform(fileBuffer);
+                    }
+                    console.log('start writeFileSync');
+                    fs.writeFileSync(fileTo(dirTo(folder), file_in_folder), fileBuffer,);
                 }
-                if (folder === 'reducers' && file_in_folder === 'app.js') {
-                    fileBuffer = changePlatform(fileBuffer);
-                }
-                fs.writeFileSync(fileTo(dirTo(folder),  file_in_folder), fileBuffer, );
             }
         });
     });
@@ -194,6 +203,9 @@ const transferStyles = () => {
     }
 };
 
+console.log('start copyMainApps');
 copyMainApps();
+console.log('start createAppFile');
 createAppFile();
+console.log('start transferStyles');
 transferStyles();

@@ -124,7 +124,7 @@ const addFlowTags = (str) => {
     }
     return str;
 };
-const addScreenDimensionListener = (str) => {
+const addScreenDimensionListener = (str, functionName) => {
     initImports();
     const dimension_listener = `if (!appState.screen_data) {
         Screen({ appState, userState, loginState, actions });
@@ -138,7 +138,8 @@ const addScreenDimensionListener = (str) => {
 
     if (str) {
         str = cutImport(str);
-        const regExp = /const\s+PageHeader\s*=\s*\(.+\)\s*.+{(\s*)/ig;
+        // const regExp = /const\s+PageHeader\s*=\s*\(.+\)\s*.+{(\s*)/ig;
+        const regExp = new RegExp(`const\\s+${functionName}\\s*=\\s*\\(.+\\)\\s*.+{(\\s*)`, 'gi');
         str = str.replace(regExp, replacer);
         // Clean file of blanks lines
         str = str.replace(remove_blank_lines_regexp, '');

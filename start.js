@@ -61,8 +61,8 @@ const copyMainApps = () => {
                 fileBuffer = SimplifyEmptyTags(fileBuffer);
                 fileBuffer = platformTransforms(fileBuffer);
                 if (folder === 'apps' || folder === 'components') {
-                    if (file_in_folder === 'PageHeader.js') {
-                        fileBuffer = addScreenDimensionListener(fileBuffer);
+                    if (file_in_folder === 'Main.js') {
+                        fileBuffer = addScreenDimensionListener(fileBuffer, 'Main');
                     }
                     fileBuffer = addFlowTags(fileBuffer);
                     fileBuffer = replaceHtmlForWithFocus(fileBuffer);

@@ -148,29 +148,29 @@ const addScreenDimensionListener = (str) => {
     // console.log(str);
     return str;
 };
-const addStatusBarHeight = (str) => {
-    initImports();
-    const dimension_listener = `const { StatusBarManager } = NativeModules;
-    StatusBarManager.getHeight(({ height }) => actions.setStatusBarHeight(height));\n`;
-    const import_line = `import { NativeModules } from 'react-native';`;
-    const replacer = (match, p1) => {
-        // console.log(`match='${match}'`);
-        match += dimension_listener + p1;
-        return match;
-    };
-
-    if (str) {
-        str = cutImport(str);
-        const regExp = /const\s+PageHeader\s*=\s*\(.+\)\s*.+{(\s*)/ig;
-        str = str.replace(regExp, replacer);
-        // Clean file of blanks lines
-        str = str.replace(remove_blank_lines_regexp, '');
-        addImportLine(import_line);
-        str = insertImport(str);
-    }
-    // console.log(str);
-    return str;
-};
+// const addStatusBarHeight = (str) => {
+//     initImports();
+//     const dimension_listener = `const { StatusBarManager } = NativeModules;
+//     StatusBarManager.getHeight(({ height }) => actions.setStatusBarHeight(height));\n`;
+//     const import_line = `import { NativeModules } from 'react-native';`;
+//     const replacer = (match, p1) => {
+//         // console.log(`match='${match}'`);
+//         match += dimension_listener + p1;
+//         return match;
+//     };
+//
+//     if (str) {
+//         str = cutImport(str);
+//         const regExp = /const\s+PageHeader\s*=\s*\(.+\)\s*.+{(\s*)/ig;
+//         str = str.replace(regExp, replacer);
+//         // Clean file of blanks lines
+//         str = str.replace(remove_blank_lines_regexp, '');
+//         addImportLine(import_line);
+//         str = insertImport(str);
+//     }
+//     // console.log(str);
+//     return str;
+// };
 const changePlatform = (str) => {
     const replacer = (match, p1, p2, p3) => {
         return p1 + 'mobile' + p3;
@@ -505,7 +505,6 @@ module.exports = {
     changeTagName,
     addScreenDimensionListener,
     replaceStyleAfterFlowFunction,
-    addStatusBarHeight,
     SimplifyEmptyTags,
     replaceHtmlForWithFocus,
 };

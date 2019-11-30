@@ -47,7 +47,7 @@ const historyToNavigationTransform = (str) => {
 };
 
 const removeFormTags = (str, tags_array) => {
-    const replacer = (match, p1, p2) => {
+    const replacer = (match, p1, p2,) => {
         console.log(`match='${match}'`);
         console.log(`p1='${p1}'`);
         let arr = p1.split('\n');
@@ -56,15 +56,13 @@ const removeFormTags = (str, tags_array) => {
             element = element.replace(/\s{4}/i,'');
             return element;
         });
-
         return arr.join('\n');
-
     };
 
     tags_array.forEach((element) => {
         // const regExp = new RegExp(`<${element}>\\s+((.+\\s+){1,150})</${element}>`, 'i');
         const regExp = new RegExp(`<${element}>\\s+(<(\\w*\\s*.[^>]+>)+)\\s+(<\/${element}>)`, 'i');
-        str.replace(regExp, replacer);
+        str = str.replace(regExp, replacer);
     });
     return str;
 };

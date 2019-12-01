@@ -48,8 +48,8 @@ const historyToNavigationTransform = (str) => {
 
 const removeFormTags = (str, tags_array) => {
     const replacer = (match, p1, p2,) => {
-        console.log(`match='${match}'`);
-        console.log(`p1='${p1}'`);
+        // console.log(`match='${match}'`);
+        // console.log(`p1='${p1}'`);
         let arr = p1.split('\n');
 
         arr = arr.map((element) => { //removing excess tab;

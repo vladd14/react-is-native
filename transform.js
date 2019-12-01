@@ -1,10 +1,10 @@
 const fs = require('fs');
 
-const { transformVariables, transformStyles, transformMediaMax, transformObjectToString } = require('./styles');
+const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform } = require('./styles');
 const { exportConnectionTransform, importNotRequired, historyToNavigationTransform, removeFormTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
-    SimplifyEmptyTags, replaceHtmlForWithFocus, } = require('./codeTransformations');
+    SimplifyEmptyTags, replaceHtmlForWithFocus,  } = require('./codeTransformations');
 
 const path_from = '../insarm-front/src/';
 const path_to = '../insarmApp/';
@@ -107,11 +107,13 @@ const transferStyles = () => {
     const scss_variables = '_variables';
     const css_files = ['container', 'header', 'links', 'cards', 'components', 'modifiers', ];
     const main_folder = 'styles';
-    const remote_folders = ['css','at_media'];
+    const remote_folders = ['css','at_media', 'platform_modifiers'];
     const modifiers_file = 'modifiers';
     const at_media_file = 'at_media';
+    const platform_modifiers_file = 'platform_modifiers';
 
-    let at_media_chanks = [];
+    let at_media_chunks = [];
+    let platform_modifiers_chunks = [];
     { // make variables file first
         if (fs.existsSync(fileTo(dirTo(dir_styles), 'variables.js'))) {
             fs.unlinkSync(fileTo(dirTo(dir_styles), 'variables.js'));
@@ -150,21 +152,39 @@ const transferStyles = () => {
 
             let fileBufferAtMedia = transformMediaMax(fileBuffer, `${scss_file_name}_at_media`);
             if (fileBufferAtMedia) {
-                at_media_chanks.push(fileBufferAtMedia);
+                at_media_chunks.push(fileBufferAtMedia);
+            }
+
+            let fileBufferPlatforms = transformMediaPlatform(fileBuffer, `${scss_file_name}_platforms`);
+            if (fileBufferPlatforms) {
+                platform_modifiers_chunks.push(fileBufferPlatforms);
             }
         }
     });
-    // console.log('at_media_chanks=',at_media_chanks);
-    let at_media_merged = at_media_chanks.reduce((accumulator, value) => {
+
+    let at_media_merged = at_media_chunks.reduce((accumulator, value) => {
         Object.keys(value).forEach((key) => {
             accumulator[key] = {...accumulator[key], ...value[key]};
         });
         return accumulator;
-    });
-    let at_media_merged_string = transformObjectToString(at_media_merged, 'at_media');
-    fs.writeFileSync(fileTo(dirTo(`${main_folder}/at_media`),  `${at_media_file}.js`), at_media_merged_string);
-    //create index.js for styles
-    // console.log('found_at_media_files=',at_media_files);
+    }, {});
+    if (at_media_chunks.length) {
+        let at_media_merged_string = transformObjectToString(at_media_merged, 'at_media');
+        fs.writeFileSync(fileTo(dirTo(`${main_folder}/at_media`),  `${at_media_file}.js`), at_media_merged_string);
+    }
+
+
+    let platform_modifiers_merged = platform_modifiers_chunks.reduce((accumulator, value) => {
+        Object.keys(value).forEach((key) => {
+            accumulator[key] = {...accumulator[key], ...value[key]};
+        }, {});
+        return accumulator;
+    }, {});
+    if (platform_modifiers_chunks.length) {
+        let platform_modifiers_merged_string = transformObjectToString(platform_modifiers_merged, 'platform_modifiers');
+        fs.writeFileSync(fileTo(dirTo(`${main_folder}/platform_modifiers`),  `${platform_modifiers_file}.js`), platform_modifiers_merged_string);
+    }
+
     if (fs.existsSync(fileTo(dirTo(dir_styles), 'index.js'))) {
         fs.unlinkSync(fileTo(dirTo(dir_styles), 'index.js'));
     }
@@ -175,6 +195,10 @@ const transferStyles = () => {
 
     if (at_media_merged) {
         fileBufferIndexJs += `import { ${at_media_file} } from './at_media/${at_media_file}';\n`;
+    }
+
+    if (platform_modifiers_merged) {
+        fileBufferIndexJs += `import { ${platform_modifiers_file} } from './platform_modifiers/${platform_modifiers_file}';\n`;
     }
 
     fileBufferIndexJs += `\nexport const styles = {`;
@@ -195,6 +219,12 @@ const transferStyles = () => {
     if (modifiers_file) {
         fileBufferIndexJs += `export const styles_modifiers = {`;
         fileBufferIndexJs += ` ...${modifiers_file}`;
+        fileBufferIndexJs += ` };\n`;
+    }
+
+    if (platform_modifiers_merged) {
+        fileBufferIndexJs += `export const styles_platform_modifiers = {`;
+        fileBufferIndexJs += ` ...${platform_modifiers_file}`;
         fileBufferIndexJs += ` };\n`;
     }
 

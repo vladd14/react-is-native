@@ -26,8 +26,8 @@ const flow_tag_regexp = new RegExp(flow_tag_string, 'gi');
 //         margin-right: 0;
 //     }
 // }
-// const media_expression_string = `\\@media\\s+\\((max-\\w+):\\s+(\\d+)px\\)\\s*{\\s*(${class_name_string}(\\s*.+\\s*;)+\\s*}\\s*)+\\s*}`;
 const media_expression_string = `\\@media\\s+\\((max-(\\w+)):\\s+(\\d+)px\\)\\s*{(\\s*(${class_name_string}(\\s*.+\\s*;)+\\s*}\\s*)+\\s*)}`;
+const media_platform_string = `\\@platform\\s+\\((\\w+)\\)\\s*{(\\s*(${class_name_string}(\\s*.+\\s*;)+\\s*}\\s*)+\\s*)}`;
 const calc_expression_string = `calc\\((.+)\\)`;
 
 module.exports = {
@@ -49,4 +49,5 @@ module.exports = {
     flow_tag_string,
     flow_tag_regexp,
     calc_expression_string,
+    media_platform_string,
 };

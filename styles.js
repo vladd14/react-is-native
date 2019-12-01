@@ -1,7 +1,8 @@
 const { space_symbol, tab_symbol, } = require('./constants')
 const {variable_expression_regexp, variable_expression_string, change_dash_to_underscore, remove_excess_scss_directives,
     remove_excess_css_directives, class_name_regexp, class_name_string, style_expression_regexp, style_expression_string,
-    property_expression_regexp, property_expression_string, media_expression_string, calc_expression_string } = require('./regexps');
+    property_expression_regexp, property_expression_string, media_expression_string, calc_expression_string,
+    media_platform_string, } = require('./regexps');
 
 const split_properties = ['border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'flex-flow',
     'padding', 'margin'];
@@ -17,6 +18,7 @@ const rename_properties = {
 };
 const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'outline'];
 const force_stringify_value = ['fontWeight'];
+const not_round_properties = ['lineHeight'];
 
 let variables = {};
 const removeExcessCssDirectives = (str) => {
@@ -158,9 +160,12 @@ const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
 
         filled_object[name_property] = isNaN(Number(arg2 ? arg2 : arg1))
                 ? arg2 ? `'${arg2.trim()}'`
-                : arg1.trim() : Math.round(Number(arg2 ? arg2 : arg1));
+                : arg1.trim() : Number(arg2 ? arg2 : arg1);
 
-        if (force_stringify_value.indexOf(name_property) !== -1) {
+        if (!not_round_properties.includes(name_property) && typeof filled_object[name_property] === "number") {
+            filled_object[name_property] = Math.round(filled_object[name_property]);
+        }
+        if (force_stringify_value.includes(name_property)) {
             filled_object[name_property] = stringifyValue(filled_object[name_property]);
         }
     }
@@ -412,14 +417,29 @@ const transformMediaMax = (str, styles_name) => {
     return str;
 };
 
-// const transformObjectToString = (style_object, styles_name) => {
-//     const str = transformObjectToString(style_object, styles_name);
-//     return str;
-// };
+const transformMediaPlatform = (str, styles_name) => {
+    let style_object = {};
+    const replacer = (match, platform, styles) => {
+        if (!style_object.hasOwnProperty(platform)) {
+            style_object[platform] = {};
+            style_object[platform] = { ...transformStylesToObj(styles)};
+        }
+        else {
+            style_object[platform] = { ...style_object[platform], ...transformStylesToObj(styles)};
+        }
+    };
+    //get additional @media rules for single max-width/height expression notation with
+    let regexp = new RegExp(media_platform_string, 'gi');
+    str.replace(regexp, replacer);
+    str = Object.keys(style_object).length ? style_object : null;
+
+    return str;
+};
 
 module.exports = {
     transformVariables,
     transformStyles,
     transformMediaMax,
     transformObjectToString,
+    transformMediaPlatform,
 };

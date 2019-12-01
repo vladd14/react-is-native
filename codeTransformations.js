@@ -120,7 +120,7 @@ const addFlowTags = (str) => {
 };
 const addScreenDimensionListener = (str, functionName) => {
     initImports();
-    const dimension_listener = `if (!appState.screen_data) {
+    const dimension_listener = `if (!appState.screen_data && appState.os) {
         Screen({ appState, userState, loginState, actions });
     }`;
     const import_line = `import { Screen } from '../platformTransforms';`;

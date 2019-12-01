@@ -118,6 +118,18 @@ const addFlowTags = (str) => {
     }
     return str;
 };
+
+const addStringsAfterFlowFunction = (str, functionName, additional_strings) => {
+    const replacer = (match, p1) => {
+        match += additional_strings + p1;
+        return match;
+    };
+    const regExp = new RegExp(`const\\s+${functionName}:\\s*\\(\\s*\\)\\s*=>\\s*React\\$Node\\s*=\\s*\\(.*\\)\\s*.+{(\\s*)`, 'gi');
+    str = str.replace(regExp, replacer);
+
+    return str;
+};
+
 const addScreenDimensionListener = (str, functionName) => {
     initImports();
     const dimension_listener = `if (!appState.screen_data && appState.os) {
@@ -413,13 +425,14 @@ const createRootStack = (apps) => {
     str += '},';
 
     str += '\n);';
-    str += '\nlet Navigation = createAppContainer(RootStack);';
+    str += '\nlet Navigation = createAppContainer(RootStack);\n';
 
     return {
         text: str,
         imports: [
             'import { createAppContainer } from \'react-navigation\';',
-            'import { createStackNavigator } from \'react-navigation-stack\';'
+            'import { createStackNavigator } from \'react-navigation-stack\';',
+            'import { enableScreens } from \'react-native-screens\';',
         ],
     }
 };
@@ -471,6 +484,7 @@ const createAppJs = (str) => {
 
         let { ...stackDependencies } = createRootStack(apps);
         str = stackDependencies.text + str;
+
         // imports = imports.concat(stackDependencies.imports);
         addImportArray(stackDependencies.imports);
 
@@ -481,6 +495,8 @@ const createAppJs = (str) => {
         str = str.replace(remove_blank_lines_regexp, '');
 
         str = addFlowTags(str);
+
+        str = addStringsAfterFlowFunction(str, 'App', 'enableScreens();');
     }
 
     // console.log(str);

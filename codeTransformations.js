@@ -1,6 +1,6 @@
 const { space_symbol, tab_symbol, } = require('./constants');
 const {remove_blank_lines_regexp, function_flow_string} = require('./regexps');
-const {cutImport, insertImport, cutImportAndGetArray, addImportLine, addImportArray, initImports} = require('./imports');
+const {cutImport, insertImport, addImportLine, addImportArray, initImports} = require('./imports');
 
 // const remove_blank_lines_regexp = /^\n+/mig; //Clean file of blanks lines
 // const takeImportLineRegexp =  /(^\s*import\s*\w*\W*[^;]*;)/mig; //Get imports lines;
@@ -271,10 +271,10 @@ const replaceHtmlForWithFocus = (str) => {
                 return match;
             });
         }
+        importsArray.forEach((element) => {
+            addImportLine(element);
+        });
     }
-    importsArray.forEach((element) => {
-        addImportLine(element);
-    });
     str = insertImport(str);
     return str;
 };
@@ -319,24 +319,24 @@ const platformTransforms = (str) => {
         if (tokens.indexOf(name_import) === (-1)) {
             tokens.push(name_import);
         }
-        return 'navigation.push(';
+        return 'navigation.navigate(';
     };
 
-    const extractEventString = (match, p1) => {
-        let onFocus = '';
-        console.log(`match='${match}'`);
-        console.log(`p1='${p1}'`);
-        match.replace(/onFocus=(\{.[^}]+})/ig, (match2, p1) => {
-            console.log(match2);
-            console.log(p1);
-            onFocus = p1;
-        });
-        console.log('onFocus=', onFocus);
-    };
-    const addOnFocusEventToLabel = (match, p1) => {
-        console.log(`match='${match}'`);
-        console.log(`p1='${p1}'`);
-    };
+    // const extractEventString = (match, p1) => {
+    //     let onFocus = '';
+    //     console.log(`match='${match}'`);
+    //     console.log(`p1='${p1}'`);
+    //     match.replace(/onFocus=(\{.[^}]+})/ig, (match2, p1) => {
+    //         console.log(match2);
+    //         console.log(p1);
+    //         onFocus = p1;
+    //     });
+    //     console.log('onFocus=', onFocus);
+    // };
+    // const addOnFocusEventToLabel = (match, p1) => {
+    //     console.log(`match='${match}'`);
+    //     console.log(`p1='${p1}'`);
+    // };
 
     if (str) {
         const htmlTokens = divTags.concat(divTags, textTags, inputsType, withoutTypeTag);

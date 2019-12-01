@@ -3,14 +3,20 @@ const {variable_expression_regexp, variable_expression_string, change_dash_to_un
     remove_excess_css_directives, class_name_regexp, class_name_string, style_expression_regexp, style_expression_string,
     property_expression_regexp, property_expression_string, media_expression_string, calc_expression_string } = require('./regexps');
 
-const splitProperties = ['border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'flex-flow',
+const split_properties = ['border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'flex-flow',
     'padding', 'margin'];
-const camelCaseProperties = ['border-radius', 'border-color', 'background-color', 'flex-shrink', 'flex-grow',
+const camel_case_properties = ['border-radius', 'border-color', 'background-color', 'flex-shrink', 'flex-grow',
     'max-height',
     'padding-left', 'padding-right', 'padding-top', 'padding-bottom', 'z-index',
     'align-items', 'justify-content', 'min-height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-    'text-transform', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'box-shadow', 'object-fit', 'text-align',];
-const complicatedProperties = ['transition', 'text-shadow', 'box-shadow'];
+    'text-transform', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'box-shadow', 'object-fit',
+    'text-align', 'overflow-x'];
+const complicated_properties = ['transition', 'text-shadow', 'box-shadow', 'text-decoration', ];
+const rename_properties = {
+    'text-decoration': 'textDecorationLine',
+};
+const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'outline'];
+const force_stringify_value = ['fontWeight'];
 
 let variables = {};
 const removeExcessCssDirectives = (str) => {
@@ -116,8 +122,6 @@ const calcExpression = (expression) => {
     }
     return expression;
 };
-const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'outline'];
-const force_stringify_value = ['fontWeight'];
 const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
 
     // check out for calc() expressions
@@ -257,9 +261,10 @@ const propertiesInnerCorrections = (property, number_value, value_string) => {
         return match;
     };
     value_string = number_value ? number_value + value_string : value_string;
+
     value_string = calcExpression(value_string);
 
-    camelCaseProperties.forEach((target_property) => {
+    camel_case_properties.forEach((target_property) => {
         const regexp = new RegExp(`${target_property}`, 'gi');
         value_string = value_string.replace(regexp, replacer);
         value_string = changeSecondsToMs(value_string);
@@ -269,43 +274,50 @@ const propertiesInnerCorrections = (property, number_value, value_string) => {
 };
 const getProperty = (str, object) => {
     // console.log(str);
-    const replacer = (match, p1, p2, p3, p4) => {
+    const replacer = (match, property, p2, p3, p4) => {
         //change '-' to '_' for getting variable with dot notation in JS
+        // if (property.includes('overflow')) {
+        //     console.log(property);
+        // }
 
-        if (splitProperties.indexOf(p1) !== -1) {
+        if (rename_properties[property]) {
+            property = rename_properties[property];
+        }
 
-            let new_properties_object = propertiesSplitter(p1, p3, p4);
+        if (split_properties.indexOf(property) !== -1) {
+
+            let new_properties_object = propertiesSplitter(property, p3, p4);
 
             p3 = p3 ? p3 : '1';
-            if (camelCaseProperties.indexOf(p1) === -1) {
-                p1 = changeDashToUnderscore(p1);
+            if (camel_case_properties.indexOf(property) === -1) {
+                property = changeDashToUnderscore(property);
             }
             else {
-                p1 = changeDashToCamelCase(p1);
+                property = changeDashToCamelCase(property);
             }
             Object.keys(new_properties_object).forEach((key) => {
                 object = getVariableExpression(object, key, null, new_properties_object[key]);
             })
         }
-        else if (complicatedProperties.indexOf(p1) !== -1) {
-            if (camelCaseProperties.indexOf(p1) === -1) {
-                p1 = changeDashToUnderscore(p1);
+        else if (complicated_properties.indexOf(property) !== -1) {
+            if (camel_case_properties.indexOf(property) === -1) {
+                property = changeDashToUnderscore(property);
             }
             else {
-                p1 = changeDashToCamelCase(p1);
+                property = changeDashToCamelCase(property);
             }
-            p4 = propertiesInnerCorrections(p1, p3, p4);
-            object = getVariableExpression(object, p1, p3, p4);
+            p4 = propertiesInnerCorrections(property, p3, p4);
+            object = getVariableExpression(object, property, p3, p4);
         }
         else {
             p3 = p3 ? p3 : '1';
-            if (camelCaseProperties.indexOf(p1) === -1) {
-                p1 = changeDashToUnderscore(p1);
+            if (camel_case_properties.indexOf(property) === -1) {
+                property = changeDashToUnderscore(property);
             }
             else {
-                p1 = changeDashToCamelCase(p1);
+                property = changeDashToCamelCase(property);
             }
-            object = getVariableExpression(object, p1, p3, p4);
+            object = getVariableExpression(object, property, p3, p4);
         }
     };
     str.replace(property_expression_regexp, replacer);

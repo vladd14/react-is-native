@@ -2,7 +2,7 @@ const { space_symbol, tab_symbol, } = require('./constants')
 const {variable_expression_regexp, variable_expression_string, change_dash_to_underscore, remove_excess_scss_directives,
     remove_excess_css_directives, class_name_regexp, class_name_string, style_expression_regexp, style_expression_string,
     property_expression_regexp, property_expression_string, media_expression_string, calc_expression_string,
-    media_platform_string, } = require('./regexps');
+    media_platform_string, tag_name_string } = require('./regexps');
 
 const split_properties = ['border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'flex-flow',
     'padding', 'margin'];
@@ -365,22 +365,40 @@ const transformVariables = (str, variables_name) => {
     return str;
 };
 
-const transformStylesToObj = (str) => {
+const transformStylesToObj = (str, tags_selection) => {
     let style_object = {};
     // let main_property;
-    const replacer = (match, p1, p2,) => {
-        p2 = removeExcessCssDirectives(p2);
-        let object;
-        if (!style_object.hasOwnProperty(p1)) {
-            // main_property = p1;
-            object = style_object[p1] = {};
+    const replacer = (match, p1, p2, p3, p4, p5) => {
+        if (tags_selection) {
+            p1 = p1.split(',').map((item) => item.trim());
+            p1.forEach((element) => {
+                p3 = removeExcessCssDirectives(p3);
+                let object;
+                if (!style_object.hasOwnProperty(element)) {
+                    // main_property = p3;
+                    object = style_object[element] = {};
+                }
+                else {
+                    object = style_object[element];
+                }
+                getProperty(p3, object);
+            });
         }
         else {
-            object = style_object[p1];
+            p2 = removeExcessCssDirectives(p2);
+            let object;
+            if (!style_object.hasOwnProperty(p1)) {
+                // main_property = p1;
+                object = style_object[p1] = {};
+            }
+            else {
+                object = style_object[p1];
+            }
+            getProperty(p2, object);
         }
-        p2 = getProperty(p2, object);
     };
-    let regexp = new RegExp(class_name_string + `\\s*((${style_expression_string})+)(\\s*)`, 'ig');
+    let selection_type = !tags_selection ? class_name_string : tag_name_string;
+    let regexp = new RegExp(selection_type + `\\s*((${style_expression_string})+)(\\s*)`, 'ig');
     str.replace(regexp, replacer);
     return style_object;
 };
@@ -437,10 +455,21 @@ const transformMediaPlatform = (str, styles_name) => {
     return str;
 };
 
+const transformTags = (str, styles_name) => {
+
+    let regexp = new RegExp(media_expression_string, 'gim');
+    str = str.replace(regexp, '');
+    let style_object = transformStylesToObj(str, true);
+    str = transformObjectToString(style_object, styles_name);
+
+    return str;
+};
+
 module.exports = {
     transformVariables,
     transformStyles,
     transformMediaMax,
     transformObjectToString,
     transformMediaPlatform,
+    transformTags,
 };

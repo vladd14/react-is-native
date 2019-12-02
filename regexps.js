@@ -18,6 +18,7 @@ const function_flow_string = 'const\\s+\\w+:\\s*\\(\\s*\\)\\s*=>\\s*React\\$Node
 const function_flow_regexp = new RegExp(function_flow_string, 'gi');
 const flow_tag_string = `\\s*\\/\\*+\\s*\\*\\s+@format\\s+\\*\\s+@flow\\s*\\*\\/`;
 const flow_tag_regexp = new RegExp(flow_tag_string, 'gi');
+const tag_name_string = '((\\w+,*\\s*)*\\s*)\\s+\\{';
 // @media (max-width: 991px) {
 // .header__header_line {
 //         padding-right: 0.5rem;
@@ -50,4 +51,5 @@ module.exports = {
     flow_tag_regexp,
     calc_expression_string,
     media_platform_string,
+    tag_name_string,
 };

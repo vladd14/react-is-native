@@ -1,10 +1,10 @@
 const fs = require('fs');
 
-const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform } = require('./styles');
+const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform, transformTags } = require('./styles');
 const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
-    SimplifyEmptyTags, replaceHtmlForWithFocus,  } = require('./codeTransformations');
+    SimplifyEmptyTags, replaceHtmlForWithFocus, } = require('./codeTransformations');
 
 const path_from = '../insarm-front/src/';
 const path_to = '../insarmApp/';
@@ -63,7 +63,7 @@ const copyMainApps = () => {
                     console.log('start SimplifyEmptyTags');
                     fileBuffer = SimplifyEmptyTags(fileBuffer);
                     console.log('start removeExcessTags');
-                    fileBuffer = removeExcessTags(fileBuffer, ['form']);
+                    // fileBuffer = removeExcessTags(fileBuffer, ['form']);
                     console.log('start platformTransforms');
                     fileBuffer = platformTransforms(fileBuffer);
                     if (folder === 'apps' || folder === 'components') {
@@ -105,7 +105,7 @@ const transferStyles = () => {
     const dir_scss = 'scss';
     const dir_css = 'scss/css';
     const scss_variables = '_variables';
-    const css_files = ['container', 'header', 'links', 'cards', 'components', 'modifiers', ];
+    const css_files = ['container', 'header', 'links', 'cards', 'components', 'tags', 'modifiers'];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];
     const modifiers_file = 'modifiers';
@@ -141,14 +141,25 @@ const transferStyles = () => {
         let js_file_name = scss_file_name.replace(/(\w+)/ig, (match, p1) => {
             return p1 + '.js';
         });
-        let js_file_media_name = scss_file_name.replace(/(\w+)/ig, (match, p1) => {
-            return p1 + '_at_media.js';
-        });
+        let fileBuffer;
+        try {
+            fileBuffer = fs.readFileSync(fileTo(dirFrom(dir_css), `${scss_file_name}.css`), 'utf-8');
+        }
+        catch (e) {
+            console.log(`file '${scss_file_name}.css' cannot be opened`);
+        }
 
-        let fileBuffer = fs.readFileSync(fileTo(dirFrom(dir_css), `${scss_file_name}.css`), 'utf-8');
         if (fileBuffer) {
-            let fileBufferCSS = transformStyles(fileBuffer, scss_file_name);
-            fs.writeFileSync(fileTo(dirTo(`${main_folder}/css`),  js_file_name), fileBufferCSS);
+            let fileBufferCSS;
+            if (scss_file_name !== 'tags') {
+                fileBufferCSS = transformStyles(fileBuffer, scss_file_name);
+            }
+            else {
+                fileBufferCSS = transformTags(fileBuffer, scss_file_name);
+            }
+            if (fileBufferCSS) {
+                fs.writeFileSync(fileTo(dirTo(`${main_folder}/css`), js_file_name), fileBufferCSS);
+            }
 
             let fileBufferAtMedia = transformMediaMax(fileBuffer, `${scss_file_name}_at_media`);
             if (fileBufferAtMedia) {

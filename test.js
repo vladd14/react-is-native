@@ -1,4 +1,4 @@
-const { transformVariables, transformStyles, transformMediaMax } = require('./styles');
+const { transformVariables, transformStyles, transformMediaMax, transformColors } = require('./styles');
 const {initImports, cutImport, findModule} = require('./imports');
 
 const {
@@ -8,345 +8,119 @@ const {
 } = require('./codeTransformations');
 
 let mainApp = `
-import React, { useState, useEffect } from 'react';
-import { withRouter } from 'react-router-dom';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { sendRequest } from '../helpers/network';
-import PageHeader from '../components/PageHeader';
-import SimpleButton from '../elements/SimpleButton';
-import SectionDelimiterWithLabel from '../components/SectionDelimiterWithLabel';
-import ActionLink from '../components/ActionLink';
-import * as userActions from '../reducers/user';
-import * as loginActions from '../reducers/login';
-import * as appActions from '../reducers/app';
-import { getUserProfile } from '../helpers/authorization';
-import { translator } from '../helpers/translate';
-import { urls, requests } from '../urls';
-import { space_symbol } from '../helpers/constants';
-import { PageContainer, PageGlobalContainer } from '../containers/PageContainers';
 
-const Login = ({ appState, userState, loginState, actions, history, ...props }) => {
-    const [additional_class, setAdditionalClass] = useState({
-        control_1: '',
-        control_2: '',
-    });
-    const parseErrors = (errors) => {
-        for (let key in errors) {
-            let error_message = '';
-            if (errors.hasOwnProperty(key) && Array.isArray(errors[key])) {
-                errors[key].forEach((element, index) => {
-                    if (index) {
-                        error_message += '\\n';
-                    }
-                    error_message += element;
-                });
-            }
-            if (error_message.length) {
-                actions.setLoginState({
-                    name: key || '',
-                    state_error: true,
-                    additional_text: error_message,
-                });
-            }
-        }
-    };
-    const requestCallBack = (receivedData) => {
-        if (receivedData && receivedData.data) {
-            if (receivedData.data.hasOwnProperty('errors')) {
-                return parseErrors(receivedData.data.errors);
-            }
+$black:   #000    !default;
+$blue:    #007bff !default;
+$indigo:  #6610f2 !default;
+$purple:  #6f42c1 !default;
+$pink:    #e83e8c !default;
+$red:     #dc3545 !default;
+$orange:  #fd7e14 !default;
+$yellow:  #ffc107 !default;
+$green:   #28a745 !default;
+$teal:    #20c997 !default;
+$cyan:    #17a2b8 !default;
 
-            const { user_auth_id, token } = receivedData.data;
+$gray-100: #f8f9fa !default;
+$gray-200: #e9ecef !default;
+$gray-300: #dee2e6 !default;
+$gray-400: #ced4da !default;
+$gray-500: #adb5bd !default;
+$gray-600: #6c757d !default;
+$gray-700: #495057 !default;
+$gray-800: #343a40 !default;
+$gray-900: #212529 !default;
 
-            if (user_auth_id) {
-                actions.setUserAuthId(user_auth_id);
-            }
-            if (token) {
-                actions.setAuthToken(token);
-                getUserProfile(appState, actions).then(() => {
-                    actions.clearLoginValues();
-                    history.push(urls.main.path);
-                });
-            }
-        }
-    };
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        console.log('submit form');
-        const { url, method } = requests.login;
-        const sendData = {
-            email: loginState.email.value,
-            password: loginState.password.value,
-        };
-        sendRequest(url, sendData, requestCallBack, method, appState, actions);
-    };
-    const handleEnterPress = (event) => {
-        if (event && event.hasOwnProperty('key') && event.key === 'Enter') {
-            handleSubmit(event);
-        }
-    };
-    const handleEmail = (event) => {
-        if (event && event.target && event.target.hasOwnProperty('value')) {
-            actions.setLoginValue({
-                name: 'email',
-                value: event.target.value,
-            });
-        }
-    };
-    const handlePassword = (event) => {
-        if (event && event.target && event.target.hasOwnProperty('value')) {
-            actions.setLoginValue({
-                name: 'password',
-                value: event.target.value,
-            });
-        }
-    };
-    const handleClick = (event) => {
-        handleSubmit(event);
-    };
-    const handleFocus_1 = (event) => {
-        // setAdditionalClass('input_focused');
+$danger:        $red !default;
+$warning:       $yellow !default;
+$warning_new:   darken($warning, 4%);
 
-        setAdditionalClass({ ...additional_class, ...{ control_1: 'selected' } });
-    };
-    const handleBlur_1 = (event) => {
-        // setAdditionalClass('');
-        setAdditionalClass({ ...additional_class, ...{ control_1: '' } });
-    };
-    const handleFocus_2 = (event) => {
-        // setAdditionalClass('input_focused');
-        setAdditionalClass({ ...additional_class, ...{ control_2: 'selected' } });
-    };
-    const handleBlur_2 = (event) => {
-        // setAdditionalClass('');
-        setAdditionalClass({ ...additional_class, ...{ control_2: '' } });
-    };
-    return (
-        <>
-            <PageGlobalContainer className={'container container_background_grey'}>
-            <PageHeader avatar_url={'/agent-avatar-change'} human_page_name={'Вход'} {...props} />
-                <PageContainer className={'container container_background_grey'}>
-                <div className={'container__limited'}>
-                    <form>
-                        <div className={'d-flex justify-content-center align-items-center'}>
-                            <div className={'card client-search-form fixed-width'}>
-                                <div className={'card-body justify-content-between'}>
-                                    <SectionDelimiterWithLabel>
-                                        {translator('Введите e-mail и пароль', appState.language)}
-                                    </SectionDelimiterWithLabel>
-                                    <div>
-                                        {/*<SimpleCustomField*/}
-                                        {/*    placeholder={'e-mail'}*/}
-                                        {/*    type={appState.platform !== 'web' ? 'email-address' : 'email'}*/}
-                                        {/*    {...loginState.email}*/}
-                                        {/*    onChange={(event) => handleEmail(event)}*/}
-                                        {/*    onKeyDown={(event) => handleEnterPress(event)}*/}
-                                        {/*/>*/}
-                                        {/*<SimpleCustomField*/}
-                                        {/*    type={'password'}*/}
-                                        {/*    placeholder={translator('Пароль', appState.language)}*/}
-                                        {/*    {...loginState.password}*/}
-                                        {/*    onChange={(event) => handlePassword(event)}*/}
-                                        {/*    onKeyDown={(event) => handleEnterPress(event)}*/}
-                                        {/*/>*/}
-                                        <div className={'form_group form_group_styled'}>
-                                            <label
-                                                htmlFor={'email_id'}
-                                                className={[
-                                                    'form_group__label',
-                                                    'input_styled_label',
-                                                    \`label_{additional_class.control_1}\`,
-                                                ].join(space_symbol)}>
-                                                {'e-mail'}
-                                            </label>
-                                            <div
-                                                className={[
-                                                    'form_group__control_container',
-                                                    \`input_{additional_class.control_1}\`,
-                                                ].join(space_symbol)}>
-                                                <div
-                                                    className={[
-                                                        \`form_group__control input_{additional_class.control_1}\`,
-                                                    ].join(space_symbol)}>
-                                                    <input
-                                                        id={'email_id'}
-                                                        className={'form_group__input'}
-                                                        type={appState.platform !== 'web' ? 'email-address' : 'email'}
-                                                        value={loginState.email.value}
-                                                        // placeholder={'e-mail'}
-                                                        required={'required'}
-                                                        onKeyDown={(event) => handleEnterPress(event)}
-                                                        onChange={(event) => handleEmail(event)}
-                                                        onFocus={(event) => handleFocus_1(event)}
-                                                        onBlur={(event) => handleBlur_1(event)}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <span className={'grp-addon'}>{loginState.email.additional_text}</span>
-                                        <div className={'form_group form_group_styled'}>
-                                            <label
-                                                htmlFor={'password_id'}
-                                                className={[
-                                                    'form_group__label',
-                                                    'input_styled_label',
-                                                    \`label_{additional_class.control_2}\`,
-                                                ].join(space_symbol)}>
-                                                {translator('Пароль', appState.language)}
-                                            </label>
-                                            <div
-                                                className={[
-                                                    'form_group__control_container',
-                                                    \`input_{additional_class.control_2}\`,
-                                                ].join(space_symbol)}>
-                                                <div
-                                                    className={[
-                                                        \`form_group__control input_{additional_class.control_2}\`,
-                                                    ].join(space_symbol)}>
-                                                    <input
-                                                        id={'password_id'}
-                                                        className={'form_group__input'}
-                                                        type={'password'}
-                                                        value={loginState.password.value}
-                                                        // placeholder={'password'}
-                                                        required={'required'}
-                                                        onKeyDown={(event) => handleEnterPress(event)}
-                                                        onChange={(event) => handlePassword(event)}
-                                                        onFocus={(event) => handleFocus_2(event)}
-                                                        onBlur={(event) => handleBlur_2(event)}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <span className={'grp-addon'}>{loginState.email.additional_text}</span>
-                                        <ActionLink to={urls.main.path}>
-                                            {translator('Зарегистрироваться', appState.language)}
-                                        </ActionLink>
-                                    </div>
-                                    <div className={'text-centered extern-offset bottom st-x2'}>
-                                        <SimpleButton
-                                            onClick={(event) => handleClick(event)}
-                                            title={translator('Войти  ', appState.language)}
-                                            additional_class={'small size-changing blue'}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </PageContainer>
-            </PageGlobalContainer>
-        </>
-    );
-};
+$brand-color: darken(rgba(255, 50, 78, 0.7), 33%);
 
-const mapStateToProps = (state) => ({
-    appState: state.app,
-    userState: state.user,
-    loginState: state.login,
-});
-const mapDispatchToProps = (dispatch) => ({
-    actions: bindActionCreators({ ...appActions, ...userActions, ...loginActions }, dispatch),
-});
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Login));
+$offside_back_color: darken(rgb(100, 50, 30), 7%);
 
+/* Стандартный цвет отображения шрифта */
+$default-text-color: lighten(black, 30%);
+
+$default-link-color: #337ab7;
+$default-link-color-hover: #23527c;
+
+/* Стандартный цвет border */
+//$default-border-color:#ddd;
+$default-border-color: rgba(0, 0, 0, 0.16);
+
+$brand-primary:         darken(#428bca, 6.5%);
+$brand-success:         #5cb85c;
+$brand-info:            #5bc0de;
+$brand-warning:         #f0ad4e;
+$brand-danger:          #d9534f;
+
+$state-default:                 #ccc;
+$state-primary:                 $brand-primary;
+$state-not-primary:             lighten($default-text-color, 35%);
+$state-success:                 $brand-success;
+$state-info:                    $brand-info;
+$state-warning:                 $brand-warning;
+$state-attention:               rgba(255, 190, 0, 1);
+$state-danger:                  $brand-danger;
+$state-error:                   $state-danger;
+
+$state-muted: darken($state-not-primary,10%);
+
+//from bootstarp
+$gray-700: #495057 !default;
+$text-sub-info:                 $gray-700;
+
+$main_bg_color_gray: #f1f1f1;
+
+//Pantone color of 2017 year
+$greenery_color_rgb: rgb(136,176,75);
+$greenery_color: #88B04B;
+
+//Pantone color of 2012 year
+$tangerine_tango_rgb: rgb(226,73,47);
+$tangerine_tango: $tangerine_tango_rgb;
+
+//@main_border_color: #d7df23;
+$border_color_mid_yellow: #d7df23;
+
+$default_border_color_bst: rgba(0, 0, 0, 0.125);
+
+//Color footer
+$container-cart-bg: rgba(237,237,242, 1);
+
+//bso types
+
+$color_casco: #3A56A2;
+$color_osago: #BA637B;
+$color_dcard: #8B8B8B;
+$color_ns: #9532A2;
+$color_real_estate: #E5C200;
+$color_property: #C48944;
+$color_green_card: #77B74F;
+$color_vzr: #67A1FF;
+$color_dms: #26846F;
+
+$green:         #28a745;
+$success:       $green !default;
+$color_receipt: $success;
+
+  //////////////////////////////////////////
+ // Цветовая индикация для состояний БСО //
+//////////////////////////////////////////
+
+$bso-clean: rgba(255, 255, 255, 1);
+$bso-issued: rgba(220, 255, 200, 1);
+$bso-returned: rgba(233, 255, 233, 1);
+$bso-transferred: rgba(235, 235, 235, 1);
+$bso-broken: rgba(255, 235, 235, 1);
+$bso-lost: rgba(255, 220, 180, 1);
+$bso-returned-from-ins: rgba(255, 180, 180, 1);
+$bso-transferred-clean: rgba(190, 190, 190, 1);
+$bso-preparing-for-transfer: rgba(180, 255, 255, 1);
 
 `;
 
-let variables = `
-//screens variables
-$screen-xsm-min:            0;
-$screen-xs-min:             520px;
-$screen-sm-min:             768px;
-$screen-md-min:             992px;
-$screen-lg-min:             1200px;
-$screen-lh-min:             1560px;
-$screen-hd-min:             1920px;
-$screen-xsm-max:            ($screen-xs-min - 1);
-$screen-xs-max:             ($screen-sm-min - 1);
-$screen-sm-max:             ($screen-md-min - 1);
-$screen-md-max:             ($screen-lg-min - 1);
-$screen-lg-max:             ($screen-lh-min - 1);
-$screen-lh-max:             ($screen-hd-min - 1);
-
-//default offset variables
-$small_single_offset: 0.06rem;
-$small_ultra_offset: 0.06rem;
-$small_extra_offset: 0.125rem;
-$small_offset: 0.25rem;
-$standard_offset: 0.5rem;
-
-//changing name type
-$offset_small_single: $small_single_offset;
-$offset_small_ultra: $small_ultra_offset;
-$offset_small_extra: $small_extra_offset;
-$offset_small: $small_offset;
-
-$border-width:                      1px !default;
-$border-radius:                     0.25rem !default;
-$card-border-width:                 $border-width !default;
-$card-border-radius:                $border-radius !default;
-$card-border-color:                 rgba(0,0,0, 0.125) !default;
-$card-inner-border-radius:          calc(#{$card-border-radius} - #{$card-border-width}) !default;
-
-$bootstrap_horizontal_offset_st: 1.25rem;
-$bootstrap_vertical_offset_st: 0.75rem;
-
-$bootstrap_horizontal_offset_fields: $bootstrap_vertical_offset_st;
-$bootstrap_vertical_offset_fields: $bootstrap_vertical_offset_st / 2;
-
-// form bootstrap _variables
-$border-radius: 0.25rem;
-$bootstrap_border_radius: $border-radius;
-$default_border_radius: $bootstrap_border_radius;
-
-//the coefficient for get avatar size smaller with mobile view
-$person_photo_smaller_k: 0.8;
-$place_holder_height: 5rem;
-
-$photo_width: 4.4rem;
-
-$panel_min_width: 190px;
-$panel_border_radius: $border-radius;
-
-$round_button_container_height: 5.4rem;
-$round_button_container_height_xs_scalar: 0.84;
-$round_button_container_height_xs: $round_button_container_height * $round_button_container_height_xs_scalar;
-
-$person_content_top_offset: 1.7rem;
-$person_default_font_size: 1.05rem;
-$person_default_font_weight: 500;
-$person_extra_info_font_size: 0.75rem;
-
-//Buttons menu
-$default_menu_width: 0.875rem;
-$logo_width: $photo_width * $person_photo_smaller_k;
-$page_title_font_size: 1.2rem;
-`;
-
-let str = `
-/**
- * @format
- * @flow
- */
-import React from 'react';
-import { Div, TextTag } from '../platformTransforms';
-
-const SectionDelimiterWithLabel: () => React$Node = ({ ...props }) => {
-    const style = 'section-delimiter-with-label subsection';
-    return (
-        <Div tagType={'div'} className={style}>
-            <TextTag tagType={'span'}></TextTag>
-            <TextTag tagType={'label'}>{props.children}</TextTag>
-            <TextTag tagType={'span'}></TextTag>
-        </Div>
-    );
-};
-export default SectionDelimiterWithLabel;
-
-`;
 
 // transformVariables(variables);
 // transformStyles(str);
@@ -354,7 +128,8 @@ export default SectionDelimiterWithLabel;
 // addScreenDimensionListener(mainApp);
 // replaceStyleAfterFlowFunction(str);
 
-let str_3 = 'borderColor 1000 ease-in, backgroundColor 1000 ease-in';
+// let str_3 = 'borderColor 1000 ease-in, backgroundColor 1000 ease-in';
 
-removeFormTags(mainApp, ['form']);
+// removeFormTags(mainApp, ['form']);
+transformColors(mainApp);
 

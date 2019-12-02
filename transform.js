@@ -1,6 +1,7 @@
 const fs = require('fs');
 
-const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform, transformTags } = require('./styles');
+const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform,
+    transformTags, transformColors } = require('./styles');
 const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
@@ -54,6 +55,8 @@ const copyMainApps = () => {
                 console.log('file_in_folder=',file_in_folder);
                 let fileBuffer = fs.readFileSync(fileFrom(dirFrom(folder), file_in_folder), 'utf-8');
                 if (fileBuffer) {
+                    console.log('start removeExcessTags');
+                    fileBuffer = removeExcessTags(fileBuffer, ['form']);
                     console.log('start exportConnectionTransform');
                     fileBuffer = exportConnectionTransform(fileBuffer);
                     console.log('start importNotRequired');
@@ -62,8 +65,6 @@ const copyMainApps = () => {
                     fileBuffer = historyToNavigationTransform(fileBuffer);
                     console.log('start SimplifyEmptyTags');
                     fileBuffer = SimplifyEmptyTags(fileBuffer);
-                    console.log('start removeExcessTags');
-                    // fileBuffer = removeExcessTags(fileBuffer, ['form']);
                     console.log('start platformTransforms');
                     fileBuffer = platformTransforms(fileBuffer);
                     if (folder === 'apps' || folder === 'components') {
@@ -105,6 +106,7 @@ const transferStyles = () => {
     const dir_scss = 'scss';
     const dir_css = 'scss/css';
     const scss_variables = '_variables';
+    const scss_colors = '_colors';
     const css_files = ['container', 'header', 'links', 'cards', 'components', 'tags', 'modifiers'];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];
@@ -123,6 +125,18 @@ const transferStyles = () => {
         if (fileBuffer) {
             fileBuffer = transformVariables(fileBuffer, 'variables');
             fs.writeFileSync(fileTo(dirTo(dir_styles), 'variables.js'), fileBuffer);
+        }
+    }
+
+    { // make colors file next
+        if (fs.existsSync(fileTo(dirTo(dir_styles), 'colors.js'))) {
+            fs.unlinkSync(fileTo(dirTo(dir_styles), 'colors.js'));
+        }
+
+        let fileBuffer = fs.readFileSync(fileTo(dirFrom(dir_scss), `${scss_colors}.scss`), 'utf-8');
+        if (fileBuffer) {
+            fileBuffer = transformColors(fileBuffer, 'colors');
+            fs.writeFileSync(fileTo(dirTo(dir_styles), 'colors.js'), fileBuffer);
         }
     }
 

@@ -10,6 +10,7 @@ const property_expression_string = '\\s*(\\D[^;:]+):\\s*((\\d*\\.*\\d*)(.*);)';
 const change_dash_to_underscore = /(\w)(-)(\w)/ig;
 const remove_excess_css_directives = /!default|!important/ig;
 const remove_excess_scss_directives = /[$#{}]|!default|!important/ig;
+const remove_excess_colors_directives = /[$]|\s*!default|\s*!important/ig;
 const class_name_regexp = /\.(.+)\s+\{/ig;
 const class_name_string = '\\.(.+)\\s+\\{';
 const style_expression_regexp = /(\D[^;:}]+):\s*((\d*\.*\d*)(.*)(\.;|}|{))/ig;
@@ -52,4 +53,5 @@ module.exports = {
     calc_expression_string,
     media_platform_string,
     tag_name_string,
+    remove_excess_colors_directives,
 };

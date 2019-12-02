@@ -2,7 +2,7 @@ const { space_symbol, tab_symbol, } = require('./constants')
 const {variable_expression_regexp, variable_expression_string, change_dash_to_underscore, remove_excess_scss_directives,
     remove_excess_css_directives, class_name_regexp, class_name_string, style_expression_regexp, style_expression_string,
     property_expression_regexp, property_expression_string, media_expression_string, calc_expression_string,
-    media_platform_string, tag_name_string } = require('./regexps');
+    media_platform_string, tag_name_string, remove_excess_colors_directives } = require('./regexps');
 
 const split_properties = ['border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'flex-flow',
     'padding', 'margin'];
@@ -289,7 +289,6 @@ const getProperty = (str, object) => {
         if (rename_properties[property]) {
             property = rename_properties[property];
         }
-
         if (split_properties.indexOf(property) !== -1) {
 
             let new_properties_object = propertiesSplitter(property, p3, p4);
@@ -356,9 +355,6 @@ const transformVariables = (str, variables_name) => {
     };
 
     str.replace(variable_expression_regexp, replacer);
-    // We don't need px definition for further operations, but rem and em we can use
-    // for mobile layout adjustments
-    // delete variables['px'];
     // console.log(variables);
     str = transformObjectToString(variables, variables_name);
     // console.log(str);
@@ -469,6 +465,154 @@ const transformTags = (str, styles_name) => {
 
     return str;
 };
+const colorMultiply = (color_object, percentage, direction) => {
+    const range = 255;
+    if (percentage.endsWith('%')) {
+        percentage = percentage.slice(0, -1);
+        percentage = parseFloat(percentage);
+        percentage /= 100;
+    }
+    if (direction === '+') {
+        color_object.red += range * percentage;
+        color_object.green += range * percentage;
+        color_object.blue += range * percentage;
+
+        if (color_object.red > range) {
+            color_object.red = range;
+        }
+        if (color_object.green > range) {
+            color_object.green = range;
+        }
+        if (color_object.blue > range) {
+            color_object.blue = range;
+        }
+    }
+    else {
+        color_object.red -= range * percentage;
+        color_object.green -= range * percentage;
+        color_object.blue -= range * percentage;
+
+        if (color_object.red < 0) {
+            color_object.red = 0;
+        }
+        if (color_object.green < 0) {
+            color_object.green = 0;
+        }
+        if (color_object.blue < 0) {
+            color_object.blue = 0;
+        }
+    }
+    return `'rgba(${Math.round(color_object.red)}, ${Math.round(color_object.green)}, ${Math.round(color_object.blue)}, ${color_object.opacity})'`;
+};
+const hexColorToRGB = (hex_string) => {
+    let rgba_color_value = {
+        red: '',
+        green: '',
+        blue: '',
+        opacity: 1,
+    };
+    if (hex_string.length === 3) {
+        hex_string += hex_string;
+    }
+    if (hex_string.length === 6) {
+        for (let i=0; i<hex_string.length; i++) {
+            if (i<2) {
+                rgba_color_value.red += hex_string.charAt(i)
+            }
+            if (i>=2 && i<4) {
+                rgba_color_value.green += hex_string.charAt(i)
+            }
+            if (i>=4) {
+                rgba_color_value.blue += hex_string.charAt(i)
+            }
+        }
+    }
+    else {
+        rgba_color_value.red = 0;
+        rgba_color_value.green = 0;
+        rgba_color_value.blue = 0;
+        return rgba_color_value;
+    }
+    rgba_color_value.red = parseInt(rgba_color_value.red, 16);
+    rgba_color_value.green = parseInt(rgba_color_value.green, 16);
+    rgba_color_value.blue = parseInt(rgba_color_value.blue, 16);
+
+    return rgba_color_value;
+};
+const tintColor = (str, colors_object, direction) => {
+    let rgba_color_value = {
+        red: '',
+        green: '',
+        blue: '',
+        opacity: 1,
+    };
+    let percentage = 1;
+    if (str.startsWith('#')) {
+        str = str.split(',').map((element) => element.trim());
+        str[0] = hexColorToRGB(str[0].slice(1));
+        return colorMultiply(str[0], str[1], direction);
+    }
+    else if (str.startsWith('rgba')) {
+        let regexp = new RegExp(`rgba\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+\\.*\\d*\\)*)\\s*,\\s*(\\d+\\W[^)]*)\\s*`, 'gi');
+        str.replace(regexp, (match, red, green, blue, opacity, percents) => {
+            rgba_color_value.red = parseInt(red);
+            rgba_color_value.green = parseInt(green);
+            rgba_color_value.blue = parseInt(blue);
+            rgba_color_value.opacity = parseFloat(opacity);
+            percentage = percents;
+        });
+        return colorMultiply(rgba_color_value, percentage, direction);
+    }
+    else if (str.startsWith('rgb')) {
+        let regexp = new RegExp(`rgb\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+\\W[^)]*)\\s*`, 'gi');
+        str.replace(regexp, (match, red, green, blue, percents) => {
+            rgba_color_value.red = parseInt(red);
+            rgba_color_value.green = parseInt(green);
+            rgba_color_value.blue = parseInt(blue);
+            percentage = percents;
+        });
+        return colorMultiply(rgba_color_value, percentage, direction);
+    }
+
+    str = str.split(',').map((element) => element.trim());
+    str[0] = colors_object && colors_object[str[0]] ? colors_object[str[0]] : null;
+    if (str[0]) {
+        str = str.join().replace(/\),/gi, ', ');
+        str = str.replace(/['"`]/gi, '');
+        return tintColor(str, colors_object, direction);
+    }
+};
+const getColorProperty = (str, colors_object) => {
+    if (str.startsWith('#') || str.startsWith('rgb')) {
+        return `'${str}'`;
+    }
+    else if (str.startsWith('darken')) {
+        str = str.replace(/darken\((.[^)]+)\)/gi, (match, params) => params);
+        return tintColor(str, colors_object);
+    }
+    else if (str.startsWith('lighten')) {
+        str = str.replace(/lighten\((.[^)]+)\)/gi, (match, params) => params);
+        return tintColor(str, colors_object, '+');
+    }
+    return colors_object && colors_object[str] ? colors_object[str] : 'undefined';
+};
+
+const transformColors = (str, variables_name) => {
+    let colors = {};
+    const replacer = (match, property, color, p3, p4) => {
+        if (!colors.hasOwnProperty(property)) {
+            colors[property] = {};
+        }
+        colors[property] = getColorProperty(color, colors);
+    };
+    str = str.replace(remove_excess_colors_directives, '');
+    str = changeDashToUnderscore(str);
+    // console.log(str);
+    str.replace(/(\w+):\s*(.[^;]+);/gi, replacer);
+
+    str = transformObjectToString(colors, variables_name);
+    return str;
+};
 
 module.exports = {
     transformVariables,
@@ -477,4 +621,5 @@ module.exports = {
     transformObjectToString,
     transformMediaPlatform,
     transformTags,
+    transformColors,
 };

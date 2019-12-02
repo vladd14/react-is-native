@@ -41,9 +41,8 @@ const historyToNavigationTransform = (str) => {
 };
 
 const removeExcessTags = (str, tags_array) => {
-    const replacer = (match, p1, p2,) => {
+    const replacer = (match, begins, p0, p1,) => {
         let arr = p1.split('\n');
-
         arr = arr.map((element) => { //removing excess tab;
             element = element.replace(/\s{4}/i,'');
             return element;
@@ -52,7 +51,7 @@ const removeExcessTags = (str, tags_array) => {
     };
 
     tags_array.forEach((element) => {
-        const regExp = new RegExp(`<\\s*${element}.[^>]*>\\s+(<(\\w*\\s*.[^>]+>)+)\\s+(<\\s*\/\\s*${element}\\s*>)`, 'gmi');
+        const regExp = new RegExp(`(<\\s*${element}\\s*>)(\\s+)(<(\\w*\\s*.[^>]+>)+)\\s+(<\\s*\/\\s*${element}\\s*>)`, 'i');
         str = str.replace(regExp, replacer);
     });
     return str;
@@ -233,7 +232,7 @@ const replaceHtmlForWithFocus = (str) => {
     ];
     let htmlForArray = [];
     const getHtmlForIds = (match, p1, p2) => {
-        p1 = p1.replace(/['"`]/ig, '');
+        // p1 = p1.replace(/['"`]/ig, '');
         const replacer = `@@onFocus_${p1}_here@@`;
         const eventObject = {
             id: p1,
@@ -258,9 +257,9 @@ const replaceHtmlForWithFocus = (str) => {
                 // console.log('ref not found and we go over');
                 useStateObject.hook_using = !useStateObject.hook_using ? true : useStateObject.hook_using;
                 const element_property = WrapElementsFor.indexOf(p1) !== (-1) ? 'Ref' : 'ref';
-                const reference_string = `{(component) => {${p2+tab_symbol}${useStateObject.hook_name}['${element.id}'] = component;${p2}}}`;
+                const reference_string = `{(component) => {${p2+tab_symbol}${useStateObject.hook_name}[${element.id}] = component;${p2}}}`;
                 p1 += `${p2}${element_property}=${reference_string}${p2}`;
-                element.eventString = `onPress={(event) => {${p2.replace(tab_symbol, '')}${useStateObject.hook_name} && ${useStateObject.hook_name}['${element.id}'] && ${useStateObject.hook_name}['${element.id}'].focus${p2}? ${useStateObject.hook_name}['${element.id}'].focus()${p2}: null;${p2.replace(tab_symbol+tab_symbol, '')}}}`;
+                element.eventString = `onPress={(event) => {${p2.replace(tab_symbol, '')}${useStateObject.hook_name} && ${useStateObject.hook_name}[${element.id}] && ${useStateObject.hook_name}[${element.id}].focus${p2}? ${useStateObject.hook_name}[${element.id}].focus()${p2}: null;${p2.replace(tab_symbol+tab_symbol, '')}}}`;
             }
             return '<' + p1 + rest +'/>';
         });

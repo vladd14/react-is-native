@@ -1,14 +1,6 @@
-const { space_symbol, tab_symbol, } = require('./constants');
+const { space_symbol, tab_symbol, flowTag, } = require('./constants');
 const {remove_blank_lines_regexp, function_flow_string} = require('./regexps');
 const {cutImport, insertImport, addImportLine, addImportArray, initImports} = require('./imports');
-
-
-const flowTag = `/**
- * @format
- * @flow
- */
-`;
-
 
 const exportConnectionTransform = (str) => {
     if (str) {

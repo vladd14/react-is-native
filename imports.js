@@ -1,10 +1,5 @@
-const {take_import_line_regexp, flow_tag_regexp} = require('./regexps');
-
-const flowTag = `/**
- * @format
- * @flow
- */
-`;
+const { take_import_line_regexp, flow_tag_regexp } = require('./regexps');
+const { flowTag } = require('./constants');
 
 let with_flow_tag = false;
 let imports_object = {};

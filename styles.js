@@ -371,8 +371,8 @@ const transformStylesToObj = (str, tags_selection) => {
     const replacer = (match, p1, p2, p3, p4, p5) => {
         if (tags_selection) {
             p1 = p1.split(',').map((item) => item.trim());
+            p3 = removeExcessCssDirectives(p3);
             p1.forEach((element) => {
-                p3 = removeExcessCssDirectives(p3);
                 let object;
                 if (!style_object.hasOwnProperty(element)) {
                     // main_property = p3;
@@ -385,16 +385,21 @@ const transformStylesToObj = (str, tags_selection) => {
             });
         }
         else {
+            p1 = p1.split(',').map((item) => item.trim());
             p2 = removeExcessCssDirectives(p2);
-            let object;
-            if (!style_object.hasOwnProperty(p1)) {
-                // main_property = p1;
-                object = style_object[p1] = {};
-            }
-            else {
-                object = style_object[p1];
-            }
-            getProperty(p2, object);
+            p1.forEach((element) => {
+                if (element.charAt(0) === '.') {
+                    element = element.slice(1);
+                }
+                let object;
+                if (!style_object.hasOwnProperty(element)) {
+                    // main_property = p1;
+                    object = style_object[element] = {};
+                } else {
+                    object = style_object[element];
+                }
+                getProperty(p2, object);
+            });
         }
     };
     let selection_type = !tags_selection ? class_name_string : tag_name_string;

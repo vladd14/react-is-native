@@ -40,10 +40,8 @@ const historyToNavigationTransform = (str) => {
     return str;
 };
 
-const removeFormTags = (str, tags_array) => {
+const removeExcessTags = (str, tags_array) => {
     const replacer = (match, p1, p2,) => {
-        // console.log(`match='${match}'`);
-        // console.log(`p1='${p1}'`);
         let arr = p1.split('\n');
 
         arr = arr.map((element) => { //removing excess tab;
@@ -54,8 +52,7 @@ const removeFormTags = (str, tags_array) => {
     };
 
     tags_array.forEach((element) => {
-        // const regExp = new RegExp(`<${element}>\\s+((.+\\s+){1,150})</${element}>`, 'i');
-        const regExp = new RegExp(`<${element}>\\s+(<(\\w*\\s*.[^>]+>)+)\\s+(<\/${element}>)`, 'i');
+        const regExp = new RegExp(`<\\s*${element}.[^>]*>\\s+(<(\\w*\\s*.[^>]+>)+)\\s+(<\\s*\/\\s*${element}\\s*>)`, 'gmi');
         str = str.replace(regExp, replacer);
     });
     return str;
@@ -501,7 +498,7 @@ module.exports = {
     exportConnectionTransform,
     checkReactRouterDomImports,
     historyToNavigationTransform,
-    removeFormTags,
+    removeExcessTags,
     addFlowTags,
     platformTransforms,
     createAppJs,

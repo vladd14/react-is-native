@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform } = require('./styles');
-const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeFormTags,
+const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus,  } = require('./codeTransformations');
@@ -62,8 +62,8 @@ const copyMainApps = () => {
                     fileBuffer = historyToNavigationTransform(fileBuffer);
                     console.log('start SimplifyEmptyTags');
                     fileBuffer = SimplifyEmptyTags(fileBuffer);
-                    console.log('start removeFormTags');
-                    fileBuffer = removeFormTags(fileBuffer, ['form']);
+                    console.log('start removeExcessTags');
+                    fileBuffer = removeExcessTags(fileBuffer, ['form']);
                     console.log('start platformTransforms');
                     fileBuffer = platformTransforms(fileBuffer);
                     if (folder === 'apps' || folder === 'components') {

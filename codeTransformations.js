@@ -2,32 +2,34 @@ const { space_symbol, tab_symbol, } = require('./constants');
 const {remove_blank_lines_regexp, function_flow_string} = require('./regexps');
 const {cutImport, insertImport, addImportLine, addImportArray, initImports} = require('./imports');
 
-// const remove_blank_lines_regexp = /^\n+/mig; //Clean file of blanks lines
-// const takeImportLineRegexp =  /(^\s*import\s*\w*\W*[^;]*;)/mig; //Get imports lines;
 
 const flowTag = `/**
  * @format
  * @flow
  */
 `;
-// const remove_blank_lines_regexp = /^\n+/mig; //Clean file of blanks lines
-// const takeImportLineRegexp =  /(^\s*import\s*\w*\W*[^;]*;)/mig; //Get imports lines;
+
 
 const exportConnectionTransform = (str) => {
     if (str) {
-        let str_change ='withNavigation(';
         let regExp = /withRouter\((?=\s*connect)/mig;
         str = str.replace(regExp, 'withNavigation(');
     }
     return str;
 };
 
-const importNotRequired = (str, replace_string) => {
+const checkReactRouterDomImports = (str) => {
+    const replacer = (match, import_string, p1, module_name, from_str, from_module) => {
+        if (module_name === 'withRouter') {
+            module_name = 'withNavigation';
+            from_module = 'react-navigation';
+            return import_string + module_name + from_str + from_module + `';`;
+        }
+        return '';
+    };
     if (str) {
-        // const regExp = /import\s+{(\s+\w+\D\s+)+}\s+from\s+'react-router-dom';/mig;
-        const regExp = /import\s+{(\s+\w+\W*)+(}\s*from\s+'react-router-dom';)/mig;
-        // str = str.replace(regExp, 'import { withNavigation } from \'react-navigation\';');
-        str = str.replace(regExp, replace_string);
+        const regExp = /(import\s+{)(\s+(\w+)\W*)+(}\s*from\s+')(react-router-dom)';/mig;
+        str = str.replace(regExp, replacer);
     }
     return str;
 };
@@ -459,7 +461,7 @@ const createAppJs = (str) => {
         let regExp = /(const\s*App)(?=\s*=\s*\()/mig;
         str = str.replace(regExp, replacer);
 
-        str = importNotRequired(str,'');
+        str = checkReactRouterDomImports(str,'');
 
         //`import './index.scss';`
         regExp = /(import\s+\W*)(index.scss';)/mig;
@@ -505,7 +507,7 @@ const createAppJs = (str) => {
 
 module.exports = {
     exportConnectionTransform,
-    importNotRequired,
+    checkReactRouterDomImports,
     historyToNavigationTransform,
     removeFormTags,
     addFlowTags,

@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform } = require('./styles');
-const { exportConnectionTransform, importNotRequired, historyToNavigationTransform, removeFormTags,
+const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeFormTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus,  } = require('./codeTransformations');
@@ -57,7 +57,7 @@ const copyMainApps = () => {
                     console.log('start exportConnectionTransform');
                     fileBuffer = exportConnectionTransform(fileBuffer);
                     console.log('start importNotRequired');
-                    fileBuffer = importNotRequired(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
+                    fileBuffer = checkReactRouterDomImports(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
                     console.log('start historyToNavigationTransform');
                     fileBuffer = historyToNavigationTransform(fileBuffer);
                     console.log('start SimplifyEmptyTags');

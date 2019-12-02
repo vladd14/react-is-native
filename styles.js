@@ -127,11 +127,6 @@ const calcExpression = (expression) => {
 const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
 
     // check out for calc() expressions
-    if (not_round_properties.includes(name_property)) {
-        console.log(name_property);
-        console.log(arg1);
-        console.log(arg2);
-    }
     arg1 = calcExpression(arg1);
     arg2 = calcExpression(arg2);
 
@@ -179,9 +174,6 @@ const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
         if (!not_round_properties.includes(name_property) && typeof filled_object[name_property] === "number") {
             filled_object[name_property] = Math.round(filled_object[name_property]);
         }
-    }
-    if (not_round_properties.includes(name_property)) {
-        console.log(filled_object);
     }
     return filled_object;
 };

@@ -17,6 +17,7 @@ const style_expression_regexp = /(\D[^;:}]+):\s*((\d*\.*\d*)(.*)(\.;|}|{))/ig;
 const style_expression_string = '(\\D[^;:\\.}]+):\\s*((\\d*\\.*\\d*)(.+));';
 const function_flow_string = 'const\\s+\\w+:\\s*\\(\\s*\\)\\s*=>\\s*React\\$Node\\s*=\\s*\\(.+\\)\\s*.+{(\\s*)';
 const function_flow_regexp = new RegExp(function_flow_string, 'gi');
+const default_function_string = '(const\\s+\\w+\\s*=\\s*\\({)(.+)(}\\)\\s*.+{)(\\s*)';
 const flow_tag_string = `\\s*\\/\\*+\\s*\\*\\s+@format\\s+\\*\\s+@flow\\s*\\*\\/`;
 const flow_tag_regexp = new RegExp(flow_tag_string, 'gi');
 const tag_name_string = '((\\w+,*\\s*)*\\s*)\\s+\\{';
@@ -54,4 +55,5 @@ module.exports = {
     media_platform_string,
     tag_name_string,
     remove_excess_colors_directives,
+    default_function_string,
 };

@@ -1,18 +1,35 @@
 const { space_symbol, tab_symbol, flowTag, } = require('./constants');
-const {remove_blank_lines_regexp, function_flow_string} = require('./regexps');
+const {remove_blank_lines_regexp, function_flow_string, default_function_string} = require('./regexps');
 const {cutImport, insertImport, addImportLine, addImportArray, initImports} = require('./imports');
 
 const exportConnectionTransform = (str) => {
+    const replacer = (match, p1, p2, p3) => {
+        // console.log(match);
+        // console.log(p1);
+        console.log(p2);
+
+        p2 = p2.split('\n').map((item) => item.trim()).filter((item) => item).map((element, index, array ) => index && index < array.length -1 ? tab_symbol + element : element);
+
+        p2 = p2.join('\n');
+        if (p2.charAt(p2.length-1) === ',') {
+            p2 = p2.slice(0, -1);
+            p2 += ';'
+        }
+        console.log(p2);
+        return p2;
+    };
     if (str) {
-        let regExp = /withRouter\((?=\s*connect)/mig;
-        str = str.replace(regExp, 'withNavigation(');
+        let regExp = /(withRouter\s*\(\s*)(.[^;]+)(\s*\));/gi;
+        str = str.replace(regExp, replacer);
+
     }
+    console.log(str);
     return str;
 };
 
 const checkReactRouterDomImports = (str) => {
     const replacer = (match, import_string, p1, module_name, from_str, from_module) => {
-        if (module_name === 'withRouter') {
+        if (module_name === 'deprecated withRouter') {
             module_name = 'withNavigation';
             from_module = 'react-navigation';
             return import_string + module_name + from_str + from_module + `';`;
@@ -120,9 +137,27 @@ const addStringsAfterFlowFunction = (str, functionName, additional_strings) => {
     return str;
 };
 
+const addNavigationRoutePropIntoFlowFunction = (str) => {
+    const replacer = (match, p1, p2, p3, p4) => {
+        console.log('match', match);
+        console.log('p1', p1);
+        console.log('p2', p2);
+        console.log('p3', p3);
+        console.log('p3', p4);
+        p2 = p2.replace(/history,/, 'navigation, route,');
+        return p1 + p2 + p3 + p4;
+    };
+
+    // const regexp = new RegExp('(const\\s+\\w+\\s*=\\s*\\({)(.+)(}\\)\\s*.+{)(\\s*)', 'gi');
+    const regexp = new RegExp(default_function_string, 'gi');
+    str = str.replace(regexp, replacer);
+    console.log(str);
+    return str
+};
+
 const addScreenDimensionListener = (str, functionName) => {
     initImports();
-    const dimension_listener = `if (!appState.screen_data && appState.os) {
+    const dimension_listener = `if (!appState.screen_data) {
         Screen({ appState, userState, loginState, actions });
     }`;
     const import_line = `import { Screen } from '../platformTransforms';`;
@@ -145,29 +180,7 @@ const addScreenDimensionListener = (str, functionName) => {
     // console.log(str);
     return str;
 };
-// const addStatusBarHeight = (str) => {
-//     initImports();
-//     const dimension_listener = `const { StatusBarManager } = NativeModules;
-//     StatusBarManager.getHeight(({ height }) => actions.setStatusBarHeight(height));\n`;
-//     const import_line = `import { NativeModules } from 'react-native';`;
-//     const replacer = (match, p1) => {
-//         // console.log(`match='${match}'`);
-//         match += dimension_listener + p1;
-//         return match;
-//     };
-//
-//     if (str) {
-//         str = cutImport(str);
-//         const regExp = /const\s+PageHeader\s*=\s*\(.+\)\s*.+{(\s*)/ig;
-//         str = str.replace(regExp, replacer);
-//         // Clean file of blanks lines
-//         str = str.replace(remove_blank_lines_regexp, '');
-//         addImportLine(import_line);
-//         str = insertImport(str);
-//     }
-//     // console.log(str);
-//     return str;
-// };
+
 const changePlatform = (str) => {
     const replacer = (match, p1, p2, p3) => {
         return p1 + 'mobile' + p3;
@@ -363,9 +376,8 @@ const platformTransforms = (str) => {
 
         //history.location.pathname
         regExp = /(get\()*(history.location.pathname)/mig;
-        // str = str.replace(regExp, 'navigation.state.routeName');
         str = str.replace(regExp, (match, p1, p2)=> {
-            p2 = 'navigation.state.routeName';
+            p2 = 'route.name';
             if (p1) {
                 p2 = p1 + `appUrlReversed.get(${p2})`;
                 if (tokens.indexOf('appUrlReversed') === (-1)) {
@@ -508,4 +520,5 @@ module.exports = {
     replaceStyleAfterFlowFunction,
     SimplifyEmptyTags,
     replaceHtmlForWithFocus,
+    addNavigationRoutePropIntoFlowFunction,
 };

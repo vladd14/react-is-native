@@ -4,43 +4,115 @@ const {initImports, cutImport, findModule, deleteModuleImport} = require('./impo
 const {
     exportConnectionTransform, importNotRequired, historyToNavigationTransform, removeFormTags, addFlowTags,
     platformTransforms, changePlatform, createAppJs, removeFunctionCall, changeTagName, addScreenDimensionListener,
-    replaceStyleAfterFlowFunction, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody
+    replaceStyleAfterFlowFunction, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody, replaceHtmlForWithFocus
 } = require('./codeTransformations');
 
 let mainApp = `
 
-import React from 'react';
-import {
-    BrowserRouter as Navigation,
-    Switch,
-    Route
-} from 'react-router-dom';
-import { Provider } from 'react-redux';
-import './index.scss';
-import Login from './apps/Login';
-import Main from './apps/Main';
+import React, { useEffect, useState } from 'react';
+import { space_symbol } from '../helpers/constants';
+import { Div, TextTag, Input } from '../platformTransforms';
 
-import store from './store';
-import { urls } from './urls';
+const InputFieldStyled: () => React$Node = ({ className, value, type, id, placeholder, required, ...props }) => {
+    const [References, addToReferences] = useState({});
+    const { onChange, onFocus, onBlur, onKeyDown, additional_text_value, error_state } = props;
+    const [state_class, setStateClass] = useState('');
+    const [error_state_class, setErrorStateClass] = useState(error_state || '');
 
-const App = () => {
+    useEffect(() => {
+        if (error_state) {
+            setErrorStateClass('state_error');
+        }
+        else {
+            setErrorStateClass('');
+        }
+    }, [error_state]);
+
+    const handleFocus: () => React$Node = (event) => {
+        setStateClass('selected');
+        if (onFocus) {
+            onFocus(event);
+        }
+    };
+    const handleBlur: () => React$Node = (event) => {
+        if (!value) {
+            setStateClass('');
+        }
+        if (onBlur) {
+            onBlur(event);
+        }
+    };
+    const handleValue: () => React$Node = (event) => {
+        if (onChange) {
+            onChange(event);
+        }
+    };
+    const handleKeys: () => React$Node = (event) => {
+        if (onKeyDown) {
+            onKeyDown(event);
+        }
+    };
     return (
-        <Provider store={store}>
-            <Navigation>
-                <Switch>
-                    <Route path={urls.login.path}>
-                        <Login/>
-                    </Route>
-                    <Route path={urls.main.path}>
-                        <Main/>
-                    </Route>
-                </Switch>
-            </Navigation>
-        </Provider>
+        <>
+            <Div className={'form_group form_group_styled'}>
+                <TextTag
+                    tagType={'label'}
+                    htmlFor={id}
+                    onPress={(event) => {
+                        References && References[id] && References[id].focus
+                            ? References[id].focus()
+                            : null;
+                    }}
+                    className={[
+                        'form_group__label',
+                        'input_styled_label',
+                        \`label_{state_class}\`,
+                        \`{error_state_class}\`,
+                    ].join(space_symbol)}>
+                    {placeholder}
+                </TextTag>
+                <Div
+                    className={[
+                        'form_group__control_container',
+                        \`input_{state_class}\`,
+                        \`input_{error_state_class}\`,
+                        \`{error_state_class}\`,
+                    ].join(space_symbol)}>
+                    <Div
+                        className={[
+                            'form_group__control',
+                            \`input_{state_class}\`,
+                            \`input_{error_state_class}\`,
+                        ].join(space_symbol)}>
+                        <Input
+                            Ref={(component) => {
+                                References[id] = component;
+                            }}
+                            tagType={'input'}
+                            id={id}
+                            className={'form_group__input'}
+                            type={type}
+                            value={value}
+                            required={required}
+                            onKeyDown={(event) => handleKeys(event)}
+                            onChange={(event) => handleValue(event)}
+                            onFocus={(event) => handleFocus(event)}
+                            onBlur={(event) => handleBlur(event)}
+                        />
+                    </Div>
+                </Div>
+                <TextTag tagType={'span'} className={[
+                    'form_group__additional_text',
+                    \`additional_text_{error_state_class}\`,
+                ].join(space_symbol)}>
+                    {additional_text_value}
+                </TextTag>
+            </Div>
+        </>
     );
 };
 
-export default App;
+export default InputFieldStyled;
 
 `;
 
@@ -79,5 +151,5 @@ const App: () => React$Node = () => {
 // let str_3 = 'borderColor 1000 ease-in, backgroundColor 1000 ease-in';
 
 // removeFormTags(mainApp, ['form']);
-createAppJs(mainApp);
+replaceHtmlForWithFocus(mainApp);
 

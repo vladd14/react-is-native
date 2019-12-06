@@ -7,11 +7,11 @@ const {variable_expression_regexp, variable_expression_string, change_dash_to_un
 const split_properties = ['border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'flex-flow',
     'padding', 'margin'];
 const camel_case_properties = ['border-radius', 'border-color', 'background-color', 'flex-shrink', 'flex-grow',
-    'max-height',
+    'max-height', 'max-width',
     'padding-left', 'padding-right', 'padding-top', 'padding-bottom', 'z-index',
     'align-items', 'justify-content', 'min-height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
     'text-transform', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'box-shadow', 'object-fit',
-    'text-align', 'overflow-x'];
+    'text-align', 'overflow-x', 'overflow-y'];
 const complicated_properties = ['transition', 'text-shadow', 'box-shadow', 'text-decoration', ];
 const rename_properties = {
     'text-decoration': 'textDecorationLine',

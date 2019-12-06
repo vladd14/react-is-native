@@ -146,7 +146,21 @@ const addFlowTags = (str) => {
 
     if (str) {
         str = flowTag + str;
-        const regExp = /(const\s+\w+)(?=\s*=\s*\({*)/mig;
+        const regExp = /(const\s+\w+)(?=\s*=\s*\({)/mig;
+        str = str.replace(regExp, replacer);
+    }
+    return str;
+};
+
+const addFlowTagsByFunctionName = (str, functionName) => {
+
+    const replacer = (match, p1) => {
+        return p1 + ': () => React$Node';
+    };
+
+    if (str) {
+        str = flowTag + str;
+        const regExp = new RegExp(`(const\\s+${functionName})(?=\\s*=\\s*\\()`, 'mig');
         str = str.replace(regExp, replacer);
     }
     return str;
@@ -317,6 +331,7 @@ const replaceHtmlForWithFocus = (str) => {
         });
     }
     str = insertImport(str);
+    console.log(str);
     return str;
 };
 
@@ -488,7 +503,7 @@ const createAppJs = (str) => {
     };
     if (str) {
 
-        str = addFlowTags(str);
+        str = addFlowTagsByFunctionName(str, 'App');
 
         str = cutImport(str);
 

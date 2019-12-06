@@ -67,8 +67,6 @@ const copyMainApps = () => {
                     fileBuffer = checkReactRouterDomImports(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
                     console.log('start addNavigationRoutePropIntoFlowFunction');
                     fileBuffer = addNavigationRoutePropIntoFlowFunction(fileBuffer);
-                    console.log('start historyToNavigationTransform');
-                    fileBuffer = historyToNavigationTransform(fileBuffer);
                     console.log('start SimplifyEmptyTags');
                     fileBuffer = SimplifyEmptyTags(fileBuffer);
                     console.log('start platformTransforms');
@@ -85,6 +83,8 @@ const copyMainApps = () => {
                     if (folder === 'reducers' && file_in_folder === 'app.js') {
                         fileBuffer = changePlatform(fileBuffer);
                     }
+                    console.log('start historyToNavigationTransform');
+                    fileBuffer = historyToNavigationTransform(fileBuffer);
                     console.log('start writeFileSync');
                     fs.writeFileSync(fileTo(dirTo(folder), file_in_folder), fileBuffer,);
                 }

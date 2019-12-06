@@ -127,8 +127,12 @@ const calcExpression = (expression) => {
 const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
 
     // check out for calc() expressions
+    console.log('arg1=', arg1);
+    console.log('arg2=', arg2);
     arg1 = calcExpression(arg1);
     arg2 = calcExpression(arg2);
+    console.log('arg1=', arg1);
+    console.log('arg2=', arg2);
 
     let not_expression = false;
     if (unsupported_css_properties.indexOf(name_property) !== -1) {
@@ -279,13 +283,12 @@ const propertiesInnerCorrections = (property, number_value, value_string) => {
     return value_string;
 };
 const getProperty = (str, object) => {
-    // console.log(str);
-    const replacer = (match, property, p2, p3, p4) => {
-        //change '-' to '_' for getting variable with dot notation in JS
-        // if (property.includes('overflow')) {
-        //     console.log(property);
-        // }
 
+    const replacer = (match, property, p2, p3, p4) => {
+        console.log('property=',property);
+        console.log('p2=',p2);
+        console.log('p3=',p3);
+        console.log('p4=',p4);
         if (rename_properties[property]) {
             property = rename_properties[property];
         }
@@ -409,6 +412,8 @@ const transformStyles = (str, styles_name) => {
     // console.log(str);
     //delete all @media first
     let regexp = new RegExp(media_expression_string, 'gi');
+    str = str.replace(regexp, '');
+    regexp = new RegExp(media_platform_string, 'gi');
     str = str.replace(regexp, '');
     // console.log(str);
     let style_object = transformStylesToObj(str);

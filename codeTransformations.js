@@ -57,8 +57,7 @@ const historyToNavigationTransform = (str) => {
     };
 
     if (str) {
-        let str_change =', navigation,';
-        let regExp = /(,\s*)(history)([,)])/mig;
+        let regExp = /(\s*)(history)(\s*[,.)]\s*)/mig;
         str = str.replace(regExp, replacer);
     }
     return str;

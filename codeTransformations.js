@@ -1,21 +1,28 @@
 const { space_symbol, tab_symbol, flowTag, } = require('./constants');
 const {remove_blank_lines_regexp, function_flow_string, default_function_string} = require('./regexps');
-const {cutImport, insertImport, addImportLine, addImportArray, initImports} = require('./imports');
+const {cutImport, insertImport, addImportLine, addImportArray, initImports, deleteImportModule} = require('./imports');
+
+const placeTabHere = (n) => {
+    n = n ? n : 1;
+    let tab = '';
+    for (let i = 0; i < n; i++) {
+        tab += tab_symbol;
+    }
+    return tab;
+};
 
 const exportConnectionTransform = (str) => {
     const replacer = (match, p1, p2, p3) => {
         // console.log(match);
         // console.log(p1);
-        console.log(p2);
-
+        // console.log(p2);
         p2 = p2.split('\n').map((item) => item.trim()).filter((item) => item).map((element, index, array ) => index && index < array.length -1 ? tab_symbol + element : element);
-
         p2 = p2.join('\n');
         if (p2.charAt(p2.length-1) === ',') {
             p2 = p2.slice(0, -1);
             p2 += ';'
         }
-        console.log(p2);
+        // console.log(p2);
         return p2;
     };
     if (str) {
@@ -23,7 +30,7 @@ const exportConnectionTransform = (str) => {
         str = str.replace(regExp, replacer);
 
     }
-    console.log(str);
+    // console.log(str);
     return str;
 };
 
@@ -60,7 +67,8 @@ const historyToNavigationTransform = (str) => {
 const removeExcessTags = (str, tags_array) => {
     const replacer = (match, begins, p0, p1,) => {
         let arr = p1.split('\n');
-        arr = arr.map((element) => { //removing excess tab;
+        //removing excess tab;
+        arr = arr.map((element) => {
             element = element.replace(/\s{4}/i,'');
             return element;
         });
@@ -68,7 +76,25 @@ const removeExcessTags = (str, tags_array) => {
     };
 
     tags_array.forEach((element) => {
-        const regExp = new RegExp(`(<\\s*${element}\\s*>)(\\s+)(<(\\w*\\s*.[^>]+>)+)\\s+(<\\s*\/\\s*${element}\\s*>)`, 'i');
+        let regExp = new RegExp(`(<\\s*${element}\\s*>)(\\s+)(<(\\w*\\s*.[^>]+>)+)\\s+(<\\s*\/\\s*${element}\\s*>)`, 'i');
+        str = str.replace(regExp, replacer);
+    });
+    return str;
+};
+
+const removeTagsWithBody = (str, tags_array) => {
+    const replacer = (match, p1, p2, p3,) => {
+        return '';
+    };
+
+    tags_array.forEach((element) => {
+        // remove single elements first
+        let regExp = new RegExp(`<\\s*${element}\\s*(.[^>]*)/>`, 'gi');
+        str = str.replace(regExp, replacer);
+
+        //Remove element with body next
+        // let regExp = new RegExp(`(?<=(<${element}\\s*[^>]+>))(\\s.+)+(?=(</${element}>))`, 'i');
+        regExp = new RegExp(`(<${element}\\s*[^>]+>)(\\s.+)+(</${element}>)`, 'gi');
         str = str.replace(regExp, replacer);
     });
     return str;
@@ -78,7 +104,7 @@ const removeFunctionCall = (str, name) => {
     const replacer = (match, p1, p2) => {
         return '';
     };
-    const regExp = new RegExp(`\\s*${name}\\((\\s*\\w*\\W[^)]*\\W[^;]*);`, 'mig');
+    const regExp = new RegExp(`\\s*${name}\\((\\s*\\w*\\W[^)]*\\W[^;]*);`, 'ig');
     str = str.replace(regExp, replacer);
 
     return str;
@@ -120,7 +146,7 @@ const addFlowTags = (str) => {
 
     if (str) {
         str = flowTag + str;
-        const regExp = /(const\s+\w+)(?=\s*=\s*\({)/mig;
+        const regExp = /(const\s+\w+)(?=\s*=\s*\({*)/mig;
         str = str.replace(regExp, replacer);
     }
     return str;
@@ -139,11 +165,11 @@ const addStringsAfterFlowFunction = (str, functionName, additional_strings) => {
 
 const addNavigationRoutePropIntoFlowFunction = (str) => {
     const replacer = (match, p1, p2, p3, p4) => {
-        console.log('match', match);
-        console.log('p1', p1);
-        console.log('p2', p2);
-        console.log('p3', p3);
-        console.log('p3', p4);
+        // console.log('match', match);
+        // console.log('p1', p1);
+        // console.log('p2', p2);
+        // console.log('p3', p3);
+        // console.log('p3', p4);
         p2 = p2.replace(/history,/, 'navigation, route,');
         return p1 + p2 + p3 + p4;
     };
@@ -151,7 +177,7 @@ const addNavigationRoutePropIntoFlowFunction = (str) => {
     // const regexp = new RegExp('(const\\s+\\w+\\s*=\\s*\\({)(.+)(}\\)\\s*.+{)(\\s*)', 'gi');
     const regexp = new RegExp(default_function_string, 'gi');
     str = str.replace(regexp, replacer);
-    console.log(str);
+    // console.log(str);
     return str
 };
 
@@ -413,28 +439,32 @@ const createRootStack = (apps) => {
         let str = `${key}: ${value},`;
         return str
     };
-
-    let str = `const RootStack = createStackNavigator(\n${tab_symbol}{`;
-    Object.keys(apps).forEach((key) => {
-        str += key !== 'initialRouteName'
-            ? `\n${tab_symbol}${tab_symbol}` + createObjectStr(key, apps[key])
-            : `\n${tab_symbol}},\n${tab_symbol}{\n${tab_symbol}${tab_symbol}` + createObjectStr(key, apps[key]);
-    });
-
-    stack_navigator_settings.forEach((item) => {
-        str += `\n${tab_symbol}${tab_symbol}` + createObjectStr(item.setting, item.param) + `\n${tab_symbol}`
-    });
-    str += '},';
-
-    str += '\n);';
-    str += '\nlet Navigation = createAppContainer(RootStack);\n';
+    // console.log('apps=',apps);
+    let str = placeTabHere(1) + '<Stack.Navigator\n';
+    if (apps.hasOwnProperty('initialRouteName')) {
+        str += placeTabHere(5) + `initialRouteName={${apps['initialRouteName']}}\n`;
+        delete apps['initialRouteName'];
+    }
+    str += placeTabHere(5) + 'screenOptions={({ ...props }) => ({\n';
+    str += placeTabHere(6) + 'headerTintColor: colors.brand_color,\n';
+    str += placeTabHere(6) + 'headerTranslucent: true,\n';
+    str += placeTabHere(6) + 'headerRight: () => <PageHeader {...props} />,\n';
+    str += placeTabHere(5) + '})}>\n';
+    str += Object.keys(apps).reduce((accumulator, key) => {
+        accumulator += `${placeTabHere(5)}<Stack.Screen name={'${key}'} component={${apps[key]}} />\n`;
+        return accumulator
+    }, '');
+    str += placeTabHere(4) + '</Stack.Navigator>';
 
     return {
         text: str,
         imports: [
-            'import { createAppContainer } from \'react-navigation\';',
-            'import { createStackNavigator } from \'react-navigation-stack\';',
+            'import PageHeader from \'./components/PageHeader\'',
+            'import { colors } from \'./styles/colors\'',
+            'import \'react-native-gesture-handler\';',
             'import { enableScreens } from \'react-native-screens\';',
+            'import { createNativeStackNavigator } from \'@react-navigation/native-stack\'',
+            'import { NavigationNativeContainer } from \'@react-navigation/native\'',
         ],
     }
 };
@@ -442,9 +472,7 @@ const createRootStack = (apps) => {
 const createAppJs = (str) => {
     initImports();
     let apps = {};
-    const replacer = (match, p1) => {
-        return p1 + ': () => React$Node';
-    };
+
     const getAppsFromRoute = (match, p1, p2, p3, p4, p5) => {
         apps[p5.toLowerCase()] = p5;
         if (p5.toLowerCase() === 'main') { //Index
@@ -452,51 +480,40 @@ const createAppJs = (str) => {
         }
         return '';
     };
-    const cleanNavigation = (match, p1, p2) => {
-        p1 = p1.replace(/>/, ' \/>');
-        return p1;
+    const cleanNavigation = (match, tab, p1, p2, p3, p4) => {
+        p1 = tab + '<NavigationNativeContainer>';
+        p2 = tab + '@@STACK_NAVIGATOR_PLACEMENT@@';
+        p4 = tab + '</NavigationNativeContainer>';
+        return p1 + p2 + p4;
     };
     if (str) {
 
-        let regExp = /(const\s*App)(?=\s*=\s*\()/mig;
-        str = str.replace(regExp, replacer);
+        str = addFlowTags(str);
 
-        str = checkReactRouterDomImports(str,'');
-
-        //`import './index.scss';`
-        regExp = /(import\s+\W*)(index.scss';)/mig;
-        str = str.replace(regExp, '');
-
-        // let { text, imports } = cutImportAndGetArray(str);
         str = cutImport(str);
 
-        // str = text;
+        const exceedModules = ['./index.scss', 'react-router-dom', './urls'];
+        exceedModules.forEach((module) => deleteImportModule(module));
 
-        // regExp = /<Route\s+path='(\/\w*\W*)+'>\s*<(\w+)\/>\s*<\/Route>/mig;
-        //<Route path={urls.login.path}>
-        regExp = /<Route\s*path={((\w*)[.](\w*)[.](\w*\W*[^}])})+>\s*<(\w+)\/>\s*<\/Route>/mig;
+        let regExp = /<Route\s*path={((\w*)[.](\w*)[.](\w*\W*[^}])})+>\s*<(\w+)\/>\s*<\/Route>/mig;
 
         str = str.replace(regExp, getAppsFromRoute);
 
-        regExp = /(<Navigation>)\s*(\W+\w+\W+\s*)+<\/Navigation>/mig;
+        regExp = /(\s*)<(Navigation)>\s*(\W+\w+\W+)+(\s*)<\/(Navigation)>/mig;
 
         str = str.replace(regExp, cleanNavigation);
+        // console.log('cleanNavigation=\n', str);
 
-        // console.log(str);
+        str = `const Stack = createNativeStackNavigator();\n` + str;
 
         let { ...stackDependencies } = createRootStack(apps);
-        str = stackDependencies.text + str;
+        str = str.replace('@@STACK_NAVIGATOR_PLACEMENT@@', stackDependencies.text );
 
-        // imports = imports.concat(stackDependencies.imports);
         addImportArray(stackDependencies.imports);
 
-        // str = imports.join('\n') +'\n\n' + str;
         str = insertImport(str);
 
-        //Clean file of blanks lines
         str = str.replace(remove_blank_lines_regexp, '');
-
-        str = addFlowTags(str);
 
         str = addStringsAfterFlowFunction(str, 'App', 'enableScreens();');
     }
@@ -521,4 +538,5 @@ module.exports = {
     SimplifyEmptyTags,
     replaceHtmlForWithFocus,
     addNavigationRoutePropIntoFlowFunction,
+    removeTagsWithBody,
 };

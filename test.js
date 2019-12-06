@@ -1,97 +1,74 @@
 const { transformVariables, transformStyles, transformMediaMax, transformColors } = require('./styles');
-const {initImports, cutImport, findModule} = require('./imports');
+const {initImports, cutImport, findModule, deleteModuleImport} = require('./imports');
 
 const {
     exportConnectionTransform, importNotRequired, historyToNavigationTransform, removeFormTags, addFlowTags,
     platformTransforms, changePlatform, createAppJs, removeFunctionCall, changeTagName, addScreenDimensionListener,
-    replaceStyleAfterFlowFunction, addNavigationRoutePropIntoFlowFunction
+    replaceStyleAfterFlowFunction, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody
 } = require('./codeTransformations');
 
 let mainApp = `
 
 import React from 'react';
 import {
-    Link,
-    Redirect,
-    withRouter
+    BrowserRouter as Navigation,
+    Switch,
+    Route
 } from 'react-router-dom';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import PageHeader from '../components/PageHeader';
-import { PageContainer, PageGlobalContainer } from '../containers/PageContainers';
-import * as userActions from '../reducers/user';
-import * as loginActions from '../reducers/login';
-import * as appActions from '../reducers/app';
-import { checkAuth, getUserProfile } from '../helpers/authorization';
-import SimpleButton from '../elements/SimpleButton';
-import { urls } from '../urls';
-import { redirect_if_not_logged } from '../settings';
-import { getLanguage } from '../platformTransforms/localization';
+import { Provider } from 'react-redux';
+import './index.scss';
+import Login from './apps/Login';
+import Main from './apps/Main';
 
-const Main = ({ appState, userState, loginState, actions, history, ...props }) => {
-    if (!appState.language) {
-        getLanguage(actions);
-    }
-    if (!userState.checkin) {
-        checkAuth({ appState, userState, loginState, actions }).then();
-    }
-    const login_state = !userState.is_authenticated ? 'You are NOT authorized' : 'You are authorized';
-    let body = userState.is_authenticated ? (
-        <>
-            <SimpleButton onClick={(event) => getUserProfile(event)} title={'getUserProfile'} />
-            <h1>{'Mobile'}</h1>
-        </>
-    ) : (
-        <>
-            {appState.platform === 'web' ? (
-                <>
-                    <h1>{login_state}</h1>
-                    <Link to={urls.login.path}>{'Goto Login'}</Link>
-                </>
-            ) : (
-                <h1>{'Mobile'}</h1>
-            )}
-        </>
-    );
+import store from './store';
+import { urls } from './urls';
 
-    if (appState.platform !== 'web' && userState.checkin && !userState.is_authenticated && redirect_if_not_logged) {
-        body = (
-            <>
-                <Redirect to={urls.login.path} />
-            </>
-        );
-    }
-
+const App = () => {
     return (
-        <>
-            <PageGlobalContainer className={'container container_background_grey'}>
-                <PageHeader avatar_url={'/agent-avatar-change'} {...props} />
-                <PageContainer className={'container container_background_grey'}>
-                    <div className={'container__limited'}>{body}</div>
-                </PageContainer>
-            </PageGlobalContainer>
-        </>
+        <Provider store={store}>
+            <Navigation>
+                <Switch>
+                    <Route path={urls.login.path}>
+                        <Login/>
+                    </Route>
+                    <Route path={urls.main.path}>
+                        <Main/>
+                    </Route>
+                </Switch>
+            </Navigation>
+        </Provider>
     );
 };
 
-const mapStateToProps = (state) => ({
-    appState: state.app,
-    userState: state.user,
-    loginState: state.login,
-});
-const mapDispatchToProps = (dispatch) => ({
-    actions: bindActionCreators({ ...appActions, ...userActions, ...loginActions }, dispatch),
-});
-
-export default withRouter(
-    connect(
-        mapStateToProps,
-        mapDispatchToProps,
-    )(Main),
-);
+export default App;
 
 `;
 
+const needs = `
+
+const Stack = createNativeStackNavigator();
+
+const App: () => React$Node = () => {
+    enableScreens();
+    return (
+        <Provider store={store}>
+            <NavigationNativeContainer>
+                <Stack.Navigator
+                    initialRouteName={'main'}
+                    screenOptions={({ ...props }) => ({
+                        headerTintColor: colors.brand_color,
+                        headerTranslucent: true,
+                        headerRight: () => <PageHeader {...props} />,
+                    })}>
+                    <Stack.Screen name={'main'} component={Main} />
+                    <Stack.Screen name={'login'} component={Login} />
+                </Stack.Navigator>
+            </NavigationNativeContainer>
+        </Provider>
+    );
+};
+
+`;
 
 // transformVariables(variables);
 // transformStyles(str);
@@ -102,5 +79,5 @@ export default withRouter(
 // let str_3 = 'borderColor 1000 ease-in, backgroundColor 1000 ease-in';
 
 // removeFormTags(mainApp, ['form']);
-addNavigationRoutePropIntoFlowFunction(mainApp);
+createAppJs(mainApp);
 

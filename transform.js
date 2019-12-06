@@ -5,7 +5,7 @@ const { transformVariables, transformStyles, transformMediaMax, transformObjectT
 const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
-    SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRoutePropIntoFlowFunction } = require('./codeTransformations');
+    SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody, } = require('./codeTransformations');
 
 const path_from = '../insarm-front/src/';
 const path_to = '../insarmApp/';
@@ -57,6 +57,10 @@ const copyMainApps = () => {
                 if (fileBuffer) {
                     console.log('start removeExcessTags');
                     fileBuffer = removeExcessTags(fileBuffer, ['form']);
+
+                    console.log('start Header');
+                    fileBuffer = removeTagsWithBody(fileBuffer, ['PageHeader']);
+
                     console.log('start exportConnectionTransform');
                     fileBuffer = exportConnectionTransform(fileBuffer);
                     console.log('start importNotRequired');
@@ -297,7 +301,7 @@ const transferStyles = () => {
 
 console.log('start copyMainApps');
 copyMainApps();
-// console.log('start createAppFile');
-// createAppFile();
+console.log('start createAppFile');
+createAppFile();
 console.log('start transferStyles');
 transferStyles();

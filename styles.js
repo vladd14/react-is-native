@@ -1,4 +1,4 @@
-const { space_symbol, tab_symbol, } = require('./constants')
+const { space_symbol, tab_symbol, } = require('./constants');
 const {variable_expression_regexp, variable_expression_string, change_dash_to_underscore, remove_excess_scss_directives,
     remove_excess_css_directives, class_name_regexp, class_name_string, style_expression_regexp, style_expression_string,
     property_expression_regexp, property_expression_string, media_expression_string, calc_expression_string,

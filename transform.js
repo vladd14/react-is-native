@@ -113,7 +113,16 @@ const transferStyles = () => {
     const dir_css = 'scss/css';
     const scss_variables = '_variables';
     const scss_colors = '_colors';
-    const css_files = ['container', 'header', 'links', 'cards', 'components', 'tags', 'modifiers'];
+    const css_files = [
+        'header',
+        'containers',
+        'links',
+        'cards',
+        'components',
+        'tags',
+        'modifiers',
+        'calculations',
+    ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];
     const modifiers_file = 'modifiers';

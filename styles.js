@@ -9,7 +9,7 @@ const split_properties = ['border', 'border-top', 'border-right', 'border-bottom
 const camel_case_properties = ['border-radius', 'border-color', 'background-color', 'flex-shrink', 'flex-grow',
     'max-height', 'max-width',
     'padding-left', 'padding-right', 'padding-top', 'padding-bottom', 'z-index',
-    'align-items', 'justify-content', 'min-height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+    'align-items', 'justify-content', 'align-content', 'align-self', 'min-height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
     'text-transform', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'box-shadow', 'object-fit',
     'text-align', 'overflow-x', 'overflow-y'];
 const complicated_properties = ['transition', 'text-shadow', 'box-shadow', 'text-decoration', ];

@@ -75,7 +75,7 @@ const removeExcessTags = (str, tags_array) => {
     };
 
     tags_array.forEach((element) => {
-        let regExp = new RegExp(`(<\\s*${element}\\s*>)(\\s+)(<(\\w*\\s*.[^>]+>)+)\\s+(<\\s*\/\\s*${element}\\s*>)`, 'i');
+        let regExp = new RegExp(`(<\\s*${element}\\s*>)(\\s+)(<(\\w*\\s*.[^>]+>)+?)\\s+(<\\s*\/\\s*${element}\\s*>)`, 'i');
         str = str.replace(regExp, replacer);
     });
     return str;
@@ -93,7 +93,7 @@ const removeTagsWithBody = (str, tags_array) => {
 
         //Remove element with body next
         // let regExp = new RegExp(`(?<=(<${element}\\s*[^>]+>))(\\s.+)+(?=(</${element}>))`, 'i');
-        regExp = new RegExp(`(<${element}\\s*[^>]+>)(\\s.+)+(</${element}>)`, 'gi');
+        regExp = new RegExp(`(<${element}\\s*[^>]+>)(\\s.+)+?(</${element}>)`, 'gi');
         str = str.replace(regExp, replacer);
     });
     return str;

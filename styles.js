@@ -15,6 +15,7 @@ const camel_case_properties = ['border-radius', 'border-color', 'background-colo
 const complicated_properties = ['transition', 'text-shadow', 'box-shadow', 'text-decoration', ];
 const rename_properties = {
     'text-decoration': 'textDecorationLine',
+    'object-fit': 'resizeMode',
 };
 const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'outline'];
 const force_stringify_value = ['fontWeight'];

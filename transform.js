@@ -34,7 +34,7 @@ const dirTo = (dirname) => {
     return dir
 };
 
-const directories = ['helpers', 'settings', 'reducers', 'apps', 'components', 'urls'];
+const directories = ['helpers', 'settings', 'reducers', 'apps', 'components', 'urls', 'requirements'];
 
 const copyMainApps = () => {
 

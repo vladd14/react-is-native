@@ -19,7 +19,8 @@ const rename_properties = {
 };
 const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'outline'];
 const force_stringify_value = ['fontWeight'];
-const not_round_properties = ['lineHeight'];
+const not_round_properties = ['lineHeight', 'fontSize'];
+const not_calculated_units = ['%', 'em'];
 
 let variables = {};
 const removeExcessCssDirectives = (str) => {
@@ -128,12 +129,20 @@ const calcExpression = (expression) => {
 const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
 
     // check out for calc() expressions
-    console.log('arg1=', arg1);
-    console.log('arg2=', arg2);
+    // console.log('arg1=', arg1);
+    // console.log('arg2=', arg2);
+    if (arg2 === 'em') {
+        console.log('arg1=', arg1);
+        console.log('arg2=', arg2);
+    }
     arg1 = calcExpression(arg1);
     arg2 = calcExpression(arg2);
-    console.log('arg1=', arg1);
-    console.log('arg2=', arg2);
+    if (arg2 === 'em') {
+        console.log('arg1=', arg1);
+        console.log('arg2=', arg2);
+    }
+    // console.log('arg1=', arg1);
+    // console.log('arg2=', arg2);
 
     let not_expression = false;
     if (unsupported_css_properties.indexOf(name_property) !== -1) {
@@ -155,7 +164,7 @@ const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
         not_expression = true;
     }
 
-    if (arg2 && arg2.indexOf('%') !== -1) {
+    if (arg2 && not_calculated_units.includes(arg2)) {
         not_expression = true;
         arg2 = arg1+ arg2;
     }
@@ -286,10 +295,12 @@ const propertiesInnerCorrections = (property, number_value, value_string) => {
 const getProperty = (str, object) => {
 
     const replacer = (match, property, p2, p3, p4) => {
-        console.log('property=',property);
-        console.log('p2=',p2);
-        console.log('p3=',p3);
-        console.log('p4=',p4);
+        if (p4 === 'em') {
+            console.log('property=',property);
+            console.log('p2=',p2);
+            console.log('p3=',p3);
+            console.log('p4=',p4);
+        }
         if (rename_properties[property]) {
             property = rename_properties[property];
         }
@@ -340,9 +351,9 @@ const transformVariables = (str, variables_name) => {
             variables['px'] = 1;
         }
         //add em definition for parsing values from scss
-        if (!variables.hasOwnProperty('em')) {
-            variables['em'] = '16';
-        }
+        // if (!variables.hasOwnProperty('em')) {
+        //     variables['em'] = '16';
+        // }
         //add rem definition for parsing values from scss
         if (!variables.hasOwnProperty('rem')) {
             variables['rem'] = '16';

@@ -5,7 +5,8 @@ const { transformVariables, transformStyles, transformMediaMax, transformObjectT
 const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
-    SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody, } = require('./codeTransformations');
+    SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody,
+    removeExcessFreeLines } = require('./codeTransformations');
 
 const path_from = '../insarm-front/src/';
 const path_to = '../insarmApp/';
@@ -86,6 +87,7 @@ const copyMainApps = () => {
                     console.log('start historyToNavigationTransform');
                     fileBuffer = historyToNavigationTransform(fileBuffer);
                     console.log('start writeFileSync');
+                    fileBuffer = removeExcessFreeLines(fileBuffer);
                     fs.writeFileSync(fileTo(dirTo(folder), file_in_folder), fileBuffer,);
                 }
             }

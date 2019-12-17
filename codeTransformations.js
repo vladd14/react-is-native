@@ -2,6 +2,11 @@ const { space_symbol, tab_symbol, flowTag, } = require('./constants');
 const {remove_blank_lines_regexp, function_flow_string, default_function_string} = require('./regexps');
 const {cutImport, insertImport, addImportLine, addImportArray, initImports, deleteImportModule} = require('./imports');
 
+const removeExcessFreeLines = (str) => {
+    str = str.replace(remove_blank_lines_regexp, '');
+    return str;
+};
+
 const placeTabHere = (n) => {
     n = n ? n : 1;
     let tab = '';
@@ -553,4 +558,5 @@ module.exports = {
     replaceHtmlForWithFocus,
     addNavigationRoutePropIntoFlowFunction,
     removeTagsWithBody,
+    removeExcessFreeLines,
 };

@@ -122,6 +122,7 @@ const transferStyles = () => {
         'cards',
         'components',
         'tags',
+        'tags_mobile',
         'modifiers',
         'calculations',
     ];
@@ -129,6 +130,7 @@ const transferStyles = () => {
     const remote_folders = ['css','at_media', 'platform_modifiers'];
     const modifiers_file = 'modifiers';
     const tags_file = 'tags';
+    const tags_mobile_file = 'tags_mobile';
     const at_media_file = 'at_media';
     const platform_modifiers_file = 'platform_modifiers';
 
@@ -183,7 +185,7 @@ const transferStyles = () => {
 
         if (fileBuffer) {
             let fileBufferCSS;
-            if (scss_file_name !== 'tags') {
+            if (!scss_file_name.includes('tags')) {
                 fileBufferCSS = transformStyles(fileBuffer, scss_file_name);
             }
             else {
@@ -268,7 +270,7 @@ const transferStyles = () => {
 
     fileBufferIndexJs += `\nexport const styles = {`;
     css_files.forEach((css_file_name) => {
-        if (css_file_name !== modifiers_file && css_file_name !== tags_file) {
+        if (css_file_name !== modifiers_file && css_file_name !== tags_file && css_file_name !== tags_mobile_file) {
             fileBufferIndexJs += ` ...${css_file_name},`;
         }
     });
@@ -302,6 +304,7 @@ const transferStyles = () => {
     if (tags_file) {
         fileBufferIndexJs += `export const styles_by_tags = {`;
         fileBufferIndexJs += ` ...${tags_file}`;
+        fileBufferIndexJs += tags_mobile_file ? `, ...${tags_mobile_file}` : '';
         fileBufferIndexJs += ` };\n`;
     }
 

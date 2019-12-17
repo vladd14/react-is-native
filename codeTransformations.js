@@ -268,8 +268,8 @@ const replaceStyleAfterFlowFunction = (str) => {
     }
     return str;
 };
-const divTags = ['div', 'section', 'header', 'footer', 'li', 'ul', ];
-const textTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'p', 'label'];
+const divTags = ['div', 'section', 'header', 'footer', 'li', 'ul', 'hr' ];
+const textTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'label'];
 const inputsType = ['input'];
 const withoutTypeTag = ['redirect', 'link', 'img', 'div'];
 const WrapElementsFor = ['Input'];

@@ -10,7 +10,7 @@ const camel_case_properties = ['border-radius', 'border-color', 'border-top-colo
     'max-height', 'max-width',
     'padding-left', 'padding-right', 'padding-top', 'padding-bottom', 'z-index',
     'align-items', 'justify-content', 'align-content', 'align-self', 'min-height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-    'text-transform', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'box-shadow', 'object-fit',
+    'text-transform', 'font-family', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'box-shadow', 'object-fit',
     'text-align', 'overflow-x', 'overflow-y'];
 const complicated_properties = ['transition', 'text-shadow', 'box-shadow', 'text-decoration', ];
 const rename_properties = {
@@ -19,6 +19,7 @@ const rename_properties = {
 };
 const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'outline'];
 const force_stringify_value = ['fontWeight'];
+const not_stringify_value = ['fontFamily'];
 const not_round_properties = ['lineHeight', 'fontSize'];
 const not_calculated_units = ['%', 'em'];
 
@@ -89,7 +90,7 @@ const replace_variable = (str) => {
     return str;
 };
 const stringifyValue = (value) => {
-    value = typeof value !== "string" ? `'${value}'` : value;
+    value = `'${value}'`;
     return value;
 };
 const splitVariable = (variable) => {
@@ -131,16 +132,16 @@ const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
     // check out for calc() expressions
     // console.log('arg1=', arg1);
     // console.log('arg2=', arg2);
-    if (arg2 === 'em') {
-        console.log('arg1=', arg1);
-        console.log('arg2=', arg2);
-    }
+    // if (arg2 === 'em') {
+    //     console.log('arg1=', arg1);
+    //     console.log('arg2=', arg2);
+    // }
     arg1 = calcExpression(arg1);
     arg2 = calcExpression(arg2);
-    if (arg2 === 'em') {
-        console.log('arg1=', arg1);
-        console.log('arg2=', arg2);
-    }
+    // if (arg2 === 'em') {
+    //     console.log('arg1=', arg1);
+    //     console.log('arg2=', arg2);
+    // }
     // console.log('arg1=', arg1);
     // console.log('arg2=', arg2);
 
@@ -172,15 +173,19 @@ const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
     if (name_property && (!arg2 || not_expression) && !filled_object.hasOwnProperty(name_property)) {
 
         filled_object[name_property] = isNaN(Number(arg2 ? arg2 : arg1))
-                ? arg2 ? `'${arg2.trim()}'`
+                ? arg2 ? `${arg2.trim()}`
                 : arg1.trim() : Number(arg2 ? arg2 : arg1);
 
         if (!not_round_properties.includes(name_property) && typeof filled_object[name_property] === "number") {
             filled_object[name_property] = Math.round(filled_object[name_property]);
         }
-        if (force_stringify_value.includes(name_property)) {
+        if (force_stringify_value.includes(name_property) || (!not_stringify_value.includes(name_property) && typeof filled_object[name_property] !== "number")) {
             filled_object[name_property] = stringifyValue(filled_object[name_property]);
         }
+        // filled_object[name_property] = stringifyValue(filled_object[name_property]);
+        // if (!not_stringify_value.includes(name_property)) {
+        //     filled_object[name_property] = `'${filled_object[name_property]}'`;
+        // }
     }
     else if (arg1 !== undefined && arg1 !== null && arg2 && !not_expression) {
         const expression = eval(arg1 + '*' + arg2);
@@ -295,12 +300,12 @@ const propertiesInnerCorrections = (property, number_value, value_string) => {
 const getProperty = (str, object) => {
 
     const replacer = (match, property, p2, p3, p4) => {
-        if (p4 === 'em') {
-            console.log('property=',property);
-            console.log('p2=',p2);
-            console.log('p3=',p3);
-            console.log('p4=',p4);
-        }
+        // if (p4 === 'em') {
+        //     console.log('property=',property);
+        //     console.log('p2=',p2);
+        //     console.log('p3=',p3);
+        //     console.log('p4=',p4);
+        // }
         if (rename_properties[property]) {
             property = rename_properties[property];
         }
@@ -482,6 +487,33 @@ const transformTags = (str, styles_name) => {
 
     return str;
 };
+
+const transformCustomFontIcons = (str, font_name, remove_from_style_property) => {
+    let font_variables = {};
+    const add_variables = (icon_name, icon_char) => {
+        icon_name = icon_name.replace(remove_from_style_property, '');
+        if (icon_name.startsWith('_')) {
+            icon_name = icon_name.slice(1);
+        }
+        const icon = String.fromCodePoint(parseInt(`${icon_char}`, 16));
+        font_variables[icon_name] = `'${icon}'`;
+    };
+    const replacer = (match, icon_name, p2, p3, icon_char) => {
+        // console.log(`match='${match}'`);
+        // console.log('icon_name=', icon_name);
+        // console.log('p2=', p2);
+        // console.log('p3=', p3);
+        // console.log('icon_char=', icon_char);
+        add_variables(icon_name, icon_char);
+    };
+    console.log(str);
+    const regexp = new RegExp('\\.(.[^:]+):(.[^}]+)\\s+\{\\s*(\\w+):\\s*\\W+(\\w*\\d*)\\W;', 'gim');
+    str = str.replace(regexp, replacer);
+    str = transformObjectToString(font_variables, font_name);
+    console.log(str);
+    return str;
+};
+
 const colorMultiply = (color_object, percentage, direction) => {
     const range = 255;
     if (percentage.endsWith('%')) {
@@ -639,4 +671,5 @@ module.exports = {
     transformMediaPlatform,
     transformTags,
     transformColors,
+    transformCustomFontIcons,
 };

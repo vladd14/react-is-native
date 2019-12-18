@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform,
-    transformTags, transformColors } = require('./styles');
+    transformTags, transformColors, transformCustomFontIcons } = require('./styles');
 const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
@@ -111,11 +111,14 @@ const createAppFile = () => {
 
 const transferStyles = () => {
     const dir_styles = 'styles';
+    const dir_fonts = 'fonts';
     const dir_scss = 'scss';
     const dir_css = 'scss/css';
     const scss_variables = '_variables';
     const scss_colors = '_colors';
+    const scss_font_icons = '_insarm_icons';
     const css_files = [
+        'insarm_font',
         'header',
         'containers',
         'links',
@@ -156,7 +159,23 @@ const transferStyles = () => {
             fs.writeFileSync(fileTo(dirTo(dir_styles), 'colors.js'), fileBuffer);
         }
     }
+    //make custom_font_icons_variables
+    {
+        if (fs.existsSync(fileTo(dirTo(dir_fonts), 'insarm_icons.js'))) {
+            fs.unlinkSync(fileTo(dirTo(dir_fonts), 'insarm_icons.js'));
+        }
 
+        if (fs.existsSync(fileTo(dirFrom(dir_fonts), 'insarm_icons.js'))) {
+            fs.unlinkSync(fileTo(dirFrom(dir_fonts), 'insarm_icons.js'));
+        }
+
+        let fileBuffer = fs.readFileSync(fileTo(dirFrom(dir_scss), `${scss_font_icons}.scss`), 'utf-8');
+        if (fileBuffer) {
+            fileBuffer = transformCustomFontIcons(fileBuffer, 'insarm_icons', 'insarm_icon');
+            fs.writeFileSync(fileTo(dirTo(dir_fonts), 'insarm_icons.js'), fileBuffer);
+            fs.writeFileSync(fileTo(dirFrom(dir_fonts), 'insarm_icons.js'), fileBuffer);
+        }
+    }
     let at_media_chunks = [];
     let platform_modifiers_chunks = [];
     let at_media_modifiers_chunks = [];

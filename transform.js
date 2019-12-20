@@ -1,12 +1,16 @@
 const fs = require('fs');
 
+const { initImports, cutImport, addImportByModuleAndPath, insertImport } = require('./imports');
+
 const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform,
-    transformTags, transformColors, transformCustomFontIcons } = require('./styles');
+    transformTags, transformColors, transformCustomFontIcons, getSvgPathsFromRequires } = require('./styles');
 const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody,
     removeExcessFreeLines } = require('./codeTransformations');
+
+const { makeStringTitled } = require('./helpers');
 
 const path_from = '../insarm-front/src/';
 const path_to = '../insarmApp/';
@@ -36,6 +40,9 @@ const dirTo = (dirname) => {
 };
 
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'components', 'urls', 'requirements'];
+
+const svg_file_name = 'vectors';
+let svg_file = {};
 
 const copyMainApps = () => {
 
@@ -86,12 +93,51 @@ const copyMainApps = () => {
                     }
                     console.log('start historyToNavigationTransform');
                     fileBuffer = historyToNavigationTransform(fileBuffer);
-                    console.log('start writeFileSync');
+
+                    console.log('start collecting svg files');
+                    if (folder === 'requirements') {
+                        let svgs = getSvgPathsFromRequires(fileBuffer);
+                        svg_file = { ...svg_file, ...svgs};
+                    }
+
+                    console.log('start removeExcessFreeLines');
                     fileBuffer = removeExcessFreeLines(fileBuffer);
+                    console.log('start writeFileSync');
                     fs.writeFileSync(fileTo(dirTo(folder), file_in_folder), fileBuffer,);
                 }
             }
         });
+        if (folder === 'requirements') {
+            if (fs.existsSync(fileTo(dirTo(folder), `${svg_file_name}.js`))) {
+                fs.unlinkSync(fileTo(dirTo(folder), `${svg_file_name}.js`));
+            }
+            if (fs.existsSync(fileTo(dirFrom(folder), `${svg_file_name}.js`))) {
+                fs.unlinkSync(fileTo(dirFrom(folder), `${svg_file_name}.js`));
+            }
+            initImports();
+            let fileBuffer = '';
+            Object.keys(svg_file).forEach((key) => {
+                addImportByModuleAndPath(makeStringTitled(key), svg_file[key]);
+                fileBuffer += `export const ${key} = ${makeStringTitled(key)};\n`;
+            });
+            fileBuffer = insertImport(fileBuffer);
+
+            fs.writeFileSync(fileTo(dirTo(folder), `${svg_file_name}.js`), fileBuffer);
+            fs.writeFileSync(fileTo(dirFrom(folder), `${svg_file_name}.js`), fileBuffer);
+
+            fileBuffer = fs.readFileSync(fileFrom(dirFrom(folder), 'index.js'), 'utf-8');
+            if (fileBuffer) {
+                initImports();
+                fileBuffer = cutImport(fileBuffer);
+                addImportByModuleAndPath('* as svg', `./${svg_file_name}`);
+                fileBuffer = insertImport(fileBuffer);
+                if (!fileBuffer.includes(`export const vectors = { ...svg };`)) {
+                    fileBuffer += `export const vectors = { ...svg };`;
+                }
+                fs.writeFileSync(fileTo(dirTo(folder), 'index.js'), fileBuffer,);
+                fs.writeFileSync(fileTo(dirFrom(folder), 'index.js'), fileBuffer,);
+            }
+        }
     });
 };
 

@@ -2,7 +2,7 @@
 const remove_blank_lines_string = `(^\\s*\\n){2,}`;
 const remove_blank_lines_regexp = /(^\s*\n){2,}/gim; //Clean file of blanks lines
 const take_import_line_regexp =  /^\s*(import\s*(\w*\W*[^;]*)\s*(from\s+(.[^;]+));*)/mig; //Get imports lines;
-const take_import_without_form_regexp =  /^\s*(import\s*(\w*\W*[^;]*)\s*(from\s+(.[^;]+))*;*)/mig; //Get imports lines;
+const take_import_without_from_regexp =  /^\s*(import\s*(\w*\W*[^;]*)\s*(from\s+(.[^;]+))*;*)/mig; //Get imports lines;
 const variable_expression_regexp = /\$(\D[^;:]+):\s*(([-]*\d*\.*\d*)(.*);)/ig;
 const variable_expression_string = '\\$(\\D[^;:]+):\\s*((\\d*\\.*\\d*)(.*);)';
 
@@ -58,5 +58,5 @@ module.exports = {
     tag_name_string,
     remove_excess_colors_directives,
     default_function_string,
-    take_import_without_form_regexp,
+    take_import_without_from_regexp,
 };

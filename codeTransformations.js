@@ -7,6 +7,10 @@ const removeExcessFreeLines = (str) => {
     return str;
 };
 
+const makeStringTitled = (str) => {
+    return str && typeof str === "string" ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+};
+
 const placeTabHere = (n) => {
     n = n ? n : 1;
     let tab = '';
@@ -335,14 +339,13 @@ const replaceHtmlForWithFocus = (str) => {
         });
     }
     str = insertImport(str);
-    console.log(str);
     return str;
 };
 
 const platformTransforms = (str) => {
     initImports();
     let tokens = [];
-    const tokenModify = (match, p1, p2, p3, p4) => {
+    const tokenModify = (match, p1, p2, p3, p4, p5, p6) => {
         let type = p1 !== '</' && withoutTypeTag.indexOf(p3.toLowerCase()) === -1 ? ` tagType={'${p3}'}` : '';
 
         if (divTags.indexOf(p3.toLowerCase()) !== -1) {
@@ -356,7 +359,20 @@ const platformTransforms = (str) => {
         if (tokens.indexOf(p3) === (-1)) {
             tokens.push(p3);
         }
-        type = type ? type + p4 : '';
+        if (p3 === 'Img') {
+            console.log(`\n${p5}\n`);
+            p5.replace(/src=\{\s*(.[^.}]+)[.}]*(.[^}]*)\s*}/gi, (match, module_name, property) => {
+                console.log('match=', match);
+                console.log('module_name=', module_name);
+                console.log('property=', property);
+                if (property === 'src') {
+                    type = ` type={${module_name}.type}` + p4;
+                }
+            });
+        }
+        else {
+            type = type ? type + p4 : '';
+        }
         return p1 + p3 + p4 + type;
     };
 
@@ -382,27 +398,11 @@ const platformTransforms = (str) => {
         return 'navigation.navigate(';
     };
 
-    // const extractEventString = (match, p1) => {
-    //     let onFocus = '';
-    //     console.log(`match='${match}'`);
-    //     console.log(`p1='${p1}'`);
-    //     match.replace(/onFocus=(\{.[^}]+})/ig, (match2, p1) => {
-    //         console.log(match2);
-    //         console.log(p1);
-    //         onFocus = p1;
-    //     });
-    //     console.log('onFocus=', onFocus);
-    // };
-    // const addOnFocusEventToLabel = (match, p1) => {
-    //     console.log(`match='${match}'`);
-    //     console.log(`p1='${p1}'`);
-    // };
-
     if (str) {
         const htmlTokens = divTags.concat(divTags, textTags, inputsType, withoutTypeTag);
         let regExp;
         htmlTokens.forEach((token) => {
-            // regExp = new RegExp(`(<|<\\/)(\\s*)(` + token + `)(\\s*)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mig');
+            // regExp = new RegExp(`(<|<\\/)(\\s*)(${token})(\\s*)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mgi');
             regExp = new RegExp(`(<|<\\/)(\\s*)(${token})(\\s*)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mgi');
             str = str.replace(regExp, tokenModify);
         });

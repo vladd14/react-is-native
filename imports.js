@@ -1,4 +1,4 @@
-const { take_import_line_regexp, take_import_without_form_regexp, flow_tag_regexp } = require('./regexps');
+const { take_import_line_regexp, take_import_without_from_regexp, flow_tag_regexp } = require('./regexps');
 const { flowTag } = require('./constants');
 
 let with_flow_tag = false;
@@ -59,7 +59,8 @@ const cutImport = (str, trace) => {
     if (trace) {
         console.log(take_import_line_regexp);
     }
-    str = str.replace(take_import_without_form_regexp, replacer);
+    str = str.replace(take_import_without_from_regexp, replacer);
+
     str = str.replace(/(^\s*\n){2,}/gim, '');
     if (trace) {
         console.log('imports_object=', imports_object);
@@ -118,6 +119,20 @@ const insertImport = (str, trace) => {
     return str;
 };
 
+const addImportByModuleAndPath = (module, path_from, trace) => {
+    if (!imports_object[path_from]) {
+        imports_object[path_from] = {};
+        imports_object[path_from].modules_in_curly_braces = [];
+        imports_object[path_from].modules = [];
+    }
+    if (module.includes('{')) {
+        imports_object[path_from].modules_in_curly_braces = getArrayItem(module, imports_object[path_from].modules_in_curly_braces, trace);
+    }
+    else {
+        imports_object[path_from].modules = getArrayItem(module, imports_object[path_from].modules, trace);
+    }
+};
+
 const addImportLine = (str, trace) => {
     cutImport(str, trace);
 };
@@ -153,4 +168,5 @@ module.exports = {
     initImports,
     findModule,
     deleteImportModule,
+    addImportByModuleAndPath,
 };

@@ -506,12 +506,28 @@ const transformCustomFontIcons = (str, font_name, remove_from_style_property) =>
         // console.log('icon_char=', icon_char);
         add_variables(icon_name, icon_char);
     };
-    console.log(str);
+    // console.log(str);
     const regexp = new RegExp('\\.(.[^:]+):(.[^}]+)\\s+\{\\s*(\\w+):\\s*\\W+(\\w*\\d*)\\W;', 'gim');
     str = str.replace(regexp, replacer);
     str = transformObjectToString(font_variables, font_name);
-    console.log(str);
+    // console.log(str);
     return str;
+};
+
+const getSvgPathsFromRequires = (str) => {
+    let paths_object = {};
+    const replacer = (match, variable_name, path) => {
+        // console.log(`match='${match}'`);
+        // console.log(`variable_name='${variable_name}'`);
+        // console.log(`path='${path}'`);
+        if (path.endsWith('.svg')) {
+            paths_object[variable_name] = path;
+        }
+    };
+    const regexp = new RegExp('export\\s+const\\s+(\\w+)\\s+.[^\'"`]+[\'"`](.[^\'"`]+)', 'gim');
+    str = str.replace(regexp, replacer);
+    // console.log(paths_object)
+    return paths_object;
 };
 
 const colorMultiply = (color_object, percentage, direction) => {
@@ -672,4 +688,5 @@ module.exports = {
     transformTags,
     transformColors,
     transformCustomFontIcons,
+    getSvgPathsFromRequires,
 };

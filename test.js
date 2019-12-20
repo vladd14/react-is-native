@@ -1,4 +1,5 @@
-const { transformVariables, transformStyles, transformMediaMax, transformColors, transformCustomFontIcons } = require('./styles');
+const { transformVariables, transformStyles, transformMediaMax, transformColors, transformCustomFontIcons,
+    getSvgPathsFromRequires } = require('./styles');
 const {initImports, cutImport, findModule, deleteModuleImport} = require('./imports');
 
 const {
@@ -9,53 +10,61 @@ const {
 
 let mainApp = `
 
-// insarm icons codes
+export const alfastrah = require('../img/brands/alfastrah.svg');
+export const alfastrah_png = require('../img/brands/alfastrah.png');
 
-.insarm_icon_error:before { content: '\e800'; }
-.insarm_icon_money:before { content: '\e803'; }
-.insarm_icon_reback:before { content: '\e805'; }
-.insarm_icon_und:before { content: '\e806'; }
-.insarm_icon_project:before { content: '\e807'; }
-.insarm_icon_reback_on_delivery:before { content: '\e808'; }
-.insarm_icon_reback_on_delivery_success:before { content: '\e809'; }
-.reback_reject_on_delivery:before { content: '\e80a'; }
-.insarm_icon_logo_2:before { content: '\e80b'; }
-.insarm_icon_callcenter:before { content: '\e80c'; }
-.insarm_icon_copy:before { content: '\e80d'; }
-.insarm_icon_reback_on_delivery_right:before { content: '\e80e'; }
-.insarm_icon_calc:before { content: '\e80f'; }
-.insarm_icon_not_relevant:before { content: '\e810'; }
-.insarm_icon_insarm_clock:before { content: '\e811'; }
-.insarm_icon_add_percent:before { content: '\e812'; }
-.insarm_icon_edit:before { content: '\e813'; }
-.insarm_icon_menu_dotted_vertical:before { content: '\e814'; }
-.insarm_icon_ol_list_reset:before { content: '\e815'; }
-.insarm_icon_add_item:before { content: '\e816'; }
-.insarm_icon_insarm_add_money:before { content: '\e817'; }
-.insarm_icon_insarm_push_text:before { content: '\e818'; }
-.insarm_icon_panels_arrangement:before { content: '\e819'; }
-.insarm_icon_call_round:before { content: '\e81a'; }
-.insarm_icon_call_outcome_round:before { content: '\e81b'; }
-.insarm_icon_call_outcome_success_round:before { content: '\e81c'; }
-.insarm_icon_call_outcome_failed_round:before { content: '\e81d'; }
-.insarm_icon_call_income_success_round:before { content: '\e81e'; }
-.insarm_icon_call_income_failed_round:before { content: '\e81f'; }
-.insarm_icon_call:before { content: '\e820'; }
-.insarm_icon_call_outcome:before { content: '\e821'; }
-.insarm_icon_call_outcome_success:before { content: '\e822'; }
-.insarm_icon_call_outcome_failed:before { content: '\e823'; }
-.insarm_icon_call_income_success:before { content: '\e824'; }
-.insarm_icon_call_income_failed:before { content: '\e825'; }
-.insarm_icon_calendar:before { content: '\e826'; }
-.insarm_icon_gear:before { content: '\e827'; }
-.insarm_icon_gear_outline:before { content: '\e828'; }
-.insarm_icon_clock_simple:before { content: '\e829'; }
-.insarm_icon_drivers_license:before { content: '\e82a'; }
-.insarm_icon_drivers_licenses_3:before { content: '\e82b'; }
-.insarm_icon_whatsapp_filled:before { content: '\e82c'; }
-.insarm_icon_whatsapp_outlined:before { content: '\e82d'; }
-.insarm_icon_recycle_bin:before { content: '\e82e'; }
-.insarm_icon_drivers_licenses_2:before { content: '\e82f'; }
+export const dcard = require('../img/brands/dcard.svg');
+export const dcard_png = require('../img/brands/dcard.png');
+
+export const ergo = require('../img/brands/ergo.svg');
+export const ergo_png = require('../img/brands/ergo.png');
+
+export const ic_angara = require('../img/brands/ic-angara.svg');
+export const ic_angara_png = require('../img/brands/ic-angara.png');
+
+export const ingos = require('../img/brands/ingos.svg');
+export const ingos_png = require('../img/brands/ingos.png');
+
+export const makc = require('../img/brands/makc.svg');
+export const makc_png = require('../img/brands/makc.png');
+
+export const nasko = require('../img/brands/nasko.svg');
+export const nasko_png = require('../img/brands/nasko.png');
+
+export const renins = require('../img/brands/renins.svg');
+export const renins_png = require('../img/brands/renins.png');
+
+export const renins_wide = require('../img/brands/renins_wide.svg');
+export const renins_wide_png = require('../img/brands/renins_wide.png');
+
+export const reso = require('../img/brands/reso.svg');
+export const reso_png = require('../img/brands/reso.png');
+
+export const rgs = require('../img/brands/rgs.svg');
+export const rgs_png = require('../img/brands/rgs.png');
+
+export const sngi = require('../img/brands/sngi.svg');
+export const sngi_png = require('../img/brands/sngi.png');
+
+export const soglasie = require('../img/brands/soglasie.svg');
+export const soglasie_png = require('../img/brands/soglasie.png');
+
+export const tinkoffinsurance = require('../img/brands/tinkoffinsurance.svg');
+export const tinkoffinsurance_png = require('../img/brands/tinkoffinsurance.png');
+
+export const ugsk = require('../img/brands/ugsk.svg');
+export const ugsk_png = require('../img/brands/ugsk.png');
+
+export const vsk = require('../img/brands/vsk.svg');
+export const vsk_png = require('../img/brands/vsk.png');
+export const vsk_path = '../img/brands/vsk.svg';
+
+export const zettains = require('../img/brands/zettains.svg');
+export const zettains_png = require('../img/brands/zettains.png');
+
+export const клувер = require('../img/brands/клувер.svg');
+export const клувер_png = require('../img/brands/клувер.png');
+
 
 `;
 
@@ -68,5 +77,5 @@ let mainApp = `
 // let str_3 = 'borderColor 1000 ease-in, backgroundColor 1000 ease-in';
 
 // removeFormTags(mainApp, ['form']);
-transformCustomFontIcons(mainApp, 'insarm_icon');
+getSvgPathsFromRequires(mainApp);
 

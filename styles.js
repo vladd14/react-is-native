@@ -182,16 +182,20 @@ const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
         if (force_stringify_value.includes(name_property) || (!not_stringify_value.includes(name_property) && typeof filled_object[name_property] !== "number")) {
             filled_object[name_property] = stringifyValue(filled_object[name_property]);
         }
-        // filled_object[name_property] = stringifyValue(filled_object[name_property]);
-        // if (!not_stringify_value.includes(name_property)) {
-        //     filled_object[name_property] = `'${filled_object[name_property]}'`;
-        // }
+
+        if (filled_object[name_property] == "'0%'" || filled_object[name_property] === "'0rem'" || filled_object[name_property] === "'0em'") {
+            filled_object[name_property] = 0;
+        }
     }
     else if (arg1 !== undefined && arg1 !== null && arg2 && !not_expression) {
         const expression = eval(arg1 + '*' + arg2);
         filled_object[name_property] = expression;
         if (!not_round_properties.includes(name_property) && typeof filled_object[name_property] === "number") {
             filled_object[name_property] = Math.round(filled_object[name_property]);
+        }
+
+        if (filled_object[name_property] == '0%' || filled_object[name_property] === '0rem' || filled_object[name_property] === '0em') {
+            filled_object[name_property] = 0;
         }
     }
     return filled_object;

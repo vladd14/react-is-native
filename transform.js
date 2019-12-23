@@ -1,10 +1,11 @@
 const fs = require('fs');
 
-const { initImports, cutImport, addImportByModuleAndPath, insertImport, deleteImportModule, findModule, addImportLine } = require('./imports');
+const { initImports, cutImport, addImportByModuleAndPath, insertImport, deleteImportModule, findModule,
+    addImportLine } = require('./imports');
 
 const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform,
     transformTags, transformColors, transformCustomFontIcons, getSvgPathsFromRequires } = require('./styles');
-const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeExcessTags,
+const { exportConnectionTransform, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, removeTagsWithBody,
@@ -78,8 +79,8 @@ const copyMainApps = () => {
                     fileBuffer = cutImport(fileBuffer);
                     excess_modules.forEach((module_name) => deleteImportModule(module_name));
 
-                    if (findModule('Animated', folder === 'apps' ? true : false)) {
-                        deleteImportModule('Animated', folder === 'apps' ? true : false);
+                    if (findModule('Animated')) {
+                        deleteImportModule('Animated');
                         addImportLine('import { Animated } from \'react-native\';');
                     }
 

@@ -43,21 +43,21 @@ const exportConnectionTransform = (str) => {
     return str;
 };
 
-const checkReactRouterDomImports = (str) => {
-    const replacer = (match, import_string, p1, module_name, from_str, from_module) => {
-        if (module_name === 'deprecated withRouter') {
-            module_name = 'withNavigation';
-            from_module = 'react-navigation';
-            return import_string + module_name + from_str + from_module + `';`;
-        }
-        return '';
-    };
-    if (str) {
-        const regExp = /(import\s+{)(\s+(\w+)\W*)+(}\s*from\s+')(react-router-dom)';/mig;
-        str = str.replace(regExp, replacer);
-    }
-    return str;
-};
+// const checkReactRouterDomImports = (str) => {
+//     const replacer = (match, import_string, p1, module_name, from_str, from_module) => {
+//         if (module_name === 'deprecated withRouter') {
+//             module_name = 'withNavigation';
+//             from_module = 'react-navigation';
+//             return import_string + module_name + from_str + from_module + `';`;
+//         }
+//         return '';
+//     };
+//     if (str) {
+//         const regExp = /(import\s+{)(\s+(\w+)\W*)+(}\s*from\s+')(react-router-dom)';/mig;
+//         str = str.replace(regExp, replacer);
+//     }
+//     return str;
+// };
 
 const historyToNavigationTransform = (str) => {
 
@@ -544,7 +544,7 @@ const createAppJs = (str) => {
 
 module.exports = {
     exportConnectionTransform,
-    checkReactRouterDomImports,
+    // checkReactRouterDomImports,
     historyToNavigationTransform,
     removeExcessTags,
     addFlowTags,

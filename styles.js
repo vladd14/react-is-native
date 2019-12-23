@@ -494,7 +494,7 @@ const transformStyles = (str, styles_name) => {
     let style_object = transformStylesToObj(str);
     // console.log(`obj=`, obj);
     str = transformObjectToString(style_object, styles_name);
-    console.log(`str=`, str);
+    // console.log(`str=`, str);
     return str;
 };
 

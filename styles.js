@@ -327,7 +327,7 @@ const splitTransforms = (str) => {
     };
     const regexp = new RegExp(`\\s*(.[^(]+)\\((.[^)]*)\\)`, 'gi');
     str.replace(regexp, replacer);
-    console.log(transformArrayToString(transforms, '', true));
+    // console.log(transformArrayToString(transforms, '', true));
     return transformArrayToString(transforms);
 };
 const propertiesInnerCorrections = (property, number_value, value_string) => {
@@ -347,7 +347,7 @@ const propertiesInnerCorrections = (property, number_value, value_string) => {
     });
 
     if (property === 'transform') {
-        console.log('value_string', value_string);
+        // console.log('value_string', value_string);
         value_string = splitTransforms(value_string);
     }
     return value_string;
@@ -441,7 +441,7 @@ const transformStylesToObj = (str, tags_selection) => {
     // let main_property;
     const replacer = (match, p1, tabs, p2, p3, p4, p5) => {
         initial_tabs = initial_tabs ? initial_tabs : tabs;
-        console.log(`initial_tabs='${initial_tabs}'`);
+        // console.log(`initial_tabs='${initial_tabs}'`);
         if (tags_selection) {
             p1 = p1.split(',').map((item) => item.trim());
             p3 = removeExcessCssDirectives(p3);
@@ -477,7 +477,7 @@ const transformStylesToObj = (str, tags_selection) => {
     };
     let selection_type = !tags_selection ? class_name_string : tag_name_string;
     let regexp = new RegExp(selection_type + `(\\s*)((${style_expression_string})+)(\\s*)`, 'ig');
-    console.log(regexp);
+    // console.log(regexp);
     str.replace(regexp, replacer);
     return style_object;
 };

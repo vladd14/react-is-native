@@ -1,13 +1,13 @@
 const fs = require('fs');
 
-const { initImports, cutImport, addImportByModuleAndPath, insertImport } = require('./imports');
+const { initImports, cutImport, addImportByModuleAndPath, insertImport, deleteImportModule, findModule, addImportLine } = require('./imports');
 
 const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform,
     transformTags, transformColors, transformCustomFontIcons, getSvgPathsFromRequires } = require('./styles');
 const { exportConnectionTransform, checkReactRouterDomImports, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
-    SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody,
+    SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, removeTagsWithBody,
     removeExcessFreeLines } = require('./codeTransformations');
 
 const { makeStringTitled } = require('./helpers');
@@ -40,7 +40,7 @@ const dirTo = (dirname) => {
 };
 
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'components', 'urls', 'requirements'];
-
+const excess_modules = ['PageHeader', 'react-router-dom'];
 const svg_file_name = 'vectors';
 let svg_file = {};
 
@@ -63,22 +63,10 @@ const copyMainApps = () => {
                 console.log('file_in_folder=',file_in_folder);
                 let fileBuffer = fs.readFileSync(fileFrom(dirFrom(folder), file_in_folder), 'utf-8');
                 if (fileBuffer) {
-                    console.log('start removeExcessTags');
-                    fileBuffer = removeExcessTags(fileBuffer, ['form']);
+                    initImports();
+                    console.log('start addNavigationRouteProps');
+                    fileBuffer = addNavigationRouteProps(fileBuffer);
 
-                    console.log('start Header');
-                    fileBuffer = removeTagsWithBody(fileBuffer, ['PageHeader']);
-
-                    console.log('start exportConnectionTransform');
-                    fileBuffer = exportConnectionTransform(fileBuffer);
-                    console.log('start importNotRequired');
-                    fileBuffer = checkReactRouterDomImports(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
-                    console.log('start addNavigationRoutePropIntoFlowFunction');
-                    fileBuffer = addNavigationRoutePropIntoFlowFunction(fileBuffer);
-                    console.log('start SimplifyEmptyTags');
-                    fileBuffer = SimplifyEmptyTags(fileBuffer);
-                    console.log('start platformTransforms');
-                    fileBuffer = platformTransforms(fileBuffer);
                     if (folder === 'apps' || folder === 'components') {
                         if (file_in_folder === 'Main.js') {
                             fileBuffer = addScreenDimensionListener(fileBuffer, 'Main');
@@ -87,6 +75,30 @@ const copyMainApps = () => {
                         fileBuffer = replaceHtmlForWithFocus(fileBuffer);
                         fileBuffer = replaceStyleAfterFlowFunction(fileBuffer);
                     }
+                    fileBuffer = cutImport(fileBuffer);
+                    excess_modules.forEach((module_name) => deleteImportModule(module_name));
+
+                    if (findModule('Animated', folder === 'apps' ? true : false)) {
+                        deleteImportModule('Animated', folder === 'apps' ? true : false);
+                        addImportLine('import { Animated } from \'react-native\';');
+                    }
+
+                    console.log('start removeExcessTags');
+                    fileBuffer = removeExcessTags(fileBuffer, ['form']);
+
+                    console.log('start Header');
+                    fileBuffer = removeTagsWithBody(fileBuffer, ['PageHeader']);
+
+                    console.log('start exportConnectionTransform');
+                    fileBuffer = exportConnectionTransform(fileBuffer);
+                    // console.log('start importNotRequired');
+                    // fileBuffer = checkReactRouterDomImports(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
+
+
+                    console.log('start SimplifyEmptyTags');
+                    fileBuffer = SimplifyEmptyTags(fileBuffer);
+                    console.log('start platformTransforms');
+                    fileBuffer = platformTransforms(fileBuffer);
                     console.log('start changePlatform');
                     if (folder === 'reducers' && file_in_folder === 'app.js') {
                         fileBuffer = changePlatform(fileBuffer);
@@ -100,6 +112,7 @@ const copyMainApps = () => {
                         svg_file = { ...svg_file, ...svgs};
                     }
 
+                    fileBuffer = insertImport(fileBuffer);
                     console.log('start removeExcessFreeLines');
                     fileBuffer = removeExcessFreeLines(fileBuffer);
                     console.log('start writeFileSync');

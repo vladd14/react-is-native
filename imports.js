@@ -68,31 +68,39 @@ const cutImport = (str, trace) => {
     return str;
 };
 
-const deleteImportModule = (key, trace) => {
+const deleteImportModule = (module_params, trace) => {
+    module_params = module_params.trim();
     if (trace) {
-        console.log('key=', key);
+        console.log('module_params=', module_params);
         console.log('imports_object', imports_object);
     }
-    if (imports_object && imports_object.hasOwnProperty(key)) {
+    if (imports_object.hasOwnProperty(module_params)) {
         if (trace) {
-            console.log('key=', key);
-            console.log('imports_object[key]=', imports_object[key]);
+            console.log('key=', module_params);
+            console.log('imports_object[key]=', imports_object[module_params]);
         }
-        delete imports_object[key];
-    } else if (imports_object && imports_object.hasOwnProperty('self')) {
-        if (trace) {
-            console.log('imports_object has property self');
-        }
-        if (imports_object.self.modules.includes(key)) {
-            if (trace) {
-                console.log('modules includes');
-            }
-            imports_object.self.modules.splice(imports_object.self.modules.indexOf(key), 1);
-        }
-        if (imports_object.self.modules_in_curly_braces.includes(key)) {
-            imports_object.self.modules_in_curly_braces.splice(imports_object.self.modules_in_curly_braces.indexOf(key), 1);
-        }
+        return delete imports_object[module_params];
     }
+    Object.keys(imports_object).forEach((key) => {
+        if (trace) {
+            console.log('imports_object checking property ', key);
+        }
+        if (imports_object[key].modules.includes(module_params)) {
+            console.log('imports_object[key].modules.includes ', key);
+            imports_object[key].modules.splice(imports_object[key].modules.indexOf(module_params), 1);
+            if (!imports_object[key].modules.length) {
+                delete imports_object[key];
+            }
+            return;
+        }
+        if (imports_object[key].modules_in_curly_braces.includes(module_params)) {
+            console.log('imports_object[key].modules_in_curly_braces.includes ', module_params);
+            imports_object[key].modules_in_curly_braces.splice(imports_object[key].modules_in_curly_braces.indexOf(module_params), 1);
+            if (!imports_object[key].modules_in_curly_braces.length) {
+                delete imports_object[key];
+            }
+        }
+    });
 };
 
 const insertImport = (str, trace) => {
@@ -149,9 +157,19 @@ const addImportArray = (array, trace) => {
     });
 };
 
-const findModule = (name) => {
-    name = name.trim();
-    return Boolean(imports_object[name]);
+const findModule = (module_params, trace) => {
+    module_params = module_params.trim();
+    if (trace) {
+        console.log('module_params=', module_params);
+        console.log('imports_object', imports_object);
+    }
+    if (imports_object.hasOwnProperty(module_params)) {
+        return true;
+    }
+    return Object.keys(imports_object).filter((key) =>
+        imports_object[key].modules.includes(module_params) ||
+        imports_object[key].modules_in_curly_braces.includes(module_params)
+    ).length;
 };
 
 const initImports = () => {

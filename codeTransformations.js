@@ -185,7 +185,7 @@ const addStringsAfterFlowFunction = (str, functionName, additional_strings) => {
     return str;
 };
 
-const addNavigationRoutePropIntoFlowFunction = (str) => {
+const addNavigationRouteProps = (str) => {
     const replacer = (match, p1, p2, p3, p4) => {
         // console.log('match', match);
         // console.log('p1', p1);
@@ -197,6 +197,7 @@ const addNavigationRoutePropIntoFlowFunction = (str) => {
     };
 
     // const regexp = new RegExp('(const\\s+\\w+\\s*=\\s*\\({)(.+)(}\\)\\s*.+{)(\\s*)', 'gi');
+    // const regexp = new RegExp(default_function_string, 'gi');
     const regexp = new RegExp(default_function_string, 'gi');
     str = str.replace(regexp, replacer);
     // console.log(str);
@@ -204,7 +205,7 @@ const addNavigationRoutePropIntoFlowFunction = (str) => {
 };
 
 const addScreenDimensionListener = (str, functionName) => {
-    initImports();
+    // initImports();
     const dimension_listener = `if (!appState.screen_data) {
         Screen({ appState, userState, loginState, actions });
     }`;
@@ -216,14 +217,14 @@ const addScreenDimensionListener = (str, functionName) => {
     };
 
     if (str) {
-        str = cutImport(str);
+        // str = cutImport(str);
         // const regExp = /const\s+PageHeader\s*=\s*\(.+\)\s*.+{(\s*)/ig;
         const regExp = new RegExp(`const\\s+${functionName}\\s*=\\s*\\(.+\\)\\s*.+{(\\s*)`, 'gi');
         str = str.replace(regExp, replacer);
         // Clean file of blanks lines
         str = str.replace(remove_blank_lines_regexp, '');
         addImportLine(import_line);
-        str = insertImport(str);
+        // str = insertImport(str);
     }
     // console.log(str);
     return str;
@@ -239,7 +240,7 @@ const changePlatform = (str) => {
 };
 
 const replaceStyleAfterFlowFunction = (str) => {
-    initImports();
+    // initImports();
     const importsArray = [
         'import { variables } from \'../styles/variables\';',
         'import { styles, styles_media, styles_modifiers } from \'../styles\';',
@@ -261,14 +262,14 @@ const replaceStyleAfterFlowFunction = (str) => {
     };
     const regExp = new RegExp(`(${function_flow_string})` + `(const|let|var)\\s+style\\w*\\W*\\s*=\\s*(.+);`, 'gim');
     if (str.search(regExp) !== -1) {
-        str = cutImport(str);
+        // str = cutImport(str);
 
         str = str.replace(regExp, replacer);
         str = str.replace(remove_blank_lines_regexp, '');
         importsArray.forEach((element) => {
             addImportLine(element);
         });
-        str = insertImport(str);
+        // str = insertImport(str);
     }
     return str;
 };
@@ -279,7 +280,7 @@ const withoutTypeTag = ['redirect', 'link', 'img', 'div'];
 const WrapElementsFor = ['Input'];
 
 const replaceHtmlForWithFocus = (str) => {
-    initImports();
+    // initImports();
     const importsArray = [
         `import { useState } from 'react';`
     ];
@@ -303,7 +304,7 @@ const replaceHtmlForWithFocus = (str) => {
         htmlForArray.push(eventObject);
         return match + replacer + p2;
     };
-    str = cutImport(str);
+    // str = cutImport(str);
     let regExp = /htmlFor=\{(.[^}]+)}(\s*)/mig;
     str = str.replace(regExp, getHtmlForIds);
     htmlForArray.forEach((element) => {
@@ -338,12 +339,12 @@ const replaceHtmlForWithFocus = (str) => {
             addImportLine(element);
         });
     }
-    str = insertImport(str);
+    // str = insertImport(str);
     return str;
 };
 
 const platformTransforms = (str) => {
-    initImports();
+    // initImports();
     let tokens = [];
     const tokenModify = (match, p1, p2, p3, p4, p5, p6) => {
         let type = p1 !== '</' && withoutTypeTag.indexOf(p3.toLowerCase()) === -1 ? ` tagType={'${p3}'}` : '';
@@ -408,7 +409,7 @@ const platformTransforms = (str) => {
         });
 
         //str = str.replace(takeImportLineRegexp, addImport);
-        str = cutImport(str);
+        // str = cutImport(str);
 
         //change the urls path to functon that get name of App by it path;
         regExp = /(\s*)(urls.\w+.path)/mig;
@@ -444,7 +445,7 @@ const platformTransforms = (str) => {
         if (tokens.length) {
             addImportLine('import { ' + tokens.join(', ') + ' } from \'../platformTransforms\';');
         }
-        str = insertImport(str);
+        // str = insertImport(str);
     }
     // console.log('str=', str);
     return str;
@@ -556,7 +557,7 @@ module.exports = {
     replaceStyleAfterFlowFunction,
     SimplifyEmptyTags,
     replaceHtmlForWithFocus,
-    addNavigationRoutePropIntoFlowFunction,
+    addNavigationRouteProps,
     removeTagsWithBody,
     removeExcessFreeLines,
 };

@@ -12,16 +12,18 @@ const camel_case_properties = ['border-radius', 'border-color', 'border-top-colo
     'align-items', 'justify-content', 'align-content', 'align-self', 'min-height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
     'text-transform', 'font-family', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'box-shadow', 'object-fit',
     'text-align', 'overflow-x', 'overflow-y'];
-const complicated_properties = ['transition', 'text-shadow', 'box-shadow', 'text-decoration', ];
+const complicated_properties = ['transition', 'text-shadow', 'box-shadow', 'text-decoration', 'transform' ];
 const rename_properties = {
     'text-decoration': 'textDecorationLine',
     'object-fit': 'resizeMode',
 };
 const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'outline'];
 const force_stringify_value = ['fontWeight'];
-const not_stringify_value = ['fontFamily'];
+const not_stringify_value = ['fontFamily', 'transform'];
 const not_round_properties = ['lineHeight', 'fontSize'];
 const not_calculated_units = ['%', 'em'];
+
+let initial_tabs;
 
 let variables = {};
 const removeExcessCssDirectives = (str) => {
@@ -70,6 +72,38 @@ const transformObjectToString = (obj, name) => {
     string_view += `};`;
     return string_view;
 };
+
+const transformArrayPropertyToString = (array, ) => {
+
+    let return_value = '[';
+    array.forEach((element) => {
+        if (typeof element !== "object" ) {
+            return_value += `\n${tabs.join('')}${element},`;
+        }
+        else {
+            return_value += `\n${tabs.join('')}${transformPropertyToString(element, tabs.push(tab_symbol))}`;
+        }
+    });
+    tabs.pop();
+    return_value += tabs.length ? `\n${tabs.join('')}],` : ``;
+    return return_value;
+};
+
+const transformArrayToString = (obj, name, use_initial_tabs) => {
+    if (use_initial_tabs && initial_tabs) {
+        initial_tabs.slice(initial_tabs.indexOf('\n')+1, -1).split('').forEach((tab) => tabs.push(tab_symbol));
+    }
+    let string_view = '';
+    string_view = name ? `export const ${name} = ` : '';
+    string_view += `${transformArrayPropertyToString(obj, tabs.push(tab_symbol))}\n`;
+    string_view += `${initial_tabs.slice(initial_tabs.indexOf('\n')+1, -1)}]`;
+
+    if (use_initial_tabs) {
+        tabs.splice(0, tabs.length);
+    }
+    return string_view;
+};
+
 const replace_variable = (str) => {
     let found_keys = [];
     // console.log('str=', str);
@@ -194,7 +228,7 @@ const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
             filled_object[name_property] = Math.round(filled_object[name_property]);
         }
 
-        if (filled_object[name_property] == '0%' || filled_object[name_property] === '0rem' || filled_object[name_property] === '0em') {
+        if (filled_object[name_property] == "'0%'" || filled_object[name_property] === "'0rem'" || filled_object[name_property] === "'0em'") {
             filled_object[name_property] = 0;
         }
     }
@@ -273,16 +307,28 @@ const propertiesSplitter = (property, number_value, value_string) => {
 };
 const changeSecondsToMs = (str) => {
     const replacer = (match, p1, p2, p3, p4) => {
-        // console.log('match=', match);
-        // console.log('p1=', p1);
-        // console.log('p2=', p2);
-        // console.log('p3=', p3);
-        // console.log('p4=', p4);
         p2 = p3.toLowerCase() === 's' ? p2 * 1000 : p2;
         return p1 + p2 + p4;
     };
-    str = str.replace(/(\s+)(\d+\.*\d*)(s)(\s+)/gi, replacer);
+    str = str.replace(/(\s+)(\d+\.*\d*)(s|ms)(\s+)/gi, replacer);
     return str;
+};
+// transform: [
+//     {
+//         translateX: 0,
+//     },
+// ],
+const splitTransforms = (str) => {
+    let transforms = [];
+    const replacer = (match, property, value) => {
+        let obj = {};
+        obj[property] = value && typeof value === "string" && value.endsWith('%') ? stringifyValue(value) : value;
+        transforms.push(obj);
+    };
+    const regexp = new RegExp(`\\s*(.[^(]+)\\((.[^)]*)\\)`, 'gi');
+    str.replace(regexp, replacer);
+    console.log(transformArrayToString(transforms, '', true));
+    return transformArrayToString(transforms);
 };
 const propertiesInnerCorrections = (property, number_value, value_string) => {
     const replacer = (match) => {
@@ -299,6 +345,11 @@ const propertiesInnerCorrections = (property, number_value, value_string) => {
         value_string = changeSecondsToMs(value_string);
         value_string = splitVariable(value_string);
     });
+
+    if (property === 'transform') {
+        console.log('value_string', value_string);
+        value_string = splitTransforms(value_string);
+    }
     return value_string;
 };
 const getProperty = (str, object) => {
@@ -388,7 +439,9 @@ const transformVariables = (str, variables_name) => {
 const transformStylesToObj = (str, tags_selection) => {
     let style_object = {};
     // let main_property;
-    const replacer = (match, p1, p2, p3, p4, p5) => {
+    const replacer = (match, p1, tabs, p2, p3, p4, p5) => {
+        initial_tabs = initial_tabs ? initial_tabs : tabs;
+        console.log(`initial_tabs='${initial_tabs}'`);
         if (tags_selection) {
             p1 = p1.split(',').map((item) => item.trim());
             p3 = removeExcessCssDirectives(p3);
@@ -423,7 +476,8 @@ const transformStylesToObj = (str, tags_selection) => {
         }
     };
     let selection_type = !tags_selection ? class_name_string : tag_name_string;
-    let regexp = new RegExp(selection_type + `\\s*((${style_expression_string})+)(\\s*)`, 'ig');
+    let regexp = new RegExp(selection_type + `(\\s*)((${style_expression_string})+)(\\s*)`, 'ig');
+    console.log(regexp);
     str.replace(regexp, replacer);
     return style_object;
 };
@@ -440,7 +494,7 @@ const transformStyles = (str, styles_name) => {
     let style_object = transformStylesToObj(str);
     // console.log(`obj=`, obj);
     str = transformObjectToString(style_object, styles_name);
-
+    console.log(`str=`, str);
     return str;
 };
 

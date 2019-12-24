@@ -322,6 +322,8 @@ const splitTransforms = (str) => {
     let transforms = [];
     const replacer = (match, property, value) => {
         let obj = {};
+        property = property.replace(/[,. ]/gi, '');
+        console.log('property=', property);
         obj[property] = value && typeof value === "string" && value.endsWith('%') ? stringifyValue(value) : value;
         transforms.push(obj);
     };

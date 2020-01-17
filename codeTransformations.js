@@ -1,14 +1,11 @@
 const { space_symbol, tab_symbol, flowTag, } = require('./constants');
+const { makeStringTitled } = require('./helpers');
 const {remove_blank_lines_regexp, function_flow_string, default_function_string} = require('./regexps');
 const {cutImport, insertImport, addImportLine, addImportArray, initImports, deleteImportModule} = require('./imports');
 
 const removeExcessFreeLines = (str) => {
     str = str.replace(remove_blank_lines_regexp, '');
     return str;
-};
-
-const makeStringTitled = (str) => {
-    return str && typeof str === "string" ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 };
 
 const placeTabHere = (n) => {
@@ -42,22 +39,6 @@ const exportConnectionTransform = (str) => {
     // console.log(str);
     return str;
 };
-
-// const checkReactRouterDomImports = (str) => {
-//     const replacer = (match, import_string, p1, module_name, from_str, from_module) => {
-//         if (module_name === 'deprecated withRouter') {
-//             module_name = 'withNavigation';
-//             from_module = 'react-navigation';
-//             return import_string + module_name + from_str + from_module + `';`;
-//         }
-//         return '';
-//     };
-//     if (str) {
-//         const regExp = /(import\s+{)(\s+(\w+)\W*)+(}\s*from\s+')(react-router-dom)';/mig;
-//         str = str.replace(regExp, replacer);
-//     }
-//     return str;
-// };
 
 const historyToNavigationTransform = (str) => {
 
@@ -126,7 +107,7 @@ const changeTagName = (str, name, attr_to_replace) => {
         Object.keys(attr_to_replace).forEach((key) => {
             match = match.replace(key, attr_to_replace[key]);
         });
-        console.log(match);
+        // console.log(match);
         return match;
     };
     //<img className={''} src={avatar} alt={'Avatar'} />
@@ -276,7 +257,7 @@ const replaceStyleAfterFlowFunction = (str) => {
 const divTags = ['div', 'section', 'header', 'footer', 'li', 'ul', 'hr' ];
 const textTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'label'];
 const inputsType = ['input'];
-const withoutTypeTag = ['redirect', 'link', 'img', 'div'];
+const withoutTypeTag = ['redirect', 'Link', 'img', 'div'];
 const WrapElementsFor = ['Input'];
 
 const replaceHtmlForWithFocus = (str) => {
@@ -316,9 +297,10 @@ const replaceHtmlForWithFocus = (str) => {
             let regExpInner = /ref=(\{.[^}]+})/ig;
             // console.log(regExpInner);
             if (match.search(regExpInner) === -1) {
-                // console.log('ref not found and we go over');
+                // console.log('\nref not found and we go over\n');
                 useStateObject.hook_using = !useStateObject.hook_using ? true : useStateObject.hook_using;
-                const element_property = WrapElementsFor.indexOf(p1) !== (-1) ? 'Ref' : 'ref';
+                // console.log('PPPPPPP1=', p1);
+                const element_property = WrapElementsFor.includes(makeStringTitled(p1)) ? 'Ref' : 'ref';
                 const reference_string = `{(component) => {${p2+tab_symbol}${useStateObject.hook_name}[${element.id}] = component;${p2}}}`;
                 p1 += `${p2}${element_property}=${reference_string}${p2}`;
                 element.eventString = `onPress={(event) => {${p2.replace(tab_symbol, '')}${useStateObject.hook_name} && ${useStateObject.hook_name}[${element.id}] && ${useStateObject.hook_name}[${element.id}].focus${p2}? ${useStateObject.hook_name}[${element.id}].focus()${p2}: null;${p2.replace(tab_symbol+tab_symbol, '')}}}`;
@@ -346,35 +328,54 @@ const replaceHtmlForWithFocus = (str) => {
 const platformTransforms = (str) => {
     // initImports();
     let tokens = [];
-    const tokenModify = (match, p1, p2, p3, p4, p5, p6) => {
-        let type = p1 !== '</' && withoutTypeTag.indexOf(p3.toLowerCase()) === -1 ? ` tagType={'${p3}'}` : '';
+    const tokenModify = (match, start_tag, possible_tabs_start, token, possible_tabs, empty, empty2, attributes, end_tag) => {
+        console.log(`match='${match}'`);
+        // console.log(`start_tag='${start_tag}'`);
 
-        if (divTags.indexOf(p3.toLowerCase()) !== -1) {
-            p3 = 'Div';
-        } else if (textTags.indexOf(p3.toLowerCase()) !== -1) {
-            p3 = 'TextTag'
-        } else if (inputsType.indexOf(p3.toLowerCase()) !== -1) {
-            p3 = 'Input'
+        console.log(`possible_tabs_start='${possible_tabs_start}'`);
+        console.log(`token='${token}'`);
+        console.log(`possible_tabs='${possible_tabs}'`);
+        console.log(`attributes='${attributes}'`);
+        console.log(`empty='${empty}'`);
+        console.log(`empty2='${empty2}'`);
+        console.log(`end_tag='${end_tag}'`);
+        // return 0;
+        possible_tabs_start = possible_tabs_start ? possible_tabs_start : '';
+        possible_tabs = possible_tabs ? possible_tabs : space_symbol;
+        let type = start_tag !== '</' && withoutTypeTag.indexOf(token.toLowerCase()) === -1 ? `${possible_tabs}tagType={'${token}'}` : attributes ? `${possible_tabs}` : '';
+
+        if (divTags.indexOf(token.toLowerCase()) !== -1) {
+            token = 'Div';
+        } else if (textTags.indexOf(token.toLowerCase()) !== -1) {
+            token = 'TextTag'
+        } else if (inputsType.indexOf(token.toLowerCase()) !== -1) {
+            token = 'Input'
         }
-        p3 = p3.charAt(0).toUpperCase() + p3.slice(1);
-        if (tokens.indexOf(p3) === (-1)) {
-            tokens.push(p3);
+        token = token.charAt(0).toUpperCase() + token.slice(1);
+        if (tokens.indexOf(token) === (-1)) {
+            tokens.push(token);
         }
-        if (p3 === 'Img') {
-            console.log(`\n${p5}\n`);
-            p5.replace(/src=\{\s*(.[^.}]+)[.}]*(.[^}]*)\s*}/gi, (match, module_name, property) => {
-                console.log('match=', match);
-                console.log('module_name=', module_name);
-                console.log('property=', property);
+        if (token === 'Img') {
+            attributes.replace(/src=\{\s*(.[^.}]+)[.}]*(.[^}]*)\s*}/gi, (match, module_name, property) => {
                 if (property === 'src') {
-                    type = ` type={${module_name}.type}` + p4;
+                    type = `${possible_tabs}type={${module_name}.type}`;
                 }
             });
         }
-        else {
-            type = type ? type + p4 : '';
+        // else {
+        //     type = type ? type + possible_tabs : '';
+        // }
+        if (attributes && attributes.search(/ref=/g) !== -1) {
+            attributes = attributes.replace(/ref=/g, 'Ref=');
         }
-        return p1 + p3 + p4 + type;
+        // console.log(start_tag + token + type + (possible_tabs || '') + (attributes || '') + (end_tag || empty2));
+        // return 0;
+        let modified_tag = start_tag + possible_tabs_start + token + type + (attributes ? type ? possible_tabs + attributes : attributes : '') + (end_tag || empty2);
+        modified_tag = modified_tag.replace(/(\w+)( +)(\w+)/g, (match, tag, spaces, attributes) => {
+            return tag + spaces.replace(/( )+/, ' ') + attributes;
+        });
+        // return start_tag + possible_tabs_start + token + type + (attributes ? type ? possible_tabs + attributes : attributes : '') + (end_tag || empty2);
+        return modified_tag;
     };
 
     const urlsReplace = (match, p1, p2) => {
@@ -400,11 +401,14 @@ const platformTransforms = (str) => {
     };
 
     if (str) {
-        const htmlTokens = divTags.concat(divTags, textTags, inputsType, withoutTypeTag);
+        const htmlTokens = divTags.concat(textTags, inputsType, withoutTypeTag);
+        console.log('htmlTokens=',htmlTokens);
         let regExp;
         htmlTokens.forEach((token) => {
             // regExp = new RegExp(`(<|<\\/)(\\s*)(${token})(\\s*)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mgi');
-            regExp = new RegExp(`(<|<\\/)(\\s*)(${token})(\\s*)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mgi');
+            // regExp = new RegExp(`(<[/]*)(\\s*)(${token})(\\s*)(([/]*>)|(.[^<]+))>`, 'gi');
+            // regExp = new RegExp(`(<[/]*\\s*)(${token})(\\s*)(([/]*>)|(.[^</]+))([/]*>)`, 'g');
+            regExp = new RegExp(`(<[/]*)(\\s*)(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
             str = str.replace(regExp, tokenModify);
         });
 

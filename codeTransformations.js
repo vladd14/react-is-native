@@ -359,6 +359,7 @@ const platformTransforms = (str) => {
             attributes.replace(/src=\{\s*(.[^.}]+)[.}]*(.[^}]*)\s*}/gi, (match, module_name, property) => {
                 if (property === 'src') {
                     type = `${possible_tabs}type={${module_name}.type}`;
+                    type = attributes ? `${type}${possible_tabs}`: type;
                 }
             });
         }
@@ -370,7 +371,7 @@ const platformTransforms = (str) => {
         }
         // console.log(start_tag + token + type + (possible_tabs || '') + (attributes || '') + (end_tag || empty2));
         // return 0;
-        let modified_tag = start_tag + possible_tabs_start + token + type + (attributes ? type ? possible_tabs + attributes : attributes : '') + (end_tag || empty2);
+        let modified_tag = start_tag + possible_tabs_start + token + type + (attributes ? withoutTypeTag.indexOf(token.toLowerCase()) === -1 ? possible_tabs + attributes : attributes : '') + (end_tag || empty2);
         modified_tag = modified_tag.replace(/(\w+)( +)(\w+)/g, (match, tag, spaces, attributes) => {
             return tag + spaces.replace(/( )+/, ' ') + attributes;
         });

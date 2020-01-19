@@ -188,6 +188,7 @@ const transferStyles = () => {
         'tags_mobile',
         'modifiers',
         'calculations',
+        'contacts',
     ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];

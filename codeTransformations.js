@@ -342,10 +342,11 @@ const platformTransforms = (str) => {
         // return 0;
         possible_tabs_start = possible_tabs_start ? possible_tabs_start : '';
         possible_tabs = possible_tabs ? possible_tabs : space_symbol;
-        let type = start_tag !== '</' && withoutTypeTag.indexOf(token.toLowerCase()) === -1 ? `${possible_tabs}tagType={'${token}'}` : attributes ? `${possible_tabs}` : '';
+        let type = start_tag !== '</' && withoutTypeTag.indexOf(token.toLowerCase()) === -1 ? `${possible_tabs}tagType={'${token}'}` : '';
 
         if (divTags.indexOf(token.toLowerCase()) !== -1) {
             token = 'Div';
+            // token += start_tag !== '</' ? possible_tabs : '';
         } else if (textTags.indexOf(token.toLowerCase()) !== -1) {
             token = 'TextTag'
         } else if (inputsType.indexOf(token.toLowerCase()) !== -1) {
@@ -359,7 +360,6 @@ const platformTransforms = (str) => {
             attributes.replace(/src=\{\s*(.[^.}]+)[.}]*(.[^}]*)\s*}/gi, (match, module_name, property) => {
                 if (property === 'src') {
                     type = `${possible_tabs}type={${module_name}.type}`;
-                    type = attributes ? `${type}${possible_tabs}`: type;
                 }
             });
         }
@@ -371,7 +371,7 @@ const platformTransforms = (str) => {
         }
         // console.log(start_tag + token + type + (possible_tabs || '') + (attributes || '') + (end_tag || empty2));
         // return 0;
-        let modified_tag = start_tag + possible_tabs_start + token + type + (attributes ? withoutTypeTag.indexOf(token.toLowerCase()) === -1 ? possible_tabs + attributes : attributes : '') + (end_tag || empty2);
+        let modified_tag = start_tag + possible_tabs_start + token + type + (attributes ? withoutTypeTag.indexOf(token.toLowerCase()) === -1 ? possible_tabs + attributes : possible_tabs + attributes : '') + (end_tag || empty2);
         modified_tag = modified_tag.replace(/(\w+)( +)(\w+)/g, (match, tag, spaces, attributes) => {
             return tag + spaces.replace(/( )+/, ' ') + attributes;
         });

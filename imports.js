@@ -134,6 +134,8 @@ const addImportByModuleAndPath = (module, path_from, trace) => {
         imports_object[path_from].modules = [];
     }
     if (module.includes('{')) {
+        module = module.replace(/[{}]/gi, '');
+        module = module.trim();
         imports_object[path_from].modules_in_curly_braces = getArrayItem(module, imports_object[path_from].modules_in_curly_braces, trace);
     }
     else {

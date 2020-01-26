@@ -1,7 +1,7 @@
 const { space_symbol, tab_symbol, flowTag, } = require('./constants');
 const { makeStringTitled } = require('./helpers');
 const {remove_blank_lines_regexp, function_flow_string, default_function_string} = require('./regexps');
-const {cutImport, insertImport, addImportLine, addImportArray, initImports, deleteImportModule} = require('./imports');
+const {cutImport, insertImport, addImportLine, addImportArray, initImports, deleteImportModule, addImportByModuleAndPath} = require('./imports');
 
 const removeExcessFreeLines = (str) => {
     str = str.replace(remove_blank_lines_regexp, '');
@@ -47,8 +47,10 @@ const historyToNavigationTransform = (str) => {
     };
 
     if (str) {
-        let regExp = /(\s*)(history)(\s*[,.)]\s*)/mig;
+        let regExp = /(\s*)(history)(\s*[,.=})]\s*)/mig;
         str = str.replace(regExp, replacer);
+        // regExp = /({\s*\.\.\.)(history)(\s*})/mig;
+        // str = str.replace(regExp, replacer);
     }
     return str;
 };
@@ -256,9 +258,9 @@ const replaceStyleAfterFlowFunction = (str) => {
 };
 const divTags = ['div', 'section', 'header', 'footer', 'li', 'ul', 'hr' ];
 const textTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'label'];
-const inputsType = ['input'];
+const inputsType = ['input', 'select'];
 const withoutTypeTag = ['redirect', 'Link', 'img', 'div'];
-const WrapElementsFor = ['Input'];
+const WrapElementsFor = ['Input', 'Select'];
 
 const replaceHtmlForWithFocus = (str) => {
     // initImports();
@@ -276,6 +278,9 @@ const replaceHtmlForWithFocus = (str) => {
     let htmlForArray = [];
     const getHtmlForIds = (match, p1, p2) => {
         // p1 = p1.replace(/['"`]/ig, '');
+
+
+
         const replacer = `@@onFocus_${p1}_here@@`;
         const eventObject = {
             id: p1,
@@ -289,9 +294,16 @@ const replaceHtmlForWithFocus = (str) => {
     let regExp = /htmlFor=\{(.[^}]+)}(\s*)/mig;
     str = str.replace(regExp, getHtmlForIds);
     htmlForArray.forEach((element) => {
-        regExp = new RegExp(`<(\\w+)(\\s*)(.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+)/>`, 'i');
+        // regExp = new RegExp(`<(\\w+)(\\s*)(.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+)/>`, 'i');
+        regExp = new RegExp(`<(\\w+)(\\s*)(.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+?)([/]*>)`, 'i');
         // console.log(regExp);
-        str = str.replace(regExp, (match,p1, p2, rest) => {
+        str = str.replace(regExp, (match,p1, p2, rest, p3, p4, p5, end_tag) => {
+
+            // console.log(`\n\np3=${p3}`);
+            // console.log(`p4=${p4}`);
+            // console.log(`p5=${p5}`);
+            // console.log(`end_tag=${end_tag}\n\n`);
+
             // console.log(match);
             // console.log(p1);
             let regExpInner = /ref=(\{.[^}]+})/ig;
@@ -305,7 +317,7 @@ const replaceHtmlForWithFocus = (str) => {
                 p1 += `${p2}${element_property}=${reference_string}${p2}`;
                 element.eventString = `onPress={(event) => {${p2.replace(tab_symbol, '')}${useStateObject.hook_name} && ${useStateObject.hook_name}[${element.id}] && ${useStateObject.hook_name}[${element.id}].focus${p2}? ${useStateObject.hook_name}[${element.id}].focus()${p2}: null;${p2.replace(tab_symbol+tab_symbol, '')}}}`;
             }
-            return '<' + p1 + rest +'/>';
+            return '<' + p1 + rest + end_tag;
         });
         str = str.replace(element.replacer, element.eventString);
     });
@@ -329,16 +341,16 @@ const platformTransforms = (str) => {
     // initImports();
     let tokens = [];
     const tokenModify = (match, start_tag, possible_tabs_start, token, possible_tabs, empty, empty2, attributes, end_tag) => {
-        console.log(`match='${match}'`);
+        // console.log(`match='${match}'`);
         // console.log(`start_tag='${start_tag}'`);
 
-        console.log(`possible_tabs_start='${possible_tabs_start}'`);
-        console.log(`token='${token}'`);
-        console.log(`possible_tabs='${possible_tabs}'`);
-        console.log(`attributes='${attributes}'`);
-        console.log(`empty='${empty}'`);
-        console.log(`empty2='${empty2}'`);
-        console.log(`end_tag='${end_tag}'`);
+        // console.log(`possible_tabs_start='${possible_tabs_start}'`);
+        // console.log(`token='${token}'`);
+        // console.log(`possible_tabs='${possible_tabs}'`);
+        // console.log(`attributes='${attributes}'`);
+        // console.log(`empty='${empty}'`);
+        // console.log(`empty2='${empty2}'`);
+        // console.log(`end_tag='${end_tag}'`);
         // return 0;
         possible_tabs_start = possible_tabs_start ? possible_tabs_start : '';
         possible_tabs = possible_tabs ? possible_tabs : space_symbol;
@@ -350,11 +362,13 @@ const platformTransforms = (str) => {
         } else if (textTags.indexOf(token.toLowerCase()) !== -1) {
             token = 'TextTag'
         } else if (inputsType.indexOf(token.toLowerCase()) !== -1) {
-            token = 'Input'
+            // token = 'Input'
+            token = makeStringTitled(token);
         }
         token = token.charAt(0).toUpperCase() + token.slice(1);
         if (tokens.indexOf(token) === (-1)) {
-            tokens.push(token);
+            // tokens.push(token);
+            tokens.push({module: `{ ${token} }`, path: '../platformTransforms' });
         }
         if (token === 'Img') {
             attributes.replace(/src=\{\s*(.[^.}]+)[.}]*(.[^}]*)\s*}/gi, (match, module_name, property) => {
@@ -382,7 +396,8 @@ const platformTransforms = (str) => {
     const urlsReplace = (match, p1, p2) => {
         const name_import = 'appUrl';
         if (tokens.indexOf(name_import) === (-1)) {
-            tokens.push(name_import);
+            // tokens.push(name_import);
+            tokens.push({module: `{ ${name_import} }`, path: '../urls'});
         }
         return p1 + `${name_import}.get(${p2})`;
     };
@@ -396,14 +411,15 @@ const platformTransforms = (str) => {
         // console.log(match);
         const name_import = 'appUrl';
         if (tokens.indexOf(name_import) === (-1)) {
-            tokens.push(name_import);
+            // tokens.push(name_import);
+            tokens.push({module: `{ ${name_import} }`, path: '../urls'});
         }
         return 'navigation.navigate(';
     };
 
     if (str) {
         const htmlTokens = divTags.concat(textTags, inputsType, withoutTypeTag);
-        console.log('htmlTokens=',htmlTokens);
+        // console.log('htmlTokens=',htmlTokens);
         let regExp;
         htmlTokens.forEach((token) => {
             // regExp = new RegExp(`(<|<\\/)(\\s*)(${token})(\\s*)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mgi');
@@ -416,7 +432,7 @@ const platformTransforms = (str) => {
         //str = str.replace(takeImportLineRegexp, addImport);
         // str = cutImport(str);
 
-        //change the urls path to functon that get name of App by it path;
+        //change the urls path to function that get name of App by it path;
         regExp = /(\s*)(urls.\w+.path)/mig;
         str = str.replace(regExp, urlsReplace);
 
@@ -432,7 +448,8 @@ const platformTransforms = (str) => {
             if (p1) {
                 p2 = p1 + `appUrlReversed.get(${p2})`;
                 if (tokens.indexOf('appUrlReversed') === (-1)) {
-                    tokens.push('appUrlReversed');
+                    // tokens.push('appUrlReversed');
+                    tokens.push({module: '{ appUrlReversed }', path: '../urls'});
                 }
             }
             return p2
@@ -448,7 +465,8 @@ const platformTransforms = (str) => {
         //Clean file of blanks lines
         str = str.replace(remove_blank_lines_regexp, '');
         if (tokens.length) {
-            addImportLine('import { ' + tokens.join(', ') + ' } from \'../platformTransforms\';');
+            // addImportLine('import { ' + tokens.join(', ') + ' } from \'../platformTransforms\';');
+            tokens.forEach((token) => addImportByModuleAndPath(token.module, token.path));
         }
         // str = insertImport(str);
     }
@@ -499,7 +517,12 @@ const createAppJs = (str) => {
     let apps = {};
 
     const getAppsFromRoute = (match, p1, p2, p3, p4, p5) => {
-        apps[p5.toLowerCase()] = p5;
+
+        console.log(`p3=${p3}`);
+        console.log(`p4=${p4}`);
+        console.log(`p5=${p5}`);
+
+        apps[p3.toLowerCase()] = p5;
         if (p5.toLowerCase() === 'main') { //Index
             apps['initialRouteName'] = `'${p5.toLowerCase()}'`;
         }
@@ -549,7 +572,6 @@ const createAppJs = (str) => {
 
 module.exports = {
     exportConnectionTransform,
-    // checkReactRouterDomImports,
     historyToNavigationTransform,
     removeExcessTags,
     addFlowTags,

@@ -11,34 +11,35 @@ const { exportConnectionTransform, historyToNavigationTransform, removeExcessTag
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, removeTagsWithBody,
     removeExcessFreeLines } = require('./codeTransformations');
 
-const { makeStringTitled } = require('./helpers');
+const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
+const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
 
-const path_from = '../insarm-front/src/';
-const path_to = '../insarmApp/';
+const path_from = `${project_dir}${initial_react_js_project_name}/src/`;
+const path_to = `${project_dir}${project_name}/`;
 
-const fileFrom = (from, filename) => {
-    return from + filename;
-};
-
-const fileTo = (to, filename) => {
-    return to + filename;
-};
-
-const dirFrom = (dirname) => {
-    let dir = path_from + dirname;
-    if (dir && !dir.endsWith('/')) {
-        dir += '/';
-    }
-    return dir
-};
-
-const dirTo = (dirname) => {
-    let dir = path_to + dirname;
-    if (dir && !dir.endsWith('/')) {
-        dir += '/';
-    }
-    return dir
-};
+// const fileFrom = (from, filename) => {
+//     return from + filename;
+// };
+//
+// const fileTo = (to, filename) => {
+//     return to + filename;
+// };
+//
+// const dirFrom = (dirname) => {
+//     let dir = path_from + dirname;
+//     if (dir && !dir.endsWith('/')) {
+//         dir += '/';
+//     }
+//     return dir
+// };
+//
+// const dirTo = (dirname) => {
+//     let dir = path_to + dirname;
+//     if (dir && !dir.endsWith('/')) {
+//         dir += '/';
+//     }
+//     return dir
+// };
 
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'components', 'urls', 'requirements'];
 const excess_modules = ['PageHeader', 'react-router-dom'];
@@ -49,20 +50,20 @@ const copyMainApps = () => {
 
     directories.forEach( (folder) => {
 
-        const files_in_dir = fs.readdirSync(dirFrom(folder), {});
-        if (fs.existsSync(dirTo(folder))) {
-            const files_in_dest_folder = fs.readdirSync(dirTo(folder), {});
+        const files_in_dir = fs.readdirSync(dirFrom(path_from, folder), {});
+        if (fs.existsSync(dirTo(path_to, folder))) {
+            const files_in_dest_folder = fs.readdirSync(dirTo(path_to, folder), {});
             files_in_dest_folder.forEach((dest_file) => {
-                fs.unlinkSync(fileTo(dirTo(folder), dest_file));
+                fs.unlinkSync(fileTo(dirTo(path_to, folder), dest_file));
             });
         } else {
-            fs.mkdirSync(dirTo(folder), {recursive: true});
+            fs.mkdirSync(dirTo(path_to, folder), { recursive: true });
         }
 
         files_in_dir.forEach((file_in_folder) => {
             if ( !file_in_folder.startsWith('.')) {
                 console.log('file_in_folder=',file_in_folder);
-                let fileBuffer = fs.readFileSync(fileFrom(dirFrom(folder), file_in_folder), 'utf-8');
+                let fileBuffer = fs.readFileSync(fileFrom(dirFrom(path_from, folder), file_in_folder), 'utf-8');
                 if (fileBuffer) {
                     initImports();
                     console.log('start addNavigationRouteProps');
@@ -70,12 +71,17 @@ const copyMainApps = () => {
 
                     if (folder === 'apps' || folder === 'components') {
                         if (file_in_folder === 'Main.js') {
+                            console.log('start addScreenDimensionListener');
                             fileBuffer = addScreenDimensionListener(fileBuffer, 'Main');
                         }
+                        console.log('start addFlowTags');
                         fileBuffer = addFlowTags(fileBuffer);
+                        console.log('start replaceHtmlForWithFocus');
                         fileBuffer = replaceHtmlForWithFocus(fileBuffer);
+                        console.log('start replaceStyleAfterFlowFunction');
                         fileBuffer = replaceStyleAfterFlowFunction(fileBuffer);
                     }
+                    console.log('start cutImport');
                     fileBuffer = cutImport(fileBuffer);
                     excess_modules.forEach((module_name) => deleteImportModule(module_name));
 
@@ -117,16 +123,16 @@ const copyMainApps = () => {
                     console.log('start removeExcessFreeLines');
                     fileBuffer = removeExcessFreeLines(fileBuffer);
                     console.log('start writeFileSync');
-                    fs.writeFileSync(fileTo(dirTo(folder), file_in_folder), fileBuffer,);
+                    fs.writeFileSync(fileTo(dirTo(path_to, folder), file_in_folder), fileBuffer,);
                 }
             }
         });
         if (folder === 'requirements') {
-            if (fs.existsSync(fileTo(dirTo(folder), `${svg_file_name}.js`))) {
-                fs.unlinkSync(fileTo(dirTo(folder), `${svg_file_name}.js`));
+            if (fs.existsSync(fileTo(dirTo(path_to, folder), `${svg_file_name}.js`))) {
+                fs.unlinkSync(fileTo(dirTo(path_to, folder), `${svg_file_name}.js`));
             }
-            if (fs.existsSync(fileTo(dirFrom(folder), `${svg_file_name}.js`))) {
-                fs.unlinkSync(fileTo(dirFrom(folder), `${svg_file_name}.js`));
+            if (fs.existsSync(fileTo(dirFrom(path_from, folder), `${svg_file_name}.js`))) {
+                fs.unlinkSync(fileTo(dirFrom(path_from, folder), `${svg_file_name}.js`));
             }
             initImports();
             let fileBuffer = '';
@@ -136,10 +142,10 @@ const copyMainApps = () => {
             });
             fileBuffer = insertImport(fileBuffer);
 
-            fs.writeFileSync(fileTo(dirTo(folder), `${svg_file_name}.js`), fileBuffer);
-            fs.writeFileSync(fileTo(dirFrom(folder), `${svg_file_name}.js`), fileBuffer);
+            fs.writeFileSync(fileTo(dirTo(path_to, folder), `${svg_file_name}.js`), fileBuffer);
+            fs.writeFileSync(fileTo(dirFrom(path_from, folder), `${svg_file_name}.js`), fileBuffer);
 
-            fileBuffer = fs.readFileSync(fileFrom(dirFrom(folder), 'index.js'), 'utf-8');
+            fileBuffer = fs.readFileSync(fileFrom(dirFrom(path_from, folder), 'index.js'), 'utf-8');
             if (fileBuffer) {
                 initImports();
                 fileBuffer = cutImport(fileBuffer);
@@ -148,11 +154,13 @@ const copyMainApps = () => {
                 if (!fileBuffer.includes(`export const vectors = { ...svg };`)) {
                     fileBuffer += `export const vectors = { ...svg };`;
                 }
-                fs.writeFileSync(fileTo(dirTo(folder), 'index.js'), fileBuffer,);
-                fs.writeFileSync(fileTo(dirFrom(folder), 'index.js'), fileBuffer,);
+                fs.writeFileSync(fileTo(dirTo(path_to, folder), 'index.js'), fileBuffer,);
+                fs.writeFileSync(fileTo(dirFrom(path_from, folder), 'index.js'), fileBuffer,);
             }
         }
     });
+    console.log('store.js has copied');
+    copyFile(path_from, path_to, 'store.js');
 };
 
 const createAppFile = () => {
@@ -164,7 +172,7 @@ const createAppFile = () => {
     let fileBuffer = fs.readFileSync(fileFrom(path_from, 'App.js'), 'utf-8');
     if (fileBuffer) {
         fileBuffer = createAppJs(fileBuffer);
-        fs.writeFileSync(fileTo(dirTo(path_to),  'App.js'), fileBuffer, );
+        fs.writeFileSync(fileTo(path_to,  'App.js'), fileBuffer, );
     }
 
 };
@@ -198,56 +206,58 @@ const transferStyles = () => {
     const at_media_file = 'at_media';
     const platform_modifiers_file = 'platform_modifiers';
 
-    { // make variables file first
-        if (fs.existsSync(fileTo(dirTo(dir_styles), 'variables.js'))) {
-            fs.unlinkSync(fileTo(dirTo(dir_styles), 'variables.js'));
+    {
+        if (!fs.existsSync(dirTo(path_to, dir_styles))) {
+            fs.mkdirSync(dirTo(path_to, dir_styles)), { recursive: true };
+        } else if (fs.existsSync(fileTo(dirTo(path_to, dir_styles), 'variables.js'))) {
+            fs.unlinkSync(fileTo(dirTo(path_to, dir_styles), 'variables.js'));
         }
-
-        let fileBuffer = fs.readFileSync(fileTo(dirFrom(dir_scss), `${scss_variables}.scss`), 'utf-8');
+        // make variables file first
+        let fileBuffer = fs.readFileSync(fileTo(dirFrom(path_from, dir_scss), `${scss_variables}.scss`), 'utf-8');
         if (fileBuffer) {
             fileBuffer = transformVariables(fileBuffer, 'variables');
-            fs.writeFileSync(fileTo(dirTo(dir_styles), 'variables.js'), fileBuffer);
+            fs.writeFileSync(fileTo(dirTo(path_to, dir_styles), 'variables.js'), fileBuffer);
         }
     }
     { // make colors file next
-        if (fs.existsSync(fileTo(dirTo(dir_styles), 'colors.js'))) {
-            fs.unlinkSync(fileTo(dirTo(dir_styles), 'colors.js'));
+        if (fs.existsSync(fileTo(dirTo(path_to, dir_styles), 'colors.js'))) {
+            fs.unlinkSync(fileTo(dirTo(path_to, dir_styles), 'colors.js'));
         }
 
-        let fileBuffer = fs.readFileSync(fileTo(dirFrom(dir_scss), `${scss_colors}.scss`), 'utf-8');
+        let fileBuffer = fs.readFileSync(fileTo(dirFrom(path_from, dir_scss), `${scss_colors}.scss`), 'utf-8');
         if (fileBuffer) {
             fileBuffer = transformColors(fileBuffer, 'colors');
-            fs.writeFileSync(fileTo(dirTo(dir_styles), 'colors.js'), fileBuffer);
+            fs.writeFileSync(fileTo(dirTo(path_to, dir_styles), 'colors.js'), fileBuffer);
         }
     }
     //make custom_font_icons_variables
     {
-        if (fs.existsSync(fileTo(dirTo(dir_fonts), 'insarm_icons.js'))) {
-            fs.unlinkSync(fileTo(dirTo(dir_fonts), 'insarm_icons.js'));
+        if (fs.existsSync(fileTo(dirTo(path_to, dir_fonts), 'insarm_icons.js'))) {
+            fs.unlinkSync(fileTo(dirTo(path_to, dir_fonts), 'insarm_icons.js'));
         }
 
-        if (fs.existsSync(fileTo(dirFrom(dir_fonts), 'insarm_icons.js'))) {
-            fs.unlinkSync(fileTo(dirFrom(dir_fonts), 'insarm_icons.js'));
+        if (fs.existsSync(fileTo(dirFrom(path_from, dir_fonts), 'insarm_icons.js'))) {
+            fs.unlinkSync(fileTo(dirFrom(path_from, dir_fonts), 'insarm_icons.js'));
         }
 
-        let fileBuffer = fs.readFileSync(fileTo(dirFrom(dir_scss), `${scss_font_icons}.scss`), 'utf-8');
+        let fileBuffer = fs.readFileSync(fileTo(dirFrom(path_from, dir_scss), `${scss_font_icons}.scss`), 'utf-8');
         if (fileBuffer) {
             fileBuffer = transformCustomFontIcons(fileBuffer, 'insarm_icons', 'insarm_icon');
-            fs.writeFileSync(fileTo(dirTo(dir_fonts), 'insarm_icons.js'), fileBuffer);
-            fs.writeFileSync(fileTo(dirFrom(dir_fonts), 'insarm_icons.js'), fileBuffer);
+            fs.writeFileSync(fileTo(dirTo(path_to, dir_fonts), 'insarm_icons.js'), fileBuffer);
+            fs.writeFileSync(fileTo(dirFrom(path_from, dir_fonts), 'insarm_icons.js'), fileBuffer);
         }
     }
     let at_media_chunks = [];
     let platform_modifiers_chunks = [];
     let at_media_modifiers_chunks = [];
     remote_folders.forEach((folder) => {
-        if (fs.existsSync(dirTo(`${main_folder}/${folder}`))) {
-            const files_in_dest_folder = fs.readdirSync(dirTo(`${main_folder}/${folder}`), {});
+        if (fs.existsSync(dirTo(path_to, `${main_folder}/${folder}`))) {
+            const files_in_dest_folder = fs.readdirSync(dirTo(path_to, `${main_folder}/${folder}`), {});
             files_in_dest_folder.forEach((dest_file) => {
-                fs.unlinkSync(fileTo(dirTo(`${main_folder}/${folder}`), dest_file));
+                fs.unlinkSync(fileTo(dirTo(path_to, `${main_folder}/${folder}`), dest_file));
             });
         } else {
-            fs.mkdirSync(dirTo(`${main_folder}/${folder}`), {recursive: true});
+            fs.mkdirSync(dirTo(path_to, `${main_folder}/${folder}`), {recursive: true});
         }
     });
     // transfer styles
@@ -257,7 +267,7 @@ const transferStyles = () => {
         });
         let fileBuffer;
         try {
-            fileBuffer = fs.readFileSync(fileTo(dirFrom(dir_css), `${scss_file_name}.css`), 'utf-8');
+            fileBuffer = fs.readFileSync(fileTo(dirFrom(path_from, dir_css), `${scss_file_name}.css`), 'utf-8');
         }
         catch (e) {
             console.log(`file '${scss_file_name}.css' cannot be opened`);
@@ -272,7 +282,7 @@ const transferStyles = () => {
                 fileBufferCSS = transformTags(fileBuffer, scss_file_name);
             }
             if (fileBufferCSS) {
-                fs.writeFileSync(fileTo(dirTo(`${main_folder}/css`), js_file_name), fileBufferCSS);
+                fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}/css`), js_file_name), fileBufferCSS);
             }
 
             if (scss_file_name !== 'modifiers') {
@@ -303,7 +313,7 @@ const transferStyles = () => {
     }, {});
     if (at_media_chunks.length) {
         let at_media_merged_string = transformObjectToString(at_media_merged, 'at_media');
-        fs.writeFileSync(fileTo(dirTo(`${main_folder}/at_media`),  `${at_media_file}.js`), at_media_merged_string);
+        fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}/at_media`),  `${at_media_file}.js`), at_media_merged_string);
     }
 
     let at_media_modifiers_merged = at_media_modifiers_chunks.reduce((accumulator, value) => {
@@ -314,7 +324,7 @@ const transferStyles = () => {
     }, {});
     if (at_media_modifiers_chunks.length) {
         let at_media_modifiers_merged_string = transformObjectToString(at_media_modifiers_merged, 'at_media_modifiers');
-        fs.writeFileSync(fileTo(dirTo(`${main_folder}/at_media`),  `at_media_modifiers.js`), at_media_modifiers_merged_string);
+        fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}/at_media`),  `at_media_modifiers.js`), at_media_modifiers_merged_string);
     }
 
     let platform_modifiers_merged = platform_modifiers_chunks.reduce((accumulator, value) => {
@@ -325,11 +335,11 @@ const transferStyles = () => {
     }, {});
     if (platform_modifiers_chunks.length) {
         let platform_modifiers_merged_string = transformObjectToString(platform_modifiers_merged, 'platform_modifiers');
-        fs.writeFileSync(fileTo(dirTo(`${main_folder}/platform_modifiers`),  `${platform_modifiers_file}.js`), platform_modifiers_merged_string);
+        fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}/platform_modifiers`),  `${platform_modifiers_file}.js`), platform_modifiers_merged_string);
     }
 
-    if (fs.existsSync(fileTo(dirTo(dir_styles), 'index.js'))) {
-        fs.unlinkSync(fileTo(dirTo(dir_styles), 'index.js'));
+    if (fs.existsSync(fileTo(dirTo(path_to, dir_styles), 'index.js'))) {
+        fs.unlinkSync(fileTo(dirTo(path_to, dir_styles), 'index.js'));
     }
     let fileBufferIndexJs = '';
     css_files.forEach((css_file_name) => {
@@ -389,13 +399,24 @@ const transferStyles = () => {
     }
 
     if (fileBufferIndexJs) {
-        fs.writeFileSync(fileTo(dirTo(`${main_folder}`),  'index.js'), fileBufferIndexJs);
+        fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}`),  'index.js'), fileBufferIndexJs);
     }
 };
 
-console.log('start copyMainApps');
-copyMainApps();
-console.log('start createAppFile');
-createAppFile();
-console.log('start transferStyles');
-transferStyles();
+const startAppWebToNativeApp = () => {
+    console.log('start copyMainApps');
+    copyMainApps();
+    console.log('start createAppFile');
+    createAppFile();
+    console.log('start transferStyles');
+    transferStyles();
+    console.log('transformation complete!');
+};
+
+// startAppWebToNativeApp();
+
+// transferStyles();
+
+module.exports = {
+    startAppWebToNativeApp,
+};

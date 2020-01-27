@@ -6,10 +6,10 @@ const flowTag = `/**
 const space_symbol = '    ';
 const tab_symbol = '    ';
 
-const project_name = 'AwesomeProject';
+const project_name = 'insarmApp';
 const initial_react_js_project_name = 'insarm-front';
 const project_dir = '/Users/admin/PycharmProjects/';
-const project_folder_with_tools = 'insarmApp/';
+const project_folder_with_tools = 'archive/insarmApp/';
 
 
 module.exports = {

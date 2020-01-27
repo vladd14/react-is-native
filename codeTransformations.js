@@ -41,16 +41,22 @@ const exportConnectionTransform = (str) => {
 };
 
 const historyToNavigationTransform = (str) => {
+    const replacer2 = (match, p1, p2, p3) => {
+        return p2;
+    };
 
     const replacer = (match, p1, p2, p3) => {
         return p1 + 'navigation' + p3;
     };
 
     if (str) {
-        let regExp = /(\s*)(history)(\s*[,.=})]\s*)/mig;
+        let regExp = /(\s*)(history)(\s*[,.=}:)]\s*)/mig;
         str = str.replace(regExp, replacer);
-        // regExp = /({\s*\.\.\.)(history)(\s*})/mig;
-        // str = str.replace(regExp, replacer);
+        regExp = /(navigation:\s*)(history)(\s*})/mig;
+        str = str.replace(regExp, replacer);
+
+        regExp = /(\/\*\s*)(route:\s*route[,]*)(\s*\*\/)/ig;
+        str = str.replace(regExp, replacer2);
     }
     return str;
 };
@@ -489,6 +495,7 @@ const createRootStack = (apps) => {
         delete apps['initialRouteName'];
     }
     str += placeTabHere(5) + 'screenOptions={({ ...props }) => ({\n';
+    str += placeTabHere(6) + 'title: \'\',\n';
     str += placeTabHere(6) + 'headerTintColor: colors.brand_color,\n';
     str += placeTabHere(6) + 'headerTranslucent: true,\n';
     str += placeTabHere(6) + 'headerRight: () => <PageHeader {...props} />,\n';

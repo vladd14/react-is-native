@@ -5,11 +5,13 @@ const makeStringTitled = (str) => {
 };
 
 const fileFrom = (from, filename) => {
-    return from + filename;
+    // return from + filename;
+    return from.endsWith('/') ? from + filename : from + '/' + filename;
 };
 
 const fileTo = (to, filename) => {
-    return to + filename;
+    // return to + filename;
+    return to.endsWith('/') ? to + filename : to + '/' + filename;
 };
 
 const dirFrom = (path_from, dirname) => {

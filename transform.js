@@ -413,9 +413,7 @@ const startAppWebToNativeApp = () => {
     console.log('transformation complete!');
 };
 
-// startAppWebToNativeApp();
-
-// transferStyles();
+startAppWebToNativeApp();
 
 module.exports = {
     startAppWebToNativeApp,

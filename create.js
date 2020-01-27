@@ -16,6 +16,8 @@ const yarn_modules = [
     'react-redux',
     '@reduxjs/toolkit',
     'react-native-svg',
+    'react-native-svg-transformer',
+    'react-navigation',
     '@react-navigation/native@next',
     '@react-navigation/native-stack@next',
     'react-native-reanimated',
@@ -24,6 +26,36 @@ const yarn_modules = [
     'react-native-safe-area-context',
     '@react-native-community/masked-view',
 ];
+
+const addPrettierCustomSettings = () => {
+    const tab = '  ';
+    const add_lines = [
+        `,\n${tab}"prettier": {`,
+        `${tab}${tab}"bracketSpacing": true,`,
+        `${tab}${tab}"jsxBracketSameLine": true,`,
+        `${tab}${tab}"singleQuote": true,`,
+        `${tab}${tab}"trailingComma": "all",`,
+        `${tab}${tab}"tabWidth": 4,`,
+        `${tab}${tab}"proseWrap": "never",`,
+        `${tab}${tab}"printWidth": 120,`,
+        `${tab}${tab}"arrowParens": "always"`,
+        `${tab}}`,
+    ];
+
+    let file = fileFrom(dirFrom(project_dir, project_name), 'package.json');
+    let file_buffer = fs.readFileSync(file, 'utf-8');
+    if (file_buffer) {
+
+        file_buffer = file_buffer.replace(/(})(\s+})/gi, (match, p1, p2) => {
+            return p1 + add_lines.join('\n') + p2;
+        });
+
+        fs.writeFileSync(file, file_buffer);
+    }
+
+    console.log(`custom setting for prettier has added`);
+    console.log(`\nThat's it!`);
+};
 
 const registerFontAssetFile = () => {
     const add_lines = [
@@ -51,7 +83,7 @@ const registerFontAssetFile = () => {
     process.on('close', (code) => {
         if (!code) {
             console.log(`custom font directory has registered`);
-            console.log(`\nThat's it!`);
+            addPrettierCustomSettings();
         }
         else {
             console.log(`Process registerFontAssetFile exited with code ${code}`);
@@ -122,6 +154,13 @@ const copyPlatformTools = () => {
             dirFrom(`${project_dir}${project_folder_with_tools}`, dir_name),
             dirTo(`${project_dir}${project_name}`, dir_name));
     });
+
+    if (fs.existsSync(fileFrom(`${project_dir}${project_name}`, 'metro.config.js'))) {
+        fs.unlinkSync(fileFrom(`${project_dir}${project_name}`, 'metro.config.js'));
+        console.log(`default metro.config.js was deleted`);
+    }
+    copyFile(`${project_dir}${project_folder_with_tools}`, `${project_dir}${project_name}`, 'metro.config.js' );
+
     console.log(`copyPlatformTools have copied`);
     addReactNavigationDependencies();
 };

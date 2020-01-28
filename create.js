@@ -27,6 +27,34 @@ const yarn_modules = [
     '@react-native-community/masked-view',
 ];
 
+const copyWebStormProjectSettings = () => {
+    const copy_files = [
+        '.gitattributes',
+        '.gitignore',
+    ];
+    const copy_folders = [
+        '.git',
+        '.idea',
+    ];
+
+    copy_files.forEach((file_name) => {
+        if (fs.existsSync(fileFrom(`${project_dir}${project_folder_with_tools}`, file_name))) {
+            copyFile(`${project_dir}${project_folder_with_tools}`, `${project_dir}${project_name}`, file_name );
+        } else {
+            console.warn(`file ${file_name} doesn't exit in directory ${project_dir}${project_folder_with_tools}`);
+        }
+    });
+
+    copy_folders.forEach((dir_name) => {
+        copyFilesFromDirectory(
+            dirFrom(`${project_dir}${project_folder_with_tools}`, dir_name),
+            dirTo(`${project_dir}${project_name}`, dir_name));
+    });
+
+    console.log(`WebStorm settings have copied`);
+    console.log(`\nThat's it!`);
+};
+
 const addPrettierCustomSettings = () => {
     const tab = '  ';
     const add_lines = [
@@ -54,7 +82,7 @@ const addPrettierCustomSettings = () => {
     }
 
     console.log(`custom setting for prettier has added`);
-    console.log(`\nThat's it!`);
+    copyWebStormProjectSettings();
 };
 
 const registerFontAssetFile = () => {

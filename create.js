@@ -58,7 +58,9 @@ const copyWebStormProjectSettings = () => {
 const addPrettierCustomSettings = () => {
     const tab = '  ';
     const add_lines = [
-        `,\n${tab}"prettier": {`,
+        `,\n${tab}"eslintConfig": {`,
+        `${tab}${tab}"extends": "@react-native-community"`,
+        `${tab}}`,
         `${tab}${tab}"bracketSpacing": true,`,
         `${tab}${tab}"jsxBracketSameLine": true,`,
         `${tab}${tab}"singleQuote": true,`,

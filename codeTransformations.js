@@ -536,6 +536,7 @@ const createAppJs = (str) => {
         return '';
     };
     const cleanNavigation = (match, tab, p1, p2, p3, p4) => {
+        console.warn(`match='${match}`);
         p1 = tab + '<NavigationNativeContainer>';
         p2 = tab + '@@STACK_NAVIGATOR_PLACEMENT@@';
         p4 = tab + '</NavigationNativeContainer>';
@@ -550,13 +551,18 @@ const createAppJs = (str) => {
         const exceedModules = ['./index.scss', 'react-router-dom', './urls'];
         exceedModules.forEach((module) => deleteImportModule(module));
 
-        let regExp = /<Route\s*path={((\w*)[.](\w*)[.](\w*\W*[^}])})+>\s*<(\w+)\/>\s*<\/Route>/mig;
+        let regExp = /<Route\s*path={((\w*)[.](\w*)[.](\w*\W*[^}])})+>\s*<(\w+)\s*\/>\s*<\/Route>/mig;
 
         str = str.replace(regExp, getAppsFromRoute);
 
-        regExp = /(\s*)<(Navigation)>\s*(\W+\w+\W+)+(\s*)<\/(Navigation)>/mig;
+        console.warn(`str='${str}`);
+
+        // regExp = /(\s*)<(Navigation)>\s*(\W+\w+\s*\W+)+(\s*)<\/(Navigation)>/mig;
+        regExp = /(\s*)<(Navigation)>\s*(.\s*)+?(\s*)<\/(Navigation)>/mig;
 
         str = str.replace(regExp, cleanNavigation);
+
+        // return str;
         // console.log('cleanNavigation=\n', str);
 
         str = `const Stack = createNativeStackNavigator();\n` + str;
@@ -573,7 +579,7 @@ const createAppJs = (str) => {
         str = addStringsAfterFlowFunction(str, 'App', 'enableScreens();');
     }
 
-    // console.log(str);
+    console.log(str);
     return str;
 };
 

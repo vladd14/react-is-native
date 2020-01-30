@@ -536,7 +536,7 @@ const createAppJs = (str) => {
         return '';
     };
     const cleanNavigation = (match, tab, p1, p2, p3, p4) => {
-        console.warn(`match='${match}`);
+
         p1 = tab + '<NavigationNativeContainer>';
         p2 = tab + '@@STACK_NAVIGATOR_PLACEMENT@@';
         p4 = tab + '</NavigationNativeContainer>';
@@ -552,14 +552,9 @@ const createAppJs = (str) => {
         exceedModules.forEach((module) => deleteImportModule(module));
 
         let regExp = /<Route\s*path={((\w*)[.](\w*)[.](\w*\W*[^}])})+>\s*<(\w+)\s*\/>\s*<\/Route>/mig;
-
         str = str.replace(regExp, getAppsFromRoute);
 
-        console.warn(`str='${str}`);
-
-        // regExp = /(\s*)<(Navigation)>\s*(\W+\w+\s*\W+)+(\s*)<\/(Navigation)>/mig;
         regExp = /(\s*)<(Navigation)>\s*(.\s*)+?(\s*)<\/(Navigation)>/mig;
-
         str = str.replace(regExp, cleanNavigation);
 
         // return str;

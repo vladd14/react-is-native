@@ -1,4 +1,6 @@
 const fs = require('fs');
+const { spawn } = require('child_process');
+
 
 const { initImports, cutImport, addImportByModuleAndPath, insertImport, deleteImportModule, findModule,
     addImportLine } = require('./imports');
@@ -161,6 +163,42 @@ const copyMainApps = () => {
     });
     console.log('store.js has copied');
     copyFile(path_from, path_to, 'store.js');
+};
+
+const doPrettier = () => {
+    let files = [];
+
+    directories.forEach( (folder) => {
+        // console.log(folder);
+        if (folder === 'apps' || folder === 'components') {
+            const files_in_dir = fs.readdirSync(dirFrom(path_to, folder), {});
+            files_in_dir.forEach((file_in_folder) => {
+
+                if (!file_in_folder.startsWith('.')) {
+                    files.push(fileTo(folder, file_in_folder));
+                }
+            });
+        }
+    });
+
+    const process = spawn('yarn', ['prettier', '--write'].concat(files), { cwd: dirTo(project_dir, project_name) });
+
+    process.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+    });
+
+    process.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+    });
+
+    process.on('close', (code) => {
+        if (!code) {
+            console.log(`Prettier`);
+        }
+        else {
+            console.log(`Process registerFontAssetFile exited with code ${code}`);
+        }
+    });
 };
 
 const createAppFile = () => {
@@ -406,6 +444,8 @@ const transferStyles = () => {
 const startAppWebToNativeApp = () => {
     console.log('start copyMainApps');
     copyMainApps();
+    console.log('start prettier');
+    doPrettier();
     console.log('start createAppFile');
     createAppFile();
     console.log('start transferStyles');

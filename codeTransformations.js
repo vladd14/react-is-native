@@ -284,9 +284,6 @@ const replaceHtmlForWithFocus = (str) => {
     let htmlForArray = [];
     const getHtmlForIds = (match, p1, p2) => {
         // p1 = p1.replace(/['"`]/ig, '');
-
-
-
         const replacer = `@@onFocus_${p1}_here@@`;
         const eventObject = {
             id: p1,
@@ -296,33 +293,42 @@ const replaceHtmlForWithFocus = (str) => {
         htmlForArray.push(eventObject);
         return match + replacer + p2;
     };
-    // str = cutImport(str);
-    let regExp = /htmlFor=\{(.[^}]+)}(\s*)/mig;
+    // console.warn(`str=`, str);
+    let regExp = /htmlFor=\{(.[^}]+?)}(\s*)/mig;
     str = str.replace(regExp, getHtmlForIds);
+    console.warn(`htmlForArray len=`, htmlForArray.length);
     htmlForArray.forEach((element) => {
-        // regExp = new RegExp(`<(\\w+)(\\s*)(.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+)/>`, 'i');
-        regExp = new RegExp(`<(\\w+)(\\s*)(.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+?)([/]*>)`, 'i');
+        console.warn(`element='${element}'`);
+        // regExp = new RegExp(`<(\\w+)(\\s*)(.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+?)([/]*>)`, 'i');
+        regExp = new RegExp(`<(\\w+)(\\s*)((.[^>]+\\s+id=\\{.*${element.id}.*})(\\s+.+?)+?\\s*)([^=]>)`, 'gi');
         // console.log(regExp);
-        str = str.replace(regExp, (match,p1, p2, rest, p3, p4, p5, end_tag) => {
-
-            // console.log(`\n\np3=${p3}`);
-            // console.log(`p4=${p4}`);
+        // str = str.replace(regExp, (match,p1, p2, rest, p3, p4, p5, end_tag) => {
+        str = str.replace(regExp, (match,p1, p2, rest, p3, p4, end_tag, ) => {
+            console.warn(`match='${match}'`);
+            // return ;
+            console.log(`\n\np1=${p1}`);
+            console.log(`p2=${p2}`);
+            console.log(`rest=${rest}`);
+            console.log(`p3=${p3}`);
+            console.log(`p4=${p4}`);
             // console.log(`p5=${p5}`);
-            // console.log(`end_tag=${end_tag}\n\n`);
+            // console.log(`p5=${p5}`);
+            console.log(`end_tag=${end_tag}\n\n`);
 
             // console.log(match);
             // console.log(p1);
-            let regExpInner = /ref=(\{.[^}]+})/ig;
+            let regExpInner = /ref=(\{.[^}]+})/gi;
             // console.log(regExpInner);
             if (match.search(regExpInner) === -1) {
-                // console.log('\nref not found and we go over\n');
+                console.warn('\nref not found and we go over\n');
                 useStateObject.hook_using = !useStateObject.hook_using ? true : useStateObject.hook_using;
                 // console.log('PPPPPPP1=', p1);
-                const element_property = WrapElementsFor.includes(makeStringTitled(p1)) ? 'Ref' : 'ref';
+                const element_property = WrapElementsFor.includes(makeStringTitled(p1)) ? `Ref` : `ref`;
                 const reference_string = `{(component) => {${p2+tab_symbol}${useStateObject.hook_name}[${element.id}] = component;${p2}}}`;
                 p1 += `${p2}${element_property}=${reference_string}${p2}`;
                 element.eventString = `onPress={(event) => {${p2.replace(tab_symbol, '')}${useStateObject.hook_name} && ${useStateObject.hook_name}[${element.id}] && ${useStateObject.hook_name}[${element.id}].focus${p2}? ${useStateObject.hook_name}[${element.id}].focus()${p2}: null;${p2.replace(tab_symbol+tab_symbol, '')}}}`;
             }
+            // return '<' + p1 + rest + end_tag;
             return '<' + p1 + rest + end_tag;
         });
         str = str.replace(element.replacer, element.eventString);
@@ -340,6 +346,7 @@ const replaceHtmlForWithFocus = (str) => {
         });
     }
     // str = insertImport(str);
+    // console.warn(`str='${str}'`);
     return str;
 };
 

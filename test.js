@@ -9,37 +9,121 @@ const {
 } = require('./codeTransformations');
 
 let mainApp = `
-import React from 'react';
-import { BrowserRouter as Navigation, Switch, Route } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import './index.scss';
-import Login from './apps/Login';
-import Main from './apps/Main';
+import React, { useEffect, useState } from 'react';
+import { space_symbol } from '../helpers/constants';
 
-import store from './store';
-import { urls } from './urls';
+const SelectFieldStyled = ({ className, value, type, id, placeholder, required, ...props }) => {
+    const { onChange, onFocus, onBlur, onKeyDown, additional_text_value, error_state, options } = props;
+    const [state_class, setStateClass] = useState('');
+    const [error_state_class, setErrorStateClass] = useState(error_state || '');
+    const { trace } = props;
 
-const App = () => {
+    useEffect(() => {
+        if (error_state) {
+            setErrorStateClass('state_error');
+        } else {
+            setErrorStateClass('');
+        }
+    }, [error_state]);
+
+    useEffect(() => {
+        if (value) {
+            setStateClass('selected');
+        } else {
+            setStateClass('');
+        }
+    }, [value]);
+
+    const handleFocus = (event) => {
+        setStateClass('selected');
+        if (onFocus) {
+            onFocus(event);
+        }
+    };
+    const handleBlur = (event) => {
+        //don't touch this if statement
+        if (!value) {
+            setStateClass('');
+        }
+        if (onBlur) {
+            onBlur(event);
+        }
+    };
+    const handleValue = (event) => {
+        if (onChange) {
+            onChange(event);
+        }
+    };
+    const handleKeys = (event) => {
+        if (onKeyDown) {
+            onKeyDown(event);
+        }
+    };
     return (
-        <Provider store={store}>
-            <Navigation>
-                <Switch>
-                    <Route path={urls.messenger_settings.path}>
-                        <Main />
-                    </Route>
-                    <Route path={urls.login.path}>
-                        <Login />
-                    </Route>
-                    <Route path={urls.main.path}>
-                        <Main />
-                    </Route>
-                </Switch>
-            </Navigation>
-        </Provider>
+        <>
+            <div className={'form_group'}>
+                <div className={'form_group_styled'}>
+                    <label
+                        htmlFor={id}
+                        className={[
+                            'form_group__label',
+                            'input_styled_label',
+                            \`label_{state_class}\`,
+                            \`{error_state_class}\`,
+                        ].join(space_symbol)}>
+                        {placeholder}
+                    </label>
+                    <div
+                        className={[
+                            'form_group__control_container',
+                            \`input_{state_class}\`,
+                            \`input_{error_state_class}\`,
+                            \`{error_state_class}\`,
+                        ].join(space_symbol)}>
+                        <div
+                            className={[
+                                'form_group__control',
+                                \`input_{state_class}\`,
+                                \`input_{error_state_class}\`,
+                            ].join(space_symbol)}>
+                            <select
+                                id={id}
+                                className={'form_group__input'}
+                                type={type}
+                                value={value}
+                                required={required}
+                                onKeyDown={(event) => handleKeys(event)}
+                                onChange={(event) => handleValue(event)}
+                                onFocus={(event) => handleFocus(event)}
+                                onBlur={(event) => handleBlur(event)}
+                                trace={trace}
+                                >
+                                {options && options.length ? (
+                                    options.map((item) => (
+                                        <option value={item.value} key={value}>
+                                            {item.name}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <></>
+                                )}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <span
+                    className={['form_group__additional_text', \`additional_text_{error_state_class}\`].join(
+                        space_symbol,
+                    )}>
+                    {additional_text_value}
+                </span>
+            </div>
+        </>
     );
 };
 
-export default App;
+export default SelectFieldStyled;
+
 `;
 
 // transformVariables(variables);
@@ -51,5 +135,5 @@ export default App;
 // let str_3 = 'borderColor 1000 ease-in, backgroundColor 1000 ease-in';
 
 // removeFormTags(mainApp, ['form']);
-createAppJs(mainApp);
+replaceHtmlForWithFocus(mainApp);
 

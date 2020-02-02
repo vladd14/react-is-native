@@ -6,8 +6,9 @@ const {variable_expression_regexp, variable_expression_string, change_dash_to_un
 
 const split_properties = ['border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'flex-flow',
     'padding', 'margin'];
-const camel_case_properties = ['border-radius', 'border-color', 'border-top-color', 'border-bottom-color', 'background-color', 'flex-shrink', 'flex-grow',
-    'max-height', 'max-width',
+const camel_case_properties = ['border-radius', 'border-color', 'border-top-color', 'border-bottom-color', 'background-color',
+    'flex-direction', 'flex-shrink', 'flex-grow',
+    'max-height', 'max-width', 'min-height', 'min-width',
     'padding-left', 'padding-right', 'padding-top', 'padding-bottom', 'z-index',
     'align-items', 'justify-content', 'align-content', 'align-self', 'min-height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
     'text-transform', 'font-family', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'box-shadow', 'object-fit',

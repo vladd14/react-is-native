@@ -281,6 +281,7 @@ const transferStyles = () => {
         let fileBuffer = fs.readFileSync(fileTo(dirFrom(path_from, dir_scss), `${scss_font_icons}.scss`), 'utf-8');
         if (fileBuffer) {
             fileBuffer = transformCustomFontIcons(fileBuffer, 'insarm_icons', 'insarm_icon');
+            fileBuffer += '\n';
             fs.writeFileSync(fileTo(dirTo(path_to, dir_fonts), 'insarm_icons.js'), fileBuffer);
             fs.writeFileSync(fileTo(dirFrom(path_from, dir_fonts), 'insarm_icons.js'), fileBuffer);
         }

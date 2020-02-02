@@ -264,6 +264,7 @@ const replaceStyleAfterFlowFunction = (str) => {
 };
 const divTags = ['div', 'section', 'header', 'footer', 'li', 'ul', 'hr' ];
 const textTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'label'];
+const linkTags = ['a'];
 const inputsType = ['input', 'select'];
 const withoutTypeTag = ['redirect', 'Link', 'img', 'div'];
 const WrapElementsFor = ['Input', 'Select'];
@@ -317,7 +318,7 @@ const replaceHtmlForWithFocus = (str) => {
 
             // console.log(match);
             // console.log(p1);
-            let regExpInner = /ref=(\{.[^}]+})/gi;
+            let regExpInner = /\s+ref=(\{.[^}]+})/gi;
             // console.log(regExpInner);
             if (match.search(regExpInner) === -1) {
                 console.warn('\nref not found and we go over\n');
@@ -367,20 +368,20 @@ const platformTransforms = (str) => {
         // return 0;
         possible_tabs_start = possible_tabs_start ? possible_tabs_start : '';
         possible_tabs = possible_tabs ? possible_tabs : space_symbol;
-        let type = start_tag !== '</' && withoutTypeTag.indexOf(token.toLowerCase()) === -1 ? `${possible_tabs}tagType={'${token}'}` : '';
+        const with_type_tag = withoutTypeTag.indexOf(token.toLowerCase()) === -1;
+        let type = start_tag !== '</' && !with_type_tag ? `${possible_tabs}tagType={'${token}'}` : '';
 
         if (divTags.indexOf(token.toLowerCase()) !== -1) {
             token = 'Div';
-            // token += start_tag !== '</' ? possible_tabs : '';
         } else if (textTags.indexOf(token.toLowerCase()) !== -1) {
-            token = 'TextTag'
+            token = 'TextTag';
+        } else if (linkTags.indexOf(token.toLowerCase()) !== -1) {
+            token = 'Link';
         } else if (inputsType.indexOf(token.toLowerCase()) !== -1) {
-            // token = 'Input'
             token = makeStringTitled(token);
         }
         token = token.charAt(0).toUpperCase() + token.slice(1);
         if (tokens.indexOf(token) === (-1)) {
-            // tokens.push(token);
             tokens.push({module: `{ ${token} }`, path: '../platformTransforms' });
         }
         if (token === 'Img') {
@@ -389,16 +390,22 @@ const platformTransforms = (str) => {
                     type = `${possible_tabs}type={${module_name}.type}`;
                 }
             });
+        } else if (attributes && token === 'Link') {
+            // attributes = attributes.replace(/href=\{\s*(.[^}]+)\s*}/gi, '');
+            attributes = attributes.replace(/(href)(=)/g, (match, p1, p2) => {
+                p1 = 'to';
+                return p1 + p2;
+            });
         }
-        // else {
-        //     type = type ? type + possible_tabs : '';
-        // }
-        if (attributes && attributes.search(/ref=/g) !== -1) {
-            attributes = attributes.replace(/ref=/g, 'Ref=');
+        if (attributes && attributes.search(/(\s)ref=/g) !== -1) {
+            // attributes = attributes.replace(/\s+ref=/g, '\\s+Ref=');
+            attributes = attributes.replace(/(\s)(ref=)/g, (match, p1, p2) => {
+                return p1 + makeStringTitled(p2);
+            });
         }
         // console.log(start_tag + token + type + (possible_tabs || '') + (attributes || '') + (end_tag || empty2));
         // return 0;
-        let modified_tag = start_tag + possible_tabs_start + token + type + (attributes ? withoutTypeTag.indexOf(token.toLowerCase()) === -1 ? possible_tabs + attributes : possible_tabs + attributes : '') + (end_tag || empty2);
+        let modified_tag = start_tag + possible_tabs_start + token + type + (attributes ? !with_type_tag ? possible_tabs + attributes : possible_tabs + attributes : '') + (end_tag || empty2);
         modified_tag = modified_tag.replace(/(\w+)( +)(\w+)/g, (match, tag, spaces, attributes) => {
             return tag + spaces.replace(/( )+/, ' ') + attributes;
         });
@@ -431,7 +438,7 @@ const platformTransforms = (str) => {
     };
 
     if (str) {
-        const htmlTokens = divTags.concat(textTags, inputsType, withoutTypeTag);
+        const htmlTokens = divTags.concat(textTags, inputsType, linkTags, withoutTypeTag);
         // console.log('htmlTokens=',htmlTokens);
         let regExp;
         htmlTokens.forEach((token) => {

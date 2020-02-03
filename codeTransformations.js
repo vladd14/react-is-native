@@ -294,34 +294,29 @@ const replaceHtmlForWithFocus = (str) => {
         htmlForArray.push(eventObject);
         return match + replacer + p2;
     };
-    // console.warn(`str=`, str);
     let regExp = /htmlFor=\{(.[^}]+?)}(\s*)/mig;
     str = str.replace(regExp, getHtmlForIds);
-    console.warn(`htmlForArray len=`, htmlForArray.length);
     htmlForArray.forEach((element) => {
-        console.warn(`element='${element}'`);
+        // console.warn(`element='${element}'`);
         // regExp = new RegExp(`<(\\w+)(\\s*)(.[^>]+\\s+id=\\{.*${element.id}.*}\\s((.[^>]+\\s+)|(=>))+?)([/]*>)`, 'i');
         regExp = new RegExp(`<(\\w+)(\\s*)((.[^>]+\\s+id=\\{.*${element.id}.*})(\\s+.+?)+?\\s*)([^=]>)`, 'gi');
         // console.log(regExp);
         // str = str.replace(regExp, (match,p1, p2, rest, p3, p4, p5, end_tag) => {
         str = str.replace(regExp, (match,p1, p2, rest, p3, p4, end_tag, ) => {
-            console.warn(`match='${match}'`);
             // return ;
-            console.log(`\n\np1=${p1}`);
-            console.log(`p2=${p2}`);
-            console.log(`rest=${rest}`);
-            console.log(`p3=${p3}`);
-            console.log(`p4=${p4}`);
-            // console.log(`p5=${p5}`);
-            // console.log(`p5=${p5}`);
-            console.log(`end_tag=${end_tag}\n\n`);
+            // console.log(`\n\np1=${p1}`);
+            // console.log(`p2=${p2}`);
+            // console.log(`rest=${rest}`);
+            // console.log(`p3=${p3}`);
+            // console.log(`p4=${p4}`);
+            // console.log(`end_tag=${end_tag}\n\n`);
 
             // console.log(match);
             // console.log(p1);
             let regExpInner = /\s+ref=(\{.[^}]+})/gi;
             // console.log(regExpInner);
             if (match.search(regExpInner) === -1) {
-                console.warn('\nref not found and we go over\n');
+                // console.warn('\nref not found and we go over\n');
                 useStateObject.hook_using = !useStateObject.hook_using ? true : useStateObject.hook_using;
                 // console.log('PPPPPPP1=', p1);
                 const element_property = WrapElementsFor.includes(makeStringTitled(p1)) ? `Ref` : `ref`;
@@ -369,10 +364,16 @@ const platformTransforms = (str) => {
         possible_tabs_start = possible_tabs_start ? possible_tabs_start : '';
         possible_tabs = possible_tabs ? possible_tabs : space_symbol;
         const with_type_tag = withoutTypeTag.indexOf(token.toLowerCase()) === -1;
-        let type = start_tag !== '</' && !with_type_tag ? `${possible_tabs}tagType={'${token}'}` : '';
+        let type = start_tag !== '</' && with_type_tag ? `${possible_tabs}tagType={'${token}'}` : '';
 
         if (divTags.indexOf(token.toLowerCase()) !== -1) {
+            if (token === 'hr') {
+                console.warn('hr');
+                console.warn('with_type_tag=', with_type_tag);
+                console.warn('type=', type);
+            }
             token = 'Div';
+
         } else if (textTags.indexOf(token.toLowerCase()) !== -1) {
             token = 'TextTag';
         } else if (linkTags.indexOf(token.toLowerCase()) !== -1) {
@@ -380,7 +381,8 @@ const platformTransforms = (str) => {
         } else if (inputsType.indexOf(token.toLowerCase()) !== -1) {
             token = makeStringTitled(token);
         }
-        token = token.charAt(0).toUpperCase() + token.slice(1);
+        // token = token.charAt(0).toUpperCase() + token.slice(1);
+        token = makeStringTitled(token);
         if (tokens.indexOf(token) === (-1)) {
             tokens.push({module: `{ ${token} }`, path: '../platformTransforms' });
         }
@@ -592,6 +594,16 @@ const createAppJs = (str) => {
     return str;
 };
 
+const removeNativeComments = (str) => {
+    if (str) {
+        let regExp = /\/\*native\s*/gi;
+        str = str.replace(regExp, '');
+        regExp = /\s*native\*\//gi;
+        str = str.replace(regExp, '');
+    }
+    return str;
+};
+
 module.exports = {
     exportConnectionTransform,
     historyToNavigationTransform,
@@ -609,4 +621,5 @@ module.exports = {
     addNavigationRouteProps,
     removeTagsWithBody,
     removeExcessFreeLines,
+    removeNativeComments,
 };

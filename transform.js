@@ -11,7 +11,7 @@ const { exportConnectionTransform, historyToNavigationTransform, removeExcessTag
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, removeTagsWithBody,
-    removeExcessFreeLines } = require('./codeTransformations');
+    removeExcessFreeLines, removeNativeComments } = require('./codeTransformations');
 
 const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
@@ -68,6 +68,10 @@ const copyMainApps = () => {
                 let fileBuffer = fs.readFileSync(fileFrom(dirFrom(path_from, folder), file_in_folder), 'utf-8');
                 if (fileBuffer) {
                     initImports();
+
+                    console.log('start removeNativeComments');
+                    fileBuffer = removeNativeComments(fileBuffer);
+
                     console.log('start addNavigationRouteProps');
                     fileBuffer = addNavigationRouteProps(fileBuffer);
 

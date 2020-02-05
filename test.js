@@ -5,125 +5,100 @@ const {initImports, cutImport, findModule, deleteModuleImport} = require('./impo
 const {
     exportConnectionTransform, importNotRequired, historyToNavigationTransform, removeFormTags, addFlowTags,
     platformTransforms, changePlatform, createAppJs, removeFunctionCall, changeTagName, addScreenDimensionListener,
-    replaceStyleAfterFlowFunction, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody, replaceHtmlForWithFocus
+    replaceStyleAfterFlowFunction, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody, replaceHtmlForWithFocus,
+    findCloseModalTag,
 } = require('./codeTransformations');
 
 let mainApp = `
-import React, { useEffect, useState } from 'react';
-import { space_symbol } from '../helpers/constants';
+/**
+ * @format
+ * @flow
+ */
+import React from 'react';
+import Avatar from '../components/Avatar';
+import { translator } from '../helpers/translate';
+import { storage } from '../helpers/storage';
+import { default_user_logo } from '../requirements';
+import { bindActionCreators } from 'redux';
+import * as appActions from '../reducers/app';
+import * as userActions from '../reducers/user';
+import * as loginActions from '../reducers/login';
+import { connect } from 'react-redux';
+import SimpleButton from '../elements/SimpleButton';
+import { Modal } from 'react-native';
+import { Div, TextTag } from '../platformTransforms';
 
-const SelectFieldStyled = ({ className, value, type, id, placeholder, required, ...props }) => {
-    const { onChange, onFocus, onBlur, onKeyDown, additional_text_value, error_state, options } = props;
-    const [state_class, setStateClass] = useState('');
-    const [error_state_class, setErrorStateClass] = useState(error_state || '');
-    const { trace } = props;
-
-    useEffect(() => {
-        if (error_state) {
-            setErrorStateClass('state_error');
-        } else {
-            setErrorStateClass('');
-        }
-    }, [error_state]);
-
-    useEffect(() => {
-        if (value) {
-            setStateClass('selected');
-        } else {
-            setStateClass('');
-        }
-    }, [value]);
-
-    const handleFocus = (event) => {
-        setStateClass('selected');
-        if (onFocus) {
-            onFocus(event);
+const ModalWindow: () => React$Node = ({ appState, userState, loginState, actions, className, ...props }) => {
+    const closeModalWindow = (event) => {
+        event.preventDefault();
+        if (event.target === event.currentTarget) {
+            actions.setModalWindowState(false);
         }
     };
-    const handleBlur = (event) => {
-        //don't touch this if statement
-        if (!value) {
-            setStateClass('');
-        }
-        if (onBlur) {
-            onBlur(event);
-        }
-    };
-    const handleValue = (event) => {
-        if (onChange) {
-            onChange(event);
-        }
-    };
-    const handleKeys = (event) => {
-        if (onKeyDown) {
-            onKeyDown(event);
-        }
-    };
+
+    const additional_class = appState.modal_window_state ? 'modal_window__active' : '';
+    const modal_visibility = !!additional_class;
+    const { message, modal_view_class, type = 'user_actions' } = storage.getData({ key: 'modal_message' })
+        ? storage.getData({ key: 'modal_message' })
+        : {};
+
+    const avatar_url = '';
+    const avatar = default_user_logo;
+    const avatar_type = '';
+    const avatar_alt = 'Avatar';
+
     return (
-        <>
-            <div className={'form_group'}>
-                <div className={'form_group_styled'}>
-                    <label
-                        htmlFor={id}
-                        className={[
-                            'form_group__label',
-                            'input_styled_label',
-                            \`label_{state_class}\`,
-                            \`{error_state_class}\`,
-                        ].join(space_symbol)}>
-                        {placeholder}
-                    </label>
-                    <div
-                        className={[
-                            'form_group__control_container',
-                            \`input_{state_class}\`,
-                            \`input_{error_state_class}\`,
-                            \`{error_state_class}\`,
-                        ].join(space_symbol)}>
-                        <div
-                            className={[
-                                'form_group__control',
-                                \`input_{state_class}\`,
-                                \`input_{error_state_class}\`,
-                            ].join(space_symbol)}>
-                            <select
-                                id={id}
-                                className={'form_group__input'}
-                                type={type}
-                                value={value}
-                                required={required}
-                                onKeyDown={(event) => handleKeys(event)}
-                                onChange={(event) => handleValue(event)}
-                                onFocus={(event) => handleFocus(event)}
-                                onBlur={(event) => handleBlur(event)}
-                                trace={trace}
-                                >
-                                {options && options.length ? (
-                                    options.map((item) => (
-                                        <option value={item.value} key={value}>
-                                            {item.name}
-                                        </option>
-                                    ))
-                                ) : (
-                                    <></>
-                                )}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <span
-                    className={['form_group__additional_text', \`additional_text_{error_state_class}\`].join(
-                        space_symbol,
-                    )}>
-                    {additional_text_value}
-                </span>
-            </div>
-        </>
+        <Div className={'modal_window__container'} onPress={(event) => closeModalWindow(event)}>
+            <Modal
+                className={'card modal_window__view'}
+                visible={modal_visibility}
+                animationType={'slide'}
+                onRequestClose={(event) => closeModalWindow(event)}
+                presentationStyle={'pageSheet'}
+            >
+                <Div className={'modal_window__content justify_content_between flex_grow'}>
+                    <TextTag tagType={'span'} className={'close_rect'} onPress={(event) => closeModalWindow(event)}>
+                        ×
+                    </TextTag>
+                    <Div>
+                        {type === 'user_actions' ? (
+                            <Div className={'logo justify_content_center'}>
+                                <Avatar to={avatar_url} src={avatar} type={avatar_type} alt={avatar_alt} />
+                            </Div>
+                        ) : (
+                            <></>
+                        )}
+                    </Div>
+                    <Div>
+                        <TextTag tagType={'p'} className={'text_centered text_weight_500'}>{message}</TextTag>
+                    </Div>
+                    <Div className={'text_centered margin_bottom_st_x2'}>
+                        <SimpleButton
+                            title={translator('OK', appState.language)}
+                            additional_class={'small size-changing blue'}
+                            onPress={(event) => closeModalWindow(event)}
+                        />
+                    </Div>
+                </Div>
+                {/* closeModalTag */}
+            </Div>
+        </Div>
     );
 };
 
-export default SelectFieldStyled;
+const mapStateToProps = (state) => ({
+    appState: state.app,
+    userState: state.user,
+    loginState: state.login,
+});
+const mapDispatchToProps = (dispatch) => ({
+    actions: bindActionCreators({ ...appActions, ...userActions, ...loginActions }, dispatch),
+});
 
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(ModalWindow);
 `;
 
 // transformVariables(variables);
@@ -135,5 +110,6 @@ export default SelectFieldStyled;
 // let str_3 = 'borderColor 1000 ease-in, backgroundColor 1000 ease-in';
 
 // removeFormTags(mainApp, ['form']);
-replaceHtmlForWithFocus(mainApp);
+// findCloseModalTag(mainApp);
+console.log(findCloseModalTag(mainApp));
 

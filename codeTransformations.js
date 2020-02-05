@@ -187,8 +187,10 @@ const addNavigationRouteProps = (str) => {
 
     // const regexp = new RegExp('(const\\s+\\w+\\s*=\\s*\\({)(.+)(}\\)\\s*.+{)(\\s*)', 'gi');
     // const regexp = new RegExp(default_function_string, 'gi');
-    const regexp = new RegExp(default_function_string, 'gi');
-    str = str.replace(regexp, replacer);
+    if (str) {
+        const regexp = new RegExp(default_function_string, 'gi');
+        str = str.replace(regexp, replacer);
+    }
     // console.log(str);
     return str
 };
@@ -367,13 +369,7 @@ const platformTransforms = (str) => {
         let type = start_tag !== '</' && with_type_tag ? `${possible_tabs}tagType={'${token}'}` : '';
 
         if (divTags.indexOf(token.toLowerCase()) !== -1) {
-            if (token === 'hr') {
-                console.warn('hr');
-                console.warn('with_type_tag=', with_type_tag);
-                console.warn('type=', type);
-            }
             token = 'Div';
-
         } else if (textTags.indexOf(token.toLowerCase()) !== -1) {
             token = 'TextTag';
         } else if (linkTags.indexOf(token.toLowerCase()) !== -1) {
@@ -404,6 +400,12 @@ const platformTransforms = (str) => {
             attributes = attributes.replace(/(\s)(ref=)/g, (match, p1, p2) => {
                 return p1 + makeStringTitled(p2);
             });
+        }
+        if (attributes && attributes.search(/(\s)visible=/g) !== -1) {
+            console.warn('Modal has searched');
+            token = 'Modal';
+            const import_line = `import { Modal } from 'react-native';`;
+            addImportLine(import_line);
         }
         // console.log(start_tag + token + type + (possible_tabs || '') + (attributes || '') + (end_tag || empty2));
         // return 0;
@@ -604,6 +606,16 @@ const removeNativeComments = (str) => {
     return str;
 };
 
+const findCloseModalTag = (str) => {
+    const replacer = (match, p1, p2, p3, p4) => {
+        return p2 + 'Modal' + p4;
+    };
+    if (str) {
+        str = str.replace(/(\{\/\*\s*closeModalTag\s+.+?\n)(\s+<\/)(div)(>)/gsi, replacer);
+    }
+    return str;
+};
+
 module.exports = {
     exportConnectionTransform,
     historyToNavigationTransform,
@@ -622,4 +634,5 @@ module.exports = {
     removeTagsWithBody,
     removeExcessFreeLines,
     removeNativeComments,
+    findCloseModalTag,
 };

@@ -4,7 +4,7 @@ const { flowTag } = require('./constants');
 let with_flow_tag = false;
 let imports_object = {};
 const check_flow_tag = (str) => {
-    if (str.search(flow_tag_regexp) !== -1) {
+    if (str && str.search(flow_tag_regexp) !== -1) {
         str = str.replace(flow_tag_regexp, '');
         with_flow_tag = true;
     }

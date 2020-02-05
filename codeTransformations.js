@@ -606,12 +606,19 @@ const removeNativeComments = (str) => {
     return str;
 };
 
-const findCloseModalTag = (str) => {
-    const replacer = (match, p1, p2, p3, p4) => {
-        return p2 + 'Modal' + p4;
+const changeNextTag = (str) => {
+    const replacer = (match, p1, p2, p3, p4, p5) => {
+        // console.log(`match='${match}'`);
+        // console.log(`p1='${p1}'`);
+        // console.log(`p2='${p2}'`);
+        // console.log(`p3='${p3}'`);
+        // console.log(`p4='${p4}'`);
+        // console.log(`p5='${p5}'`);
+        return p3 + 'Modal' + p5;
     };
     if (str) {
-        str = str.replace(/(\{\/\*\s*closeModalTag\s+.+?\n)(\s+<\/)(div)(>)/gsi, replacer);
+        // {/* changeNextTag </Modal> */}
+        str = str.replace(/(\{\/\*\s*changeNextTag\s*<[\/](.+?)>\s+.+?\n)(\s+<\/)(div)(>)/gsi, replacer);
     }
     return str;
 };
@@ -634,5 +641,5 @@ module.exports = {
     removeTagsWithBody,
     removeExcessFreeLines,
     removeNativeComments,
-    findCloseModalTag,
+    changeNextTag,
 };

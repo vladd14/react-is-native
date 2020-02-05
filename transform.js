@@ -11,7 +11,7 @@ const { exportConnectionTransform, historyToNavigationTransform, removeExcessTag
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, removeTagsWithBody,
-    removeExcessFreeLines, removeNativeComments, findCloseModalTag } = require('./codeTransformations');
+    removeExcessFreeLines, removeNativeComments, changeNextTag } = require('./codeTransformations');
 
 const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
@@ -72,7 +72,7 @@ const copyMainApps = () => {
                     console.log('start removeNativeComments');
                     fileBuffer = removeNativeComments(fileBuffer);
                     console.log('start closeModalTags');
-                    fileBuffer = findCloseModalTag(fileBuffer);
+                    fileBuffer = changeNextTag(fileBuffer);
 
                     console.log('start addNavigationRouteProps');
                     fileBuffer = addNavigationRouteProps(fileBuffer);

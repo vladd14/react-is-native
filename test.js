@@ -6,7 +6,7 @@ const {
     exportConnectionTransform, importNotRequired, historyToNavigationTransform, removeFormTags, addFlowTags,
     platformTransforms, changePlatform, createAppJs, removeFunctionCall, changeTagName, addScreenDimensionListener,
     replaceStyleAfterFlowFunction, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody, replaceHtmlForWithFocus,
-    findCloseModalTag,
+    changeNextTag,
 } = require('./codeTransformations');
 
 let mainApp = `
@@ -80,7 +80,7 @@ const ModalWindow: () => React$Node = ({ appState, userState, loginState, action
                         />
                     </Div>
                 </Div>
-                {/* closeModalTag */}
+                {/* changeNextTag </Modal> */}
             </Div>
         </Div>
     );
@@ -111,5 +111,5 @@ export default connect(
 
 // removeFormTags(mainApp, ['form']);
 // findCloseModalTag(mainApp);
-console.log(findCloseModalTag(mainApp));
+console.log(changeNextTag(mainApp));
 

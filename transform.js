@@ -19,30 +19,6 @@ const { project_name, project_dir, initial_react_js_project_name, } = require('.
 const path_from = `${project_dir}${initial_react_js_project_name}/src/`;
 const path_to = `${project_dir}${project_name}/`;
 
-// const fileFrom = (from, filename) => {
-//     return from + filename;
-// };
-//
-// const fileTo = (to, filename) => {
-//     return to + filename;
-// };
-//
-// const dirFrom = (dirname) => {
-//     let dir = path_from + dirname;
-//     if (dir && !dir.endsWith('/')) {
-//         dir += '/';
-//     }
-//     return dir
-// };
-//
-// const dirTo = (dirname) => {
-//     let dir = path_to + dirname;
-//     if (dir && !dir.endsWith('/')) {
-//         dir += '/';
-//     }
-//     return dir
-// };
-
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'components', 'urls', 'requirements'];
 const excess_modules = ['PageHeader', 'react-router-dom'];
 const svg_file_name = 'vectors';
@@ -173,10 +149,10 @@ const copyMainApps = () => {
 
 const doPrettier = () => {
     let files = [];
-
-    directories.forEach( (folder) => {
+    const dirs_for_prettier = ['apps', 'components', 'styles', 'styles/at_media', 'styles/css', 'styles/platform_modifiers'];
+    dirs_for_prettier.forEach( (folder) => {
         // console.log(folder);
-        if (folder === 'apps' || folder === 'components') {
+        // if (folder === 'apps' || folder === 'components') {
             const files_in_dir = fs.readdirSync(dirFrom(path_to, folder), {});
             files_in_dir.forEach((file_in_folder) => {
 
@@ -184,7 +160,7 @@ const doPrettier = () => {
                     files.push(fileTo(folder, file_in_folder));
                 }
             });
-        }
+        // }
     });
 
     const process = spawn('yarn', ['prettier', '--write'].concat(files), { cwd: dirTo(project_dir, project_name) });
@@ -199,10 +175,10 @@ const doPrettier = () => {
 
     process.on('close', (code) => {
         if (!code) {
-            console.log(`Prettier`);
+            console.log(`Prettier OK`);
         }
         else {
-            console.log(`Process registerFontAssetFile exited with code ${code}`);
+            console.log(`Process Prettier exited with code ${code}`);
         }
     });
 };
@@ -451,13 +427,13 @@ const transferStyles = () => {
 const startAppWebToNativeApp = () => {
     console.log('start copyMainApps');
     copyMainApps();
-    console.log('start prettier');
-    doPrettier();
     console.log('start createAppFile');
     createAppFile();
     console.log('start transferStyles');
     transferStyles();
     console.log('transformation complete!');
+    console.log('start prettier');
+    doPrettier();
 };
 
 startAppWebToNativeApp();

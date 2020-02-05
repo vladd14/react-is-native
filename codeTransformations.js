@@ -406,6 +406,7 @@ const platformTransforms = (str) => {
             token = 'Modal';
             const import_line = `import { Modal } from 'react-native';`;
             addImportLine(import_line);
+            attributes = attributes.replace(/\s*(className=[{]*.+([}`]))/gi, '');
         }
         // console.log(start_tag + token + type + (possible_tabs || '') + (attributes || '') + (end_tag || empty2));
         // return 0;
@@ -598,9 +599,9 @@ const createAppJs = (str) => {
 
 const removeNativeComments = (str) => {
     if (str) {
-        let regExp = /\/\*native\s*/gi;
+        let regExp = /[{]*\/\*native\s*/gi;
         str = str.replace(regExp, '');
-        regExp = /\s*native\*\//gi;
+        regExp = /\s*native\*\/[}]*/gi;
         str = str.replace(regExp, '');
     }
     return str;

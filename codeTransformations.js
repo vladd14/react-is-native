@@ -402,7 +402,7 @@ const platformTransforms = (str) => {
             });
         }
         if (attributes && attributes.search(/(\s)visible=/g) !== -1) {
-            console.warn('Modal has searched');
+            // console.warn('Modal has searched');
             token = 'Modal';
             const import_line = `import { Modal } from 'react-native';`;
             addImportLine(import_line);

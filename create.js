@@ -59,8 +59,10 @@ const addPrettierCustomSettings = () => {
     const tab = '  ';
     const add_lines = [
         `,\n${tab}"eslintConfig": {`,
+        `${tab}${tab}"root": true,`,
         `${tab}${tab}"extends": "@react-native-community"`,
-        `${tab}}`,
+        `${tab}},`,
+        `${tab}"prettier": {`,
         `${tab}${tab}"bracketSpacing": true,`,
         `${tab}${tab}"jsxBracketSameLine": true,`,
         `${tab}${tab}"singleQuote": true,`,

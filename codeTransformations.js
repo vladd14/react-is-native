@@ -533,7 +533,7 @@ const createRootStack = (apps) => {
             'import \'react-native-gesture-handler\';',
             'import { enableScreens } from \'react-native-screens\';',
             'import { createNativeStackNavigator } from \'@react-navigation/native-stack\'',
-            'import { NavigationNativeContainer } from \'@react-navigation/native\'',
+            'import { NavigationContainer } from \'@react-navigation/native\'',
         ],
     }
 };
@@ -556,9 +556,9 @@ const createAppJs = (str) => {
     };
     const cleanNavigation = (match, tab, p1, p2, p3, p4) => {
 
-        p1 = tab + '<NavigationNativeContainer>';
+        p1 = tab + '<NavigationContainer>';
         p2 = tab + '@@STACK_NAVIGATOR_PLACEMENT@@';
-        p4 = tab + '</NavigationNativeContainer>';
+        p4 = tab + '</NavigationContainer>';
         return p1 + p2 + p4;
     };
     if (str) {

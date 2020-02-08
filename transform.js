@@ -89,7 +89,7 @@ const copyMainApps = () => {
                     console.log('start SimplifyEmptyTags');
                     fileBuffer = SimplifyEmptyTags(fileBuffer);
                     console.log('start platformTransforms');
-                    fileBuffer = platformTransforms(fileBuffer);
+                    fileBuffer = platformTransforms(fileBuffer, file_in_folder);
                     console.log('start changePlatform');
                     if (folder === 'reducers' && file_in_folder === 'app.js') {
                         fileBuffer = changePlatform(fileBuffer);

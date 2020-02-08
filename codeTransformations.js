@@ -50,7 +50,7 @@ const historyToNavigationTransform = (str) => {
     };
 
     if (str) {
-        let regExp = /(\s*)(history)(\s*[,.=}:)]\s*)/mig;
+        let regExp = /(=*\s*)(history)(\s*[,.=}:;)]\s*)/mig;
         str = str.replace(regExp, replacer);
         regExp = /(navigation:\s*)(history)(\s*})/mig;
         str = str.replace(regExp, replacer);
@@ -348,7 +348,7 @@ const replaceHtmlForWithFocus = (str) => {
     return str;
 };
 
-const platformTransforms = (str) => {
+const platformTransforms = (str, filename) => {
     // initImports();
     let tokens = [];
     const tokenModify = (match, start_tag, possible_tabs_start, token, possible_tabs, empty, empty2, attributes, end_tag) => {
@@ -458,8 +458,10 @@ const platformTransforms = (str) => {
         // str = cutImport(str);
 
         //change the urls path to function that get name of App by it path;
-        regExp = /(\s*)(urls.\w+.path)/mig;
-        str = str.replace(regExp, urlsReplace);
+        if (filename !== 'index.js') {
+            regExp = /(\s*)(urls[.\[].+?[\]]*.path)/mig;
+            str = str.replace(regExp, urlsReplace);
+        }
 
         //return history.push(appUrl.get(urls.login.path));
         // regExp = /\s*(history.push\(\s*)(\w*\W[^)]*)(\s*\);)/mig;

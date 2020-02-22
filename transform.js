@@ -436,7 +436,7 @@ const startAppWebToNativeApp = () => {
     doPrettier();
 };
 
-// startAppWebToNativeApp();
+startAppWebToNativeApp();
 
 module.exports = {
     startAppWebToNativeApp,

@@ -50,7 +50,7 @@ const historyToNavigationTransform = (str) => {
     };
 
     if (str) {
-        let regExp = /(=*\s*)(history)(\s*[,.=}:;)]\s*)/mig;
+        let regExp = /([\[=]*\s*)(history)(\s*[,.=}:;)\]]\s*)/mig;
         str = str.replace(regExp, replacer);
         regExp = /(navigation:\s*)(history)(\s*})/mig;
         str = str.replace(regExp, replacer);
@@ -450,7 +450,8 @@ const platformTransforms = (str, filename) => {
             // regExp = new RegExp(`(<|<\\/)(\\s*)(${token})(\\s*)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mgi');
             // regExp = new RegExp(`(<[/]*)(\\s*)(${token})(\\s*)(([/]*>)|(.[^<]+))>`, 'gi');
             // regExp = new RegExp(`(<[/]*\\s*)(${token})(\\s*)(([/]*>)|(.[^</]+))([/]*>)`, 'g');
-            regExp = new RegExp(`(<[/]*)(\\s*)(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
+            // regExp = new RegExp(`(<[/]*)(\\s*)(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
+            regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
             str = str.replace(regExp, tokenModify);
         });
 

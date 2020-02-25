@@ -11,7 +11,7 @@ const { exportConnectionTransform, historyToNavigationTransform, removeExcessTag
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, removeTagsWithBody,
-    removeExcessFreeLines, removeNativeComments, changeNextTag } = require('./codeTransformations');
+    removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage } = require('./codeTransformations');
 
 const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
@@ -85,6 +85,8 @@ const copyMainApps = () => {
                     // console.log('start importNotRequired');
                     // fileBuffer = checkReactRouterDomImports(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
 
+                    console.log('start changeWindowLocalStorage');
+                    fileBuffer = changeWindowLocalStorage(fileBuffer);
 
                     console.log('start SimplifyEmptyTags');
                     fileBuffer = SimplifyEmptyTags(fileBuffer);

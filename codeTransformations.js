@@ -627,6 +627,17 @@ const changeNextTag = (str) => {
     return str;
 };
 
+const changeWindowLocalStorage = (str) => {
+    const replacer = (match) => {
+        addImportLine('import AsyncStorage from \'@react-native-community/async-storage\';');
+        return 'AsyncStorage';
+    };
+    if (str) {
+        str = str.replace(/window\.localStorage/gi, replacer);
+    }
+    return str;
+};
+
 module.exports = {
     exportConnectionTransform,
     historyToNavigationTransform,
@@ -646,4 +657,5 @@ module.exports = {
     removeExcessFreeLines,
     removeNativeComments,
     changeNextTag,
+    changeWindowLocalStorage,
 };

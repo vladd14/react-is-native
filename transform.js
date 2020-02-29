@@ -11,7 +11,8 @@ const { exportConnectionTransform, historyToNavigationTransform, removeExcessTag
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, removeTagsWithBody,
-    removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage } = require('./codeTransformations');
+    removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage,
+    addRunAfterInteractionsWrapper } = require('./codeTransformations');
 
 const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
@@ -58,6 +59,8 @@ const copyMainApps = () => {
                             console.log('start addScreenDimensionListener');
                             fileBuffer = addScreenDimensionListener(fileBuffer, 'Main');
                         }
+                        console.log('start addRunAfterInteractionsWrapper');
+                        fileBuffer = addRunAfterInteractionsWrapper(fileBuffer);
                         console.log('start addFlowTags');
                         fileBuffer = addFlowTags(fileBuffer);
                         console.log('start replaceHtmlForWithFocus');

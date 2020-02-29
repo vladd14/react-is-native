@@ -484,8 +484,8 @@ const platformTransforms = (str, filename) => {
         });
 
         //change onClick with onPress;
-        regExp = /(onClick={)/mig;
-        str = str.replace(regExp, 'onPress={');
+        regExp = /(onClick)(\s*[={}():,])/mig;
+        str = str.replace(regExp, (match, p1, p2) => {return 'onPress' + p2});
         //Change onKeyDown with onChangeText;
         regExp = /<SimpleCustomField\s*(\w*\W[^={\/]*)(\W[^{\/]*(\w*\W[^}\/]*})+)\s*\/>/mig;
         str = str.replace(regExp, textInputOnChange);
@@ -638,6 +638,28 @@ const changeWindowLocalStorage = (str) => {
     return str;
 };
 
+// actions.setLoginValue({
+//     name: 'email',
+//     value: event.target.value,
+// });
+addRunAfterInteractionsWrapper = (str) => {
+    const replacer = (match, p1, p2, p3) => {
+        if (match.startsWith('/')) {
+            return  match
+        }
+        // console.log(`match='${match}'`);
+        // console.log(`p1='${p1}'`);
+        // console.log(`p2='${p2}'`);
+        // console.log(`p3='${p3}'`);
+        addImportLine('import { InteractionManager } from \'react-native\';');
+        return `\nInteractionManager.runAfterInteractions(() => {\n${match}\n});`;
+    };
+    if (str) {
+        str = str.replace(/(.[^\/\n']+(return\s*)*(actions\.\w+?\(.+?\);))+/gsi, replacer);
+    }
+    return str;
+};
+
 module.exports = {
     exportConnectionTransform,
     historyToNavigationTransform,
@@ -658,4 +680,5 @@ module.exports = {
     removeNativeComments,
     changeNextTag,
     changeWindowLocalStorage,
+    addRunAfterInteractionsWrapper,
 };

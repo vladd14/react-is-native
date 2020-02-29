@@ -25,6 +25,7 @@ const yarn_modules = [
     'react-native-screens',
     'react-native-safe-area-context',
     '@react-native-community/masked-view',
+    '@react-native-community/async-storage',
 ];
 
 const copyWebStormProjectSettings = () => {
@@ -115,7 +116,7 @@ const registerFontAssetFile = () => {
     process.on('close', (code) => {
         if (!code) {
             console.log(`custom font directory has registered`);
-            addPrettierCustomSettings();
+            // linkSafeAreaContext();
         }
         else {
             console.log(`Process registerFontAssetFile exited with code ${code}`);
@@ -176,6 +177,7 @@ const addReactNavigationDependencies = () => {
         fs.writeFileSync(file, file_buffer);
     }
     console.log(`React Navigation has added`);
+    addPrettierCustomSettings();
     startAppWebToNativeApp();
     registerFontAssetFile();
 };

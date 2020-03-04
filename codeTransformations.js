@@ -264,10 +264,11 @@ const replaceStyleAfterFlowFunction = (str) => {
     }
     return str;
 };
-const divTags = ['div', 'section', 'header', 'footer', 'li', 'ul', 'hr' ];
+const divTags = ['div', 'section', 'header', 'footer', 'li', 'hr' ];
 const textTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'label'];
 const linkTags = ['a'];
 const inputsType = ['input', 'select'];
+const listTags = ['ul', 'ol'];
 const withoutTypeTag = ['redirect', 'Link', 'img', 'div'];
 const WrapElementsFor = ['Input', 'Select'];
 
@@ -374,6 +375,8 @@ const platformTransforms = (str, filename) => {
             token = 'TextTag';
         } else if (linkTags.indexOf(token.toLowerCase()) !== -1) {
             token = 'Link';
+        } else if (listTags.indexOf(token.toLowerCase()) !== -1) {
+                token = 'List';
         } else if (inputsType.indexOf(token.toLowerCase()) !== -1) {
             token = makeStringTitled(token);
         }
@@ -443,7 +446,7 @@ const platformTransforms = (str, filename) => {
     };
 
     if (str) {
-        const htmlTokens = divTags.concat(textTags, inputsType, linkTags, withoutTypeTag);
+        const htmlTokens = divTags.concat(textTags, inputsType, linkTags, listTags, withoutTypeTag);
         // console.log('htmlTokens=',htmlTokens);
         let regExp;
         htmlTokens.forEach((token) => {

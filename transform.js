@@ -22,6 +22,7 @@ const path_to = `${project_dir}${project_name}/`;
 
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'components', 'urls', 'requirements'];
 const excess_modules = ['PageHeader', 'react-router-dom'];
+const fake_modules = ['Animated', 'ActivityIndicator'];
 const svg_file_name = 'vectors';
 let svg_file = {};
 
@@ -72,10 +73,16 @@ const copyMainApps = () => {
                     fileBuffer = cutImport(fileBuffer);
                     excess_modules.forEach((module_name) => deleteImportModule(module_name));
 
-                    if (findModule('Animated')) {
-                        deleteImportModule('Animated');
-                        addImportLine('import { Animated } from \'react-native\';');
-                    }
+                    fake_modules.forEach((module) => {
+                        if (findModule(module)) {
+                            deleteImportModule(module);
+                            addImportLine(`import { ${module} } from \'react-native\';`);
+                        }
+                    });
+                    // if (findModule('Animated')) {
+                    //     deleteImportModule('Animated');
+                    //     addImportLine('import { Animated } from \'react-native\';');
+                    // }
 
                     console.log('start removeExcessTags');
                     fileBuffer = removeExcessTags(fileBuffer, ['form']);

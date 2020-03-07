@@ -376,7 +376,7 @@ const platformTransforms = (str, filename) => {
         } else if (linkTags.indexOf(token.toLowerCase()) !== -1) {
             token = 'Link';
         } else if (listTags.indexOf(token.toLowerCase()) !== -1) {
-                token = 'List';
+            token = 'List';
         } else if (inputsType.indexOf(token.toLowerCase()) !== -1) {
             token = makeStringTitled(token);
         }
@@ -446,7 +446,7 @@ const platformTransforms = (str, filename) => {
     };
 
     if (str) {
-        const htmlTokens = divTags.concat(textTags, inputsType, linkTags, listTags, withoutTypeTag);
+        const htmlTokens = divTags.concat(textTags, inputsType, listTags, withoutTypeTag, linkTags);
         // console.log('htmlTokens=',htmlTokens);
         let regExp;
         htmlTokens.forEach((token) => {

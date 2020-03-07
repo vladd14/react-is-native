@@ -198,7 +198,7 @@ const addNavigationRouteProps = (str) => {
 const addScreenDimensionListener = (str, functionName) => {
     // initImports();
     const dimension_listener = `if (!appState.screen_data) {
-        Screen({ appState, userState, loginState, actions });
+        Screen({ appState, actions });
     }`;
     const import_line = `import { Screen } from '../platformTransforms';`;
     const replacer = (match, p1) => {

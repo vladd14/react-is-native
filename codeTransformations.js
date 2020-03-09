@@ -1,4 +1,4 @@
-const { space_symbol, tab_symbol, flowTag, } = require('./constants');
+const { space_symbol, tab_symbol, flowTag, initial_app_name } = require('./constants');
 const { makeStringTitled } = require('./helpers');
 const {remove_blank_lines_regexp, function_flow_string, default_function_string} = require('./regexps');
 const {cutImport, insertImport, addImportLine, addImportArray, initImports, deleteImportModule, addImportByModuleAndPath} = require('./imports');
@@ -447,14 +447,12 @@ const platformTransforms = (str, filename) => {
 
     if (str) {
         const htmlTokens = divTags.concat(textTags, inputsType, listTags, withoutTypeTag, linkTags);
-        // console.log('htmlTokens=',htmlTokens);
+        console.log('htmlTokens=',htmlTokens);
         let regExp;
         htmlTokens.forEach((token) => {
-            // regExp = new RegExp(`(<|<\\/)(\\s*)(${token})(\\s*)(?=(\\s+\\w*\\W[^>]*)|(\\s*>))`, 'mgi');
-            // regExp = new RegExp(`(<[/]*)(\\s*)(${token})(\\s*)(([/]*>)|(.[^<]+))>`, 'gi');
-            // regExp = new RegExp(`(<[/]*\\s*)(${token})(\\s*)(([/]*>)|(.[^</]+))([/]*>)`, 'g');
-            // regExp = new RegExp(`(<[/]*)(\\s*)(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
-            regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
+
+            // regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
+            regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^<>]+)([/]*>))`, 'g');
             str = str.replace(regExp, tokenModify);
         });
 
@@ -556,7 +554,8 @@ const createAppJs = (str) => {
 
         apps[p3.toLowerCase()] = p5;
         if (p5.toLowerCase() === 'main') { //Index
-            apps['initialRouteName'] = `'${p5.toLowerCase()}'`;
+        // if (p5.toLowerCase() === initial_app_name) { //Index
+            apps['initialRouteName'] = initial_app_name ? `'${initial_app_name}'` : `'${p5.toLowerCase()}'`;
         }
         return '';
     };

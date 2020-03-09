@@ -21,7 +21,8 @@ const path_from = `${project_dir}${initial_react_js_project_name}/src/`;
 const path_to = `${project_dir}${project_name}/`;
 
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'components', 'urls', 'requirements'];
-const excess_modules = ['PageHeader', 'react-router-dom'];
+// const excess_modules = ['PageHeader', 'react-router-dom'];
+const excess_modules = ['react-router-dom'];
 const fake_modules = ['Animated', 'ActivityIndicator'];
 const svg_file_name = 'vectors';
 let svg_file = {};
@@ -87,8 +88,8 @@ const copyMainApps = () => {
                     console.log('start removeExcessTags');
                     fileBuffer = removeExcessTags(fileBuffer, ['form']);
 
-                    console.log('start Header');
-                    fileBuffer = removeTagsWithBody(fileBuffer, ['PageHeader']);
+                    // console.log('start Header');
+                    // fileBuffer = removeTagsWithBody(fileBuffer, ['PageHeader']);
 
                     console.log('start exportConnectionTransform');
                     fileBuffer = exportConnectionTransform(fileBuffer);

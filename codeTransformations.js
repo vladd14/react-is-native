@@ -223,9 +223,13 @@ const addScreenDimensionListener = (str, functionName) => {
 
 const changePlatform = (str) => {
     const replacer = (match, p1, p2, p3) => {
+        // console.log(`match='${match}'`);
+        // console.log(`p1='${p1}'`);
+        // console.log(`p3='${p2}'`);
         return p1 + 'mobile' + p3;
     };
-    const regExp = /(initialState:\s*{\s*platform:\s*')(\w+)('\s*,)/ig;
+    // const regExp = /(initialState:\s*{\s*platform:\s*')(\w+)('\s*,)/ig;
+    const regExp = /(initialState:\s*{\s*.+platform:\s*['"`])(.+?)(['"`])/gsi;
     str = str.replace(regExp, replacer);
     return str;
 };

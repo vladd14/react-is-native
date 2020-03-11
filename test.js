@@ -10,146 +10,137 @@ const {
 } = require('./codeTransformations');
 
 let mainApp = `
-import React from 'react';
-import { storage } from '../helpers/storage';
-import { bindActionCreators } from 'redux';
-import * as appActions from '../reducers/app';
-import * as userActions from '../reducers/user';
-import * as loginActions from '../reducers/login';
-import { withRouter } from 'react-router-dom';
-import { connect } from 'react-redux';
-import { urls } from '../urls';
-import { insarm_icons } from '../fonts/insarm_icons';
-import * as dataActions from '../reducers/data';
+import { createSlice } from '@reduxjs/toolkit';
+import { detect_language } from '../settings';
 
-const ModalWindowNotify = ({ appState, userState, loginState, data, actions, history, className, ...props }) => {
-    const closeModalWindow = (event) => {
-        if (appState.platform !== 'web' || (event && event.target === event.currentTarget)) {
-            if (event) {
-                event.preventDefault();
+export const appSlice = createSlice({
+    name: 'app',
+    initialState: {
+        counter: 0,
+        platform: 'web',
+        os: '',
+        browser: null,
+        language: null,
+        default_language: 'RU',
+        connection_state: '',
+        await_request: [],
+        loading: {
+            main: false,
+            person_view: false,
+            messenger_settings: false,
+            test_view: false,
+            login: false,
+        },
+        title_header_height: 0,
+        screen_data: '',
+        screen_errors: {
+            all: [],
+        },
+        current_screen_number: {},
+        messenger_state: null,
+        modal_window_state: '',
+        over_menu_state: '',
+    },
+    reducers: {
+        setLanguage: (state, action) => {
+            state.language =
+                detect_language && action.payload ? action.payload : state.language || state.default_language;
+        },
+        setBrowser: (state, action) => {
+            state.browser = action.payload;
+        },
+        setConnectionState: (state, action) => {
+            const error_connection_message = 'Отсутствует подключение к интернет';
+            state.connection_state = action.payload;
+            if (state.connection_state === 'error') {
+                state.await_request.splice(0, state.await_request.length - 1);
+                if (!state.screen_errors.all.includes(error_connection_message)) {
+                    state.screen_errors.all.push(error_connection_message);
+                }
+            } else if (state.screen_errors.all && state.screen_errors.all.includes(error_connection_message)) {
+                state.screen_errors.all.splice(state.screen_errors.all.indexOf(error_connection_message), 1);
             }
-            actions.setOverMenuState('');
-        }
-    };
-    const storage_key = 'over_menu';
-    const additional_class =
-        appState.over_menu_state && appState.over_menu_state === 'over_menu' ? 'modal_window__active' : '';
-    const { modal_view_class, data_type, item } = storage.getData({
-        key: storage_key,
-    })
-        ? storage.getData({ key: storage_key })
-        : {};
-
-    const additional_view_modal_class = appState.over_menu_state === 'over_menu' ? 'over_menu' : '';
-
-    const action = (() => {
-        switch (data_type) {
-            case 'contacts':
-                return { title: 'Контактом', to_screen_name: 'person_view', to_data_type: 'person_app' };
-            default:
-                return { title: '' };
-        }
-    })(data_type);
-
-    const openPage = () => {
-        console.log('openPage From OverMenu');
-        storage.setData({
-            key: \`{action.to_screen_name}_{action.to_data_type}\`,
-            platform: appState.platform,
-        });
-        storage.setInnerData({
-            key: \`{action.to_screen_name}_{action.to_data_type}\`,
-            inner_key: 'results',
-            payload: [item],
-        });
-        actions.setModalWindowState('');
-        actions.setOverMenuState('');
-        history.push(urls[action.to_screen_name].path);
-    };
-
-    const addToContacts = () => {
-        console.log('addToContacts From OverMenu');
-        console.log('item', item);
-    };
-
-    const addToBookmarks = () => {
-        console.log('addToContacts From OverMenu');
-        console.log('item', item);
-    };
-
-    let actions_menu = [
-        {
-            name: 'Открыть',
-            action: openPage,
-            data_types: ['contacts'],
         },
-        {
-            name: 'в Контакты',
-            action: addToContacts,
-            data_types: ['contacts'],
+        updateScreenDimensions: (state, action) => {
+            if (!state.screen_data) {
+                state.screen_data = {};
+            }
+            state.screen_data = { ...state.screen_data, ...action.payload };
         },
-        {
-            name: 'в Закладки',
-            action: addToBookmarks,
-            data_types: ['contacts'],
+        setOS: (state, action) => {
+            state.os = action.payload;
         },
-    ];
-    
-    // const y_animated_position = animated_property._value;
-    // if (direction === 'forward' && Math.abs(y_animated_position) < y_position) {
-    //     animated_property.setValue(y_position);
-    //     console.log('animated_property._value=', animated_property._value);
-    //     actions.setHeaderTitleHeight(y_position);
-    // }
-
-    return (
-        <div className={\`modal_window__container {additional_class}\`} onClick={(event) => closeModalWindow(event)}>
-            <div
-                className={\`card modal_window__view modal_window_notify {modal_view_class} {additional_view_modal_class}\`}>
-                <div className={'modal_window__content justify_content_between flex_grow over_menu_content'}>
-                    <span className={'close_rect'} onClick={(event) => closeModalWindow(event)}>
-                        ×
-                    </span>
-                    <div className={'over_menu_header'}>
-                        <span className={'margin_top_st'}>{\`Действия с {action.title}\`}</span>
-                    </div>
-                    <div className={'d_flex flex_column'}>
-                        {actions_menu
-                            .filter((item) => item.data_types.includes(data_type))
-                            .map((item, index) => (
-                                <span
-                                    className={\`column_menu__item item_{index + 1} text_smaller_p20\`}
-                                    onClick={(event) => item.action(event)}
-                                    key={index}>
-                                    <span /*native onClick={(event) => item.action(event)} native*/>{item.name}</span>
-                                    <span className={'insarm_icon product_indicators__indicator'}>
-                                        {insarm_icons.chevron_right_tiny}
-                                    </span>
-                                </span>
-                            ))}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const mapStateToProps = (state) => ({
-    appState: state.app,
-    userState: state.user,
-    loginState: state.login,
-    data: state.data,
-});
-const mapDispatchToProps = (dispatch) => ({
-    actions: bindActionCreators({ ...appActions, ...userActions, ...loginActions, ...dataActions }, dispatch),
+        setStatusBarHeight: (state, action) => {
+            if (!state.screen_data) {
+                state.screen_data = {};
+            }
+            state.screen_data.status_bar_height = action.payload.status_bar_height;
+        },
+        setHeaderHeight: (state, action) => {
+            if (!state.screen_data) {
+                state.screen_data = {};
+            }
+            state.screen_data.header_height = action.payload;
+        },
+        setAppTitleHeight: (state, action) => {
+            state.title_header_height = action.payload;
+        },
+        setScreenErrors: (state, action) => {
+            Object.keys(action.payload).forEach((key) => {
+                state.screen_errors[key] = action.payload[key];
+            });
+        },
+        cleanScreenErrors: (state, action) => {
+            if (state.screen_errors[action.payload]) {
+                state.screen_errors[action.payload].splice(0, state.screen_errors[action.payload].length);
+            }
+        },
+        setCurrentScreenNumber: (state, action) => {
+            const { screen_number, screen_name } = action.payload;
+            state.current_screen_number[screen_name] = screen_number;
+        },
+        setMessengerState: (state, action) => {
+            state.messenger_state = action.payload;
+        },
+        setModalWindowState: (state, action) => {
+            state.modal_window_state = action.payload;
+        },
+        setOverMenuState: (state, action) => {
+            state.over_menu_state = action.payload;
+        },
+        setLoadingState: (state, action) => {
+            const { screen_name, data_type, loading_state } = action.payload;
+            state.loading[screen_name] = loading_state;
+        },
+        updateAppState: (state, action) => {
+            state.counter++;
+        },
+    },
 });
 
-export default withRouter(
-    connect(
-        mapStateToProps,
-        mapDispatchToProps,
-    )(ModalWindowNotify),
-);
+// Extract the action creators object and the reducer
+const { actions, reducer } = appSlice;
+// Extract and export each action creator by name
+export const {
+    setLanguage,
+    setBrowser,
+    updateScreenDimensions,
+    setOS,
+    setStatusBarHeight,
+    setConnectionState,
+    setScreenErrors,
+    cleanScreenErrors,
+    setCurrentScreenNumber,
+    setMessengerState,
+    setModalWindowState,
+    setHeaderHeight,
+    setOverMenuState,
+    setAppTitleHeight,
+    setLoadingState,
+    updateAppState,
+} = actions;
+// Export the reducer, either as a default or named export
+export default reducer;
 `;
 
 // transformVariables(variables);
@@ -162,5 +153,5 @@ export default withRouter(
 
 // removeFormTags(mainApp, ['form']);
 // findCloseModalTag(mainApp);
-addRunAfterInteractionsWrapper(mainApp);
+changePlatform(mainApp);
 

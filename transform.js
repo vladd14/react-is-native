@@ -7,12 +7,12 @@ const { initImports, cutImport, addImportByModuleAndPath, insertImport, deleteIm
 
 const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform,
     transformTags, transformColors, transformCustomFontIcons, getSvgPathsFromRequires } = require('./styles');
-const { exportConnectionTransform, historyToNavigationTransform, removeExcessTags,
+const { withRouterDelete, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
-    SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, removeTagsWithBody,
+    SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, changeNavigationHooks, removeTagsWithBody,
     removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage,
-    addRunAfterInteractionsWrapper } = require('./codeTransformations');
+    addRunAfterInteractionsWrapper, addStatusBarConnection } = require('./codeTransformations');
 
 const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
@@ -20,10 +20,10 @@ const { project_name, project_dir, initial_react_js_project_name, } = require('.
 const path_from = `${project_dir}${initial_react_js_project_name}/src/`;
 const path_to = `${project_dir}${project_name}/`;
 
-const directories = ['helpers', 'settings', 'reducers', 'apps', 'components', 'urls', 'requirements'];
+const directories = ['helpers', 'settings', 'reducers', 'apps', 'app_structure', 'components', 'components_connections', 'urls', 'requirements'];
 // const excess_modules = ['PageHeader', 'react-router-dom'];
 const excess_modules = ['react-router-dom'];
-const fake_modules = ['Animated', 'ActivityIndicator'];
+const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar'];
 const svg_file_name = 'vectors';
 let svg_file = {};
 
@@ -56,10 +56,16 @@ const copyMainApps = () => {
                     console.log('start addNavigationRouteProps');
                     fileBuffer = addNavigationRouteProps(fileBuffer);
 
+                    console.log('start changeNavigationHooks');
+                    fileBuffer = changeNavigationHooks(fileBuffer);
+
                     if (folder === 'apps' || folder === 'components') {
                         if (file_in_folder === 'Main.js') {
                             console.log('start addScreenDimensionListener');
                             fileBuffer = addScreenDimensionListener(fileBuffer, 'Main');
+                        }
+                        if (file_in_folder === 'StatusBar.js') {
+                            addImportLine(`import { StatusBar } from \'react-native\';`);
                         }
                         console.log('start addRunAfterInteractionsWrapper');
                         fileBuffer = addRunAfterInteractionsWrapper(fileBuffer);
@@ -92,7 +98,7 @@ const copyMainApps = () => {
                     // fileBuffer = removeTagsWithBody(fileBuffer, ['PageHeader']);
 
                     console.log('start exportConnectionTransform');
-                    fileBuffer = exportConnectionTransform(fileBuffer);
+                    fileBuffer = withRouterDelete(fileBuffer);
                     // console.log('start importNotRequired');
                     // fileBuffer = checkReactRouterDomImports(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
 
@@ -104,9 +110,14 @@ const copyMainApps = () => {
                     console.log('start platformTransforms');
                     fileBuffer = platformTransforms(fileBuffer, file_in_folder);
                     console.log('start changePlatform');
-                    if (folder === 'reducers' && file_in_folder === 'app.js') {
+                    if (folder === 'app_structure' && file_in_folder === 'screens.js') {
                         fileBuffer = changePlatform(fileBuffer);
                     }
+                    // if (folder === 'components_connections') {
+                    //     // fileBuffer = changePlatform(fileBuffer);
+                    //     fileBuffer = addStatusBarConnection(fileBuffer);
+                    //     addImportLine(`import { StatusBar } from \'react-native\';`);
+                    // }
                     console.log('start historyToNavigationTransform');
                     fileBuffer = historyToNavigationTransform(fileBuffer);
 
@@ -162,7 +173,7 @@ const copyMainApps = () => {
 
 const doPrettier = () => {
     let files = [];
-    const dirs_for_prettier = ['apps', 'components', 'styles', 'styles/at_media', 'styles/css', 'styles/platform_modifiers'];
+    const dirs_for_prettier = ['apps', 'components', 'components_connections', 'styles', 'styles/at_media', 'styles/css', 'styles/platform_modifiers'];
     dirs_for_prettier.forEach( (folder) => {
         // console.log(folder);
         // if (folder === 'apps' || folder === 'components') {

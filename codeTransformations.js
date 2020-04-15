@@ -17,26 +17,21 @@ const placeTabHere = (n) => {
     return tab;
 };
 
-const exportConnectionTransform = (str) => {
+const withRouterDelete = (str) => {
+
     const replacer = (match, p1, p2, p3) => {
-        // console.log(match);
-        // console.log(p1);
-        // console.log(p2);
-        p2 = p2.split('\n').map((item) => item.trim()).filter((item) => item).map((element, index, array ) => index && index < array.length -1 ? tab_symbol + element : element);
-        p2 = p2.join('\n');
-        if (p2.charAt(p2.length-1) === ',') {
-            p2 = p2.slice(0, -1);
-            p2 += ';'
-        }
-        // console.log(p2);
+        p2 = p2.replace(/(\w+\))([,])/gi, (match, p1, p2) => {
+            p1 = p1 + ';';
+            return p1;
+        });
         return p2;
     };
     if (str) {
-        let regExp = /(withRouter\s*\(\s*)(.[^;]+)(\s*\));/gi;
+        let regExp = /(withRouter\s*\()(.+?)(\);)/gsi;
         str = str.replace(regExp, replacer);
 
     }
-    // console.log(str);
+    console.log(str);
     return str;
 };
 
@@ -195,6 +190,22 @@ const addNavigationRouteProps = (str) => {
     return str
 };
 
+const changeNavigationHooks = (str) => {
+    if (str) {
+        // const regexp = new RegExp(default_function_string, 'gi');
+        //useHistory();
+
+        str = str.replace(/(useHistory)(\(\).*)/gi, (match,p1, p2) => {
+            const import_line = `import { useNavigation, useRoute } from '@react-navigation/native';`;
+            addImportLine(import_line);
+            p1 = 'useNavigation';
+            return p1 + p2 + '\n' + 'const route = useRoute();';
+        });
+    }
+    // console.log(str);
+    return str
+};
+
 const addScreenDimensionListener = (str, functionName) => {
     // initImports();
     const dimension_listener = `if (!appState.screen_data) {
@@ -226,11 +237,22 @@ const changePlatform = (str) => {
         // console.log(`match='${match}'`);
         // console.log(`p1='${p1}'`);
         // console.log(`p3='${p2}'`);
-        return p1 + 'mobile' + p3;
+        p2 = 'mobile';
+        return p1 + p2 + p3;
     };
     // const regExp = /(initialState:\s*{\s*platform:\s*')(\w+)('\s*,)/ig;
-    const regExp = /(initialState:\s*{\s*.+platform:\s*['"`])(.+?)(['"`])/gsi;
+    // initial_state: {
+    //     platform: 'web',
+    //         language: 'RU',
+    //         screen_errors: {
+    //         all: [],
+    //     },
+    // },
+    // const regExp = /(initialState:\s*{\s*.*platform:\s*['"`])(.+?)(['"`])/gsi;
+    // const regExp = /(initial_state:.+?platform:\s*['"`])(.+?)(['"`])/gsi;
+    const regExp = /(const\s+platform\s*=\s*['"`])(.+?)(['"`])/gi;
     str = str.replace(regExp, replacer);
+    console.log(str);
     return str;
 };
 
@@ -425,13 +447,16 @@ const platformTransforms = (str, filename) => {
         return modified_tag;
     };
 
-    const urlsReplace = (match, p1, p2) => {
+    const urlsReplace = (match, p0, p1, p2) => {
+        if (p0 === 'get') {
+            return match;
+        }
         const name_import = 'appUrl';
         if (tokens.indexOf(name_import) === (-1)) {
             // tokens.push(name_import);
             tokens.push({module: `{ ${name_import} }`, path: '../urls'});
         }
-        return p1 + `${name_import}.get(${p2})`;
+        return p0 + p1 + `${name_import}.get(${p2})`;
     };
     const textInputOnChange = (match, p1,p2,p3,p4) => {
         // console.log('match=', match);
@@ -460,12 +485,12 @@ const platformTransforms = (str, filename) => {
             str = str.replace(regExp, tokenModify);
         });
 
-        //str = str.replace(takeImportLineRegexp, addImport);
+        // str = str.replace(takeImportLineRegexp, addImport);
         // str = cutImport(str);
 
         //change the urls path to function that get name of App by it path;
         if (filename !== 'index.js') {
-            regExp = /(\s*)(urls[.\[].+?[\]]*.path)/mig;
+            regExp = /(\w+)(\()(urls[.\[].+?[\]]*.path)/mig;
             str = str.replace(regExp, urlsReplace);
         }
 
@@ -485,11 +510,11 @@ const platformTransforms = (str, filename) => {
                     tokens.push({module: '{ appUrlReversed }', path: '../urls'});
                 }
             }
-            return p2
+            return p2;
         });
 
         //change onClick with onPress;
-        regExp = /(onClick)(\s*[={}():,])/mig;
+        regExp = /(onClick)(\s*[&={}():,])/mig;
         str = str.replace(regExp, (match, p1, p2) => {return 'onPress' + p2});
         //Change onKeyDown with onChangeText;
         regExp = /<SimpleCustomField\s*(\w*\W[^={\/]*)(\W[^{\/]*(\w*\W[^}\/]*})+)\s*\/>/mig;
@@ -524,11 +549,14 @@ const createRootStack = (apps) => {
     str += placeTabHere(5) + 'screenOptions={({ ...props }) => ({\n';
     str += placeTabHere(6) + 'title: \'\',\n';
     str += placeTabHere(6) + 'headerTintColor: colors.brand_color,\n';
-    str += placeTabHere(6) + 'headerTranslucent: true,\n';
-    str += placeTabHere(6) + 'headerRight: () => <PageHeader {...props} />,\n';
+    str += placeTabHere(6) + 'headerShown: false,\n';
+    // str += placeTabHere(6) + 'headerTranslucent: true,\n';
+    // str += placeTabHere(6) + 'headerRight: () => <PageHeader {...props} />,\n';
     str += placeTabHere(5) + '})}>\n';
+
+    // str += placeTabHere(5) + '>\n';
     str += Object.keys(apps).reduce((accumulator, key) => {
-        accumulator += `${placeTabHere(5)}<Stack.Screen name={'${key}'} component={${apps[key]}} />\n`;
+        accumulator += `${placeTabHere(5)}<Stack.Screen name={'${key}'} ${apps[key].params} component={${apps[key].component}} />\n`;
         return accumulator
     }, '');
     str += placeTabHere(4) + '</Stack.Navigator>';
@@ -550,17 +578,26 @@ const createAppJs = (str) => {
     initImports();
     let apps = {};
 
-    const getAppsFromRoute = (match, p1, p2, p3, p4, p5) => {
+    const getAppsFromRoute = (match, path_name, url_name, component_name, params, p5) => {
+        console.log('match=', match);
+        console.log(`path_name=${path_name}`);
+        console.log(`url_name=${url_name}`);
+        console.log(`component_name=${component_name}`);
+        console.log(`params=${params}`);
+        // console.log(`p4=${p4}`);
+        // console.log(`p5=${p5}`);
 
-        console.log(`p3=${p3}`);
-        console.log(`p4=${p4}`);
-        console.log(`p5=${p5}`);
-
-        apps[p3.toLowerCase()] = p5;
-        if (p5.toLowerCase() === 'main') { //Index
-        // if (p5.toLowerCase() === initial_app_name) { //Index
-            apps['initialRouteName'] = initial_app_name ? `'${initial_app_name}'` : `'${p5.toLowerCase()}'`;
+        // apps[p3.toLowerCase()] = p5;
+        // if (p5.toLowerCase() === 'main') { //Index
+        //     apps['initialRouteName'] = initial_app_name ? `'${initial_app_name}'` : `'${p5.toLowerCase()}'`;
+        // }
+        if (component_name.toLowerCase() === 'main') { //Index
+            apps['initialRouteName'] = initial_app_name ? `'${initial_app_name}'` : `'${component_name.toLowerCase()}'`;
         }
+        apps[url_name.toLowerCase()] = {
+            component: component_name,
+            params: params,
+        };
         return '';
     };
     const cleanNavigation = (match, tab, p1, p2, p3, p4) => {
@@ -579,7 +616,11 @@ const createAppJs = (str) => {
         const exceedModules = ['./index.scss', 'react-router-dom', './urls'];
         exceedModules.forEach((module) => deleteImportModule(module));
 
-        let regExp = /<Route\s*path={((\w*)[.](\w*)[.](\w*\W*[^}])})+>\s*<(\w+)\s*\/>\s*<\/Route>/mig;
+        // <Route path={urls.login.path}>
+        //     <Main screen_name={'login'} />
+        // </Route>
+        // let regExp = /<Route\s*path={((\w*)[.](\w*)[.](\w*\W*[^}])})+>\s*<(\w+)\s*\/>\s*<\/Route>/mig;
+        let regExp = /<Route\s*path=\{(\w+.(\w+).\w+)}\s*>\s*<(\w+)\s*(.+?)\s*\/>\s*<\/Route>/ig;
         str = str.replace(regExp, getAppsFromRoute);
 
         regExp = /(\s*)<(Navigation)>\s*(.\s*)+?(\s*)<\/(Navigation)>/mig;
@@ -602,7 +643,7 @@ const createAppJs = (str) => {
         str = addStringsAfterFlowFunction(str, 'App', 'enableScreens();');
     }
 
-    console.log(str);
+    // console.log(str);
     return str;
 };
 
@@ -648,26 +689,54 @@ const changeWindowLocalStorage = (str) => {
 //     name: 'email',
 //     value: event.target.value,
 // });
-addRunAfterInteractionsWrapper = (str) => {
-    const replacer = (match, p1, p2, p3) => {
-        if (match.startsWith('/')) {
-            return  match
-        }
-        // console.log(`match='${match}'`);
-        // console.log(`p1='${p1}'`);
-        // console.log(`p2='${p2}'`);
-        // console.log(`p3='${p3}'`);
-        addImportLine('import { InteractionManager } from \'react-native\';');
-        return `\nInteractionManager.runAfterInteractions(() => {\n${match}\n});`;
-    };
-    if (str) {
-        str = str.replace(/(.[^\/\n']+(return\s*)*(actions\.\w+?\(.+?\);))+/gsi, replacer);
-    }
+const addRunAfterInteractionsWrapper = (str) => {
+    // const replacer = (match, p1, p2, p3) => {
+    //     if (match.startsWith('/')) {
+    //         return  match
+    //     }
+    //     // console.log(`match='${match}'`);
+    //     // console.log(`p1='${p1}'`);
+    //     // console.log(`p2='${p2}'`);
+    //     // console.log(`p3='${p3}'`);
+    //     addImportLine('import { InteractionManager } from \'react-native\';');
+    //     return `\nInteractionManager.runAfterInteractions(() => {\n${match}\n});`;
+    // };
+    // if (str) {
+    //     str = str.replace(/(.[^\/\n']+(return\s*)*(actions\.\w+?\(.+?\);))+/gsi, replacer);
+    // }
     return str;
 };
 
+addStatusBarConnection = (str) => {
+const status_bar_connection_function = `
+export const StatusBarConnected = screens_prototype.reduce((accumulator, item) => {
+    if (item.name === 'status_bar') {
+        const extra_reducers = item.hasOwnProperty('extra_reducers') ? item.extra_reducers : {};
+        accumulator[\`\${item.screen}_\${item.name}\`] = connect(
+            (state) => ({
+                storeState: state[\`\${item.screen}_\${item.name}\`],
+                ...{
+                    ...Object.keys(extra_reducers).reduce((acc, property) => {
+                        acc[property] = state[extra_reducers[property]];
+                        return acc;
+                    }, {}),
+                },
+            }),
+            mapDispatchToProps,
+        )(StatusBar);
+    }
+    return accumulator;
+}, {});
+`;
+
+if (str) {
+    str += status_bar_connection_function
+}
+return str;
+};
+
 module.exports = {
-    exportConnectionTransform,
+    withRouterDelete,
     historyToNavigationTransform,
     removeExcessTags,
     addFlowTags,
@@ -681,10 +750,12 @@ module.exports = {
     SimplifyEmptyTags,
     replaceHtmlForWithFocus,
     addNavigationRouteProps,
+    changeNavigationHooks,
     removeTagsWithBody,
     removeExcessFreeLines,
     removeNativeComments,
     changeNextTag,
     changeWindowLocalStorage,
     addRunAfterInteractionsWrapper,
+    addStatusBarConnection,
 };

@@ -12,7 +12,7 @@ const { withRouterDelete, historyToNavigationTransform, removeExcessTags,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, changeNavigationHooks, removeTagsWithBody,
     removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage,
-    addRunAfterInteractionsWrapper, addStatusBarConnection } = require('./codeTransformations');
+    addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative } = require('./codeTransformations');
 
 const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
@@ -48,10 +48,13 @@ const copyMainApps = () => {
                 if (fileBuffer) {
                     initImports();
 
+                    console.log('start transformModalToNative');
+                    fileBuffer = transformModalToNative(fileBuffer);
                     console.log('start removeNativeComments');
                     fileBuffer = removeNativeComments(fileBuffer);
-                    console.log('start closeModalTags');
-                    fileBuffer = changeNextTag(fileBuffer);
+                    // console.log('start closeModalTags');
+                    // fileBuffer = changeNextTag(fileBuffer);
+
 
                     console.log('start addNavigationRouteProps');
                     fileBuffer = addNavigationRouteProps(fileBuffer);

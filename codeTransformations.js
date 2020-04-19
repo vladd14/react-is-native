@@ -430,13 +430,13 @@ const platformTransforms = (str, filename) => {
                 return p1 + makeStringTitled(p2);
             });
         }
-        if (attributes && attributes.search(/(\s)visible=/g) !== -1) {
-            // console.warn('Modal has searched');
-            token = 'Modal';
-            const import_line = `import { Modal } from 'react-native';`;
-            addImportLine(import_line);
-            attributes = attributes.replace(/\s*(className=[{]*.+([}`]))/gi, '');
-        }
+        // if (attributes && attributes.search(/(\s)visible=/g) !== -1) {
+        //     // console.warn('Modal has searched');
+        //     token = 'Modal';
+        //     const import_line = `import { Modal } from 'react-native';`;
+        //     addImportLine(import_line);
+        //     attributes = attributes.replace(/\s*(className=[{]*.+([}`]))/gi, '');
+        // }
         // console.log(start_tag + token + type + (possible_tabs || '') + (attributes || '') + (end_tag || empty2));
         // return 0;
         let modified_tag = start_tag + possible_tabs_start + token + type + (attributes ? !with_type_tag ? possible_tabs + attributes : possible_tabs + attributes : '') + (end_tag || empty2);
@@ -735,6 +735,58 @@ if (str) {
 return str;
 };
 
+const transformModalToNative = (str) => {
+    // import { Modal } from 'react-native';
+    const replacer = (match, p1) => {
+        // console.log('match=', match);
+        let modal_class_name;
+        // className={`modal_window__container ${additional_class}`}
+        match = match.replace(/(<.+?)(className=[{]*['"`]+.+?[`"']+[}]*)(.+?[^=])>/si, (match, tagName, className, restProps) => {
+            modal_class_name = className;
+            const str = `<Modal ${restProps}>\n${tagName} ${className}>`
+            return str;
+        });
+        return match + '\n</Modal>';
+    };
+    if (str && str.search(/<.+?visible=\{/gsi) !== -1) {
+        const pos = str.search(/<div.[^\n]+?modal_window__view(.+?)[^=]>/gsi);
+        let cut_str;
+        let found = false;
+        let step=0;
+        // console.log(str.substring(pos, 10));
+        while (!found && pos !== -1) {
+            cut_str = str.substring(pos, step++);
+            if (cut_str) {
+                let div =0;
+                let close_div=0;
+                cut_str.replace(/<div/gi, () => {
+                    div++;
+                })
+                cut_str.replace(/<\/div>/gi, () => {
+                    close_div++;
+                })
+                if (div && close_div && div === close_div) {
+                    // console.log('div=',div);
+                    // console.log('close_div=',close_div);
+                    found = true;
+                    break;
+                }
+            }
+        }
+        // console.log('cut_str=', cut_str);
+        if (cut_str) {
+            const new_str = replacer(cut_str);
+            if (new_str) {
+                addImportLine('import { Modal } from \'react-native\';');
+                str = str.replace(cut_str, new_str);
+                console.log('new_str=', new_str);
+            }
+        }
+    }
+    console.log('str=', str);
+    return str;
+}
+
 module.exports = {
     withRouterDelete,
     historyToNavigationTransform,
@@ -758,4 +810,5 @@ module.exports = {
     changeWindowLocalStorage,
     addRunAfterInteractionsWrapper,
     addStatusBarConnection,
+    transformModalToNative,
 };

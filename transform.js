@@ -48,12 +48,13 @@ const copyMainApps = () => {
                 if (fileBuffer) {
                     initImports();
 
-                    console.log('start transformModalToNative');
-                    fileBuffer = transformModalToNative(fileBuffer);
+
                     console.log('start removeNativeComments');
                     fileBuffer = removeNativeComments(fileBuffer);
                     // console.log('start closeModalTags');
                     // fileBuffer = changeNextTag(fileBuffer);
+                    console.log('start transformModalToNative');
+                    fileBuffer = transformModalToNative(fileBuffer);
 
 
                     console.log('start addNavigationRouteProps');
@@ -244,6 +245,7 @@ const transferStyles = () => {
         'modifiers',
         'calculations',
         'contacts',
+        'insarmic',
     ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];

@@ -424,9 +424,9 @@ const platformTransforms = (str, filename) => {
                 return p1 + p2;
             });
         }
-        if (attributes && attributes.search(/(\s)ref=/g) !== -1) {
+        if (attributes && attributes.search(/(\s*)ref=/g) !== -1) {
             // attributes = attributes.replace(/\s+ref=/g, '\\s+Ref=');
-            attributes = attributes.replace(/(\s)(ref=)/g, (match, p1, p2) => {
+            attributes = attributes.replace(/(\s*)(ref=)/g, (match, p1, p2) => {
                 return p1 + makeStringTitled(p2);
             });
         }
@@ -783,7 +783,7 @@ const transformModalToNative = (str) => {
             }
         }
     }
-    console.log('str=', str);
+    // console.log('str=', str);
     return str;
 }
 

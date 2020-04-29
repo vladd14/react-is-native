@@ -43,7 +43,6 @@ const copyFile = (path_from, path_to, file_name,) => {
 const copyFilesFromDirectory = (path_from, path_to) => {
     const files_in_dir = fs.readdirSync(path_from, { withFileTypes: true, });
     files_in_dir.forEach((file_in_folder) => {
-
         if (!file_in_folder.isDirectory()) {
             copyFile(path_from, path_to, file_in_folder.name);
         } else {

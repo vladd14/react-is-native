@@ -375,7 +375,15 @@ const replaceHtmlForWithFocus = (str) => {
     return str;
 };
 
-const platformTransforms = (str, filename) => {
+const addPathDots = (level = 0) => {
+    let path = '../';
+    for (let i = 0; i < level; i++) {
+        path += path;
+    }
+    return path;
+}
+
+const platformTransforms = (str, filename, nested_level) => {
     // initImports();
     let tokens = [];
     const tokenModify = (match, start_tag, possible_tabs_start, token, possible_tabs, empty, empty2, attributes, end_tag) => {
@@ -409,7 +417,9 @@ const platformTransforms = (str, filename) => {
         // token = token.charAt(0).toUpperCase() + token.slice(1);
         token = makeStringTitled(token);
         if (tokens.indexOf(token) === (-1)) {
-            tokens.push({module: `{ ${token} }`, path: '../platformTransforms' });
+            // tokens.push({module: `{ ${token} }`, path: '../platformTransforms' });
+            tokens.push({module: `{ ${token} }`, path: `${addPathDots(nested_level)}platformTransforms` });
+
         }
         if (token === 'Img') {
             attributes.replace(/src=\{\s*(.[^.}]+)[.}]*(.[^}]*)\s*}/gi, (match, module_name, property) => {
@@ -507,7 +517,7 @@ const platformTransforms = (str, filename) => {
                 p2 = p1 + `appUrlReversed.get(${p2})`;
                 if (tokens.indexOf('appUrlReversed') === (-1)) {
                     // tokens.push('appUrlReversed');
-                    tokens.push({module: '{ appUrlReversed }', path: '../urls'});
+                    tokens.push({module: '{ appUrlReversed }', path: `${addPathDots(nested_level)}urls`});
                 }
             }
             return p2;

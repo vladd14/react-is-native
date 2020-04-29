@@ -27,22 +27,28 @@ const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar'];
 const svg_file_name = 'vectors';
 let svg_file = {};
 
-const copyMainApps = () => {
+const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
 
-    directories.forEach( (folder) => {
+    apps_folder.forEach( (folder) => {
 
-        const files_in_dir = fs.readdirSync(dirFrom(path_from, folder), {});
+        const files_in_dir = fs.readdirSync(dirFrom(path_from, folder), { withFileTypes: true, });
         if (fs.existsSync(dirTo(path_to, folder))) {
-            const files_in_dest_folder = fs.readdirSync(dirTo(path_to, folder), {});
+            const files_in_dest_folder = fs.readdirSync(dirTo(path_to, folder), { withFileTypes: true, });
             files_in_dest_folder.forEach((dest_file) => {
-                fs.unlinkSync(fileTo(dirTo(path_to, folder), dest_file));
+                if (!dest_file.isDirectory()) {
+                    fs.unlinkSync(fileTo(dirTo(path_to, folder), dest_file.name));
+                }
             });
         } else {
             fs.mkdirSync(dirTo(path_to, folder), { recursive: true });
         }
 
-        files_in_dir.forEach((file_in_folder) => {
-            if ( !file_in_folder.startsWith('.')) {
+        files_in_dir.forEach((file_in_folder_object) => {
+            const file_in_folder = file_in_folder_object.name;
+            if (file_in_folder_object.isDirectory()) {
+                copyMainApps({ apps_folder: [`${folder}/${file_in_folder}`], nested_level: ++nested_level });
+            }
+            if ( !file_in_folder.startsWith('.') && !file_in_folder_object.isDirectory()) {
                 console.log('file_in_folder=',file_in_folder);
                 let fileBuffer = fs.readFileSync(fileFrom(dirFrom(path_from, folder), file_in_folder), 'utf-8');
                 if (fileBuffer) {
@@ -112,7 +118,7 @@ const copyMainApps = () => {
                     console.log('start SimplifyEmptyTags');
                     fileBuffer = SimplifyEmptyTags(fileBuffer);
                     console.log('start platformTransforms');
-                    fileBuffer = platformTransforms(fileBuffer, file_in_folder);
+                    fileBuffer = platformTransforms(fileBuffer, file_in_folder, nested_level);
                     console.log('start changePlatform');
                     if (folder === 'app_structure' && file_in_folder === 'screens.js') {
                         fileBuffer = changePlatform(fileBuffer);
@@ -171,8 +177,6 @@ const copyMainApps = () => {
             }
         }
     });
-    console.log('store.js has copied');
-    copyFile(path_from, path_to, 'store.js');
 };
 
 const doPrettier = () => {
@@ -455,7 +459,7 @@ const transferStyles = () => {
 
 const startAppWebToNativeApp = () => {
     console.log('start copyMainApps');
-    copyMainApps();
+    copyMainApps({ apps_folder: directories });
     console.log('start createAppFile');
     createAppFile();
     console.log('start transferStyles');

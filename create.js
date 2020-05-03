@@ -26,6 +26,7 @@ const yarn_modules = [
     'react-native-safe-area-context',
     '@react-native-community/masked-view',
     '@react-native-community/async-storage',
+    '@react-native-community/picker',
 ];
 
 const copyWebStormProjectSettings = () => {

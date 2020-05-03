@@ -22,7 +22,7 @@ const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'o
 const force_stringify_value = ['fontWeight'];
 const not_stringify_value = ['fontFamily', 'transform'];
 const not_round_properties = ['lineHeight', 'fontSize'];
-const not_calculated_units = ['%', 'em'];
+const not_calculated_units = ['%', 'em', 'deg'];
 
 let initial_tabs;
 
@@ -136,6 +136,8 @@ const splitVariable = (variable) => {
         if (p2) {
             p2 = replace_variable(p2);
         }
+        console.log(p1);
+        console.log(p2);
         const expression = p1 && p2 ? eval(`${p1} * ${p2}`) : p1 || p2;
         return expression;
     };
@@ -149,6 +151,7 @@ const splitVariable = (variable) => {
 const calcExpression = (expression) => {
     const replacer = (match, p1) => {
         if (p1) {
+            console.log('splitVariable 555', p1);
             p1 = splitVariable(p1);
             p1 = replace_variable(p1);
             p1 = eval(p1);
@@ -321,23 +324,22 @@ const changeSecondsToMs = (str) => {
     str = str.replace(/(\s+)(\d+\.*\d*)(s|ms)(\s+)/gi, replacer);
     return str;
 };
-// transform: [
-//     {
-//         translateX: 0,
-//     },
-// ],
+
+
 const splitTransforms = (str) => {
     let transforms = [];
     const replacer = (match, property, value) => {
         let obj = {};
         property = property.replace(/[,. ]/gi, '');
-        // console.log('property=', property);
-        obj[property] = value && typeof value === "string" && value.endsWith('%') ? stringifyValue(value) : value;
+        console.log('property=', property);
+        console.log('value=', value);
+        obj[property] = value && typeof value === "string" && (value.endsWith('%') || (value.endsWith('deg')) ) ? stringifyValue(value) : value;
+        console.log('transforms.push(obj);=', obj);
         transforms.push(obj);
     };
     const regexp = new RegExp(`\\s*(.[^(]+)\\((.[^)]*)\\)`, 'gi');
     str.replace(regexp, replacer);
-    // console.log(transformArrayToString(transforms, '', true));
+    // console.log(transformArrayToString(transforms));
     return transformArrayToString(transforms);
 };
 const propertiesInnerCorrections = (property, number_value, value_string) => {
@@ -346,20 +348,25 @@ const propertiesInnerCorrections = (property, number_value, value_string) => {
         return match;
     };
     value_string = number_value ? number_value + value_string : value_string;
-
+    console.log('property 555', property);
+    console.log('value_string 555', value_string);
     value_string = calcExpression(value_string);
 
     camel_case_properties.forEach((target_property) => {
         const regexp = new RegExp(`${target_property}`, 'gi');
         value_string = value_string.replace(regexp, replacer);
         value_string = changeSecondsToMs(value_string);
-        value_string = splitVariable(value_string);
+        console.log('value_string 555', value_string);
+        if (!value_string.includes('rotate')) {
+            value_string = splitVariable(value_string);
+        }
     });
 
     if (property === 'transform') {
         // console.log('value_string', value_string);
         value_string = splitTransforms(value_string);
     }
+    // console.log('value_string', value_string);
     return value_string;
 };
 const getProperty = (str, object) => {

@@ -46,7 +46,7 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
         files_in_dir.forEach((file_in_folder_object) => {
             const file_in_folder = file_in_folder_object.name;
             if (file_in_folder_object.isDirectory()) {
-                copyMainApps({ apps_folder: [`${folder}/${file_in_folder}`], nested_level: ++nested_level });
+                copyMainApps({ apps_folder: [`${folder}/${file_in_folder}`], nested_level: nested_level + 1 });
             }
             if ( !file_in_folder.startsWith('.') && !file_in_folder_object.isDirectory()) {
                 console.log('file_in_folder=',file_in_folder);
@@ -250,6 +250,7 @@ const transferStyles = () => {
         'calculations',
         'contacts',
         'insarmic',
+        'param_view'
     ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];

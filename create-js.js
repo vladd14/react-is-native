@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { spawn } = require('child_process');
 // const { startAppWebToNativeApp } = require('./transform');
-const { fileFrom, dirFrom, dirTo, copyFile, copyFilesFromDirectory } = require('./helpers');
+const { fileFrom, dirFrom, dirTo, copyFile, copyFilesFromDirectory, copyFileByStream, copyFilesFromDirectoryByStream, deleteFolder } = require('./helpers');
 const { project_name_js, project_folder_with_prettier, project_dir, project_folder_with_js_source_files, project_folder_with_tools, } = require('./constants');
 
 const project_name = project_name_js;
@@ -27,16 +27,30 @@ const yarn_modules = [
     'react-redux',
     '@reduxjs/toolkit',
     'node-sass',
-    'react-router-dom'
+    'react-router-dom',
+    'moment-timezone',
+    'react-datetime',
 ];
+
+// const copyGitDirStream = () => {
+//     const copy_folders = [
+//         '.git',
+//     ];
+//     copy_folders.forEach((dir_name) => {
+//         copyFilesFromDirectoryByStream(
+//             dirFrom(`${project_dir}${project_folder_with_js_source_files}`, dir_name),
+//             dirTo(`${project_dir}${project_name}`, dir_name));
+//     });
+//     console.log(`.Git settings have copied`);
+//     console.log(`\nThat's it!`);
+// }
 
 const copyWebStormProjectSettings = () => {
     const copy_files = [
         '.gitattributes',
-        '.gitignore',
+    //     '.gitignore',
     ];
     const copy_folders = [
-        '.git',
         '.idea',
     ];
 
@@ -53,10 +67,33 @@ const copyWebStormProjectSettings = () => {
             dirFrom(`${project_dir}${project_folder_with_js_source_files}`, dir_name),
             dirTo(`${project_dir}${project_name}`, dir_name));
     });
-
     console.log(`WebStorm settings have copied`);
     console.log(`\nThat's it!`);
+    // copyGitDirStream();
 };
+
+const copyGitDirStream = () => {
+    const copy_folders = [
+        '.git',
+    ];
+    copy_folders.forEach((dir_name) => {
+        deleteFolder(dirTo(`${project_dir}${project_name}`, dir_name));
+    });
+
+    // copy_folders.forEach((dir_name) => {
+    //     copyFilesFromDirectoryByStream(
+    //         dirFrom(`${project_dir}${project_folder_with_js_source_files}`, dir_name),
+    //         dirTo(`${project_dir}${project_name}`, dir_name));
+    // });
+    copy_folders.forEach((dir_name) => {
+        copyFilesFromDirectory(
+            dirFrom(`${project_dir}${project_folder_with_js_source_files}`, dir_name),
+            dirTo(`${project_dir}${project_name}`, dir_name));
+    });
+    console.log(`.Git settings have copied`);
+    console.log(`Start to copy WebStorm settings files`);
+    copyWebStormProjectSettings();
+}
 
 const copyProjectFiles = () => {
     copy_project_dirs.forEach((dir_name) => {
@@ -65,15 +102,11 @@ const copyProjectFiles = () => {
             dirTo(`${project_dir}${project_name}`, dir_name));
     });
 
-    // if (fs.existsSync(fileFrom(`${project_dir}${project_name}`, 'metro.config.js'))) {
-    //     fs.unlinkSync(fileFrom(`${project_dir}${project_name}`, 'metro.config.js'));
-    //     console.log(`default metro.config.js was deleted`);
-    // }
-    // copyFile(`${project_dir}${project_folder_with_tools}`, `${project_dir}${project_name}`, 'metro.config.js' );
-
     console.log(`Project files have copied`);
-    console.log(`Start to copy WebStorm settings files`);
-    copyWebStormProjectSettings();
+
+    console.log(`start copy the Git folder`);
+    // copyWebStormProjectSettings();
+    copyGitDirStream();
 };
 
 const removeJestLinks = () => {
@@ -224,6 +257,7 @@ const brewUpgrade = () => {
 
 const startCreatingProject = () => {
     brewUpgrade();
+    // copyGitDirStream();
 };
 
 startCreatingProject();

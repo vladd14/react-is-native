@@ -21,8 +21,7 @@ const path_from = `${project_dir}${initial_react_js_project_name}/src/`;
 const path_to = `${project_dir}${project_name}/`;
 
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'app_structure', 'components', 'components_connections', 'urls', 'requirements'];
-// const excess_modules = ['PageHeader', 'react-router-dom'];
-const excess_modules = ['react-router-dom'];
+const excess_modules = ['react-router-dom', 'react-datetime'];
 const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar'];
 const svg_file_name = 'vectors';
 let svg_file = {};
@@ -53,9 +52,6 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                 let fileBuffer = fs.readFileSync(fileFrom(dirFrom(path_from, folder), file_in_folder), 'utf-8');
                 if (fileBuffer) {
                     initImports();
-                    console.log('start cutImport');
-                    fileBuffer = cutImport(fileBuffer);
-                    excess_modules.forEach((module_name) => deleteImportModule(module_name));
 
                     console.log('start removeNativeComments');
                     fileBuffer = removeNativeComments(fileBuffer);
@@ -80,7 +76,6 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                             addImportLine(`import { StatusBar } from \'react-native\';`);
                         }
                         if (file_in_folder === 'ModalWindowDateTimePicker.js') {
-                            deleteImportModule('react-datetime');
                             addImportLine(`import DateTimePicker from '@react-native-community/datetimepicker';`);
                         }
                         console.log('start addRunAfterInteractionsWrapper');
@@ -92,6 +87,10 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                         console.log('start replaceStyleAfterFlowFunction');
                         fileBuffer = replaceStyleAfterFlowFunction(fileBuffer);
                     }
+
+                    console.log('start cutImport');
+                    fileBuffer = cutImport(fileBuffer);
+                    excess_modules.forEach((module_name) => deleteImportModule(module_name));
 
                     fake_modules.forEach((module) => {
                         if (findModule(module)) {

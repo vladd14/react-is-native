@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { startAppWebToNativeApp } = require('./transformations');
-const { fileFrom, dirFrom, dirTo, copyFile, copyFilesFromDirectory } = require('./helpers');
+const { fileFrom, dirFrom, dirTo, copyFile, copyFilesFromDirectory, deleteFolder } = require('./helpers');
 const { project_name, project_dir, project_folder_with_tools, } = require('./constants');
 
 // const project_name = 'AwesomeProject';
@@ -32,6 +32,24 @@ const yarn_modules = [
     'moment-timezone',
 ];
 
+const iOSCopyIconAndLoadingScreen = () => {
+    const copy_folders = [
+        'Base.lproj',
+        'Images.xcassets',
+    ];
+    copy_folders.forEach((dir_name) => {
+        deleteFolder(dirTo(`${project_dir}${project_name}/ios/${project_name}`, dir_name));
+    });
+
+    copy_folders.forEach((dir_name) => {
+        copyFilesFromDirectory(
+            dirFrom(`${project_dir}${project_folder_with_tools}/ios/${project_name}`, dir_name),
+            dirTo(`${project_dir}${project_name}/ios/${project_name}`, dir_name));
+    });
+    console.log(`iOS settings have been transfer`);
+    console.log(`\nThat's it!`);
+}
+
 const copyWebStormProjectSettings = () => {
     const copy_files = [
         '.gitattributes',
@@ -57,7 +75,7 @@ const copyWebStormProjectSettings = () => {
     });
 
     console.log(`WebStorm settings have copied`);
-    console.log(`\nThat's it!`);
+    iOSCopyIconAndLoadingScreen();
 };
 
 const addPrettierCustomSettings = () => {
@@ -128,6 +146,22 @@ const registerFontAssetFile = () => {
     });
 };
 
+const changeBundleToRam = () => {
+    let file = fileFrom(dirFrom(`${project_dir}${project_name}`, 'node_modules/react-native/scripts/'), 'react-native-xcode.sh');
+    let file_buffer = fs.readFileSync(file, 'utf-8');
+    if (file_buffer) {
+        //BUNDLE_COMMAND="bundle"
+        file_buffer = file_buffer.replace(/(BUNDLE_COMMAND=["'`])(bundle)(["'`])/gi, (match, str_pre, bundle, str_after) => {
+            return str_pre + 'ram-' + bundle + str_after;
+        });
+        fs.writeFileSync(file, file_buffer);
+    }
+    console.log(`type of bundle has changed`);
+    addPrettierCustomSettings();
+    startAppWebToNativeApp();
+    registerFontAssetFile();
+}
+
 const addReactNavigationDependencies = () => {
     // https://reactnavigation.org/docs/en/next/getting-started.html
     // To finalize installation of react-native-screens for Android,
@@ -181,9 +215,8 @@ const addReactNavigationDependencies = () => {
         fs.writeFileSync(file, file_buffer);
     }
     console.log(`React Navigation has added`);
-    addPrettierCustomSettings();
-    startAppWebToNativeApp();
-    registerFontAssetFile();
+    console.log(`start change bundle type to ram-bundle`);
+    changeBundleToRam()
 };
 
 const copyPlatformTools = () => {

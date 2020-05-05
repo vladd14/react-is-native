@@ -10,99 +10,119 @@ const {
 } = require('./codeTransformations');
 
 let mainApp = `
-        <div
-            className={'modal_window__container {additional_class}'}
-            onClick={(event) => closeModalWindow({ event: event })}>
-            <div
-                className={\'card modal_window__view modal_window_search {modal_view_class} {additional_view_class}\'}
-                /*native visible={modal_visibility} native*/
-                /*native animationType={\'{animation_type\'} native*/
-                /*native onRequestClose={(event) => closeModalWindow({ event: event, on_dismiss: true })} native*/
-                /*native onDismiss={(event) => closeModalWindow({ event: event, on_dismiss: true })} native*/
-                /*native presentationStyle={\'{presentation_style}\'} native*/
-                /*native {...dynamic_props} native*/
-            >
-                <div className={'modal_window__content search_content justify_content_between flex_grow'}>
-                    <span className={'close_rect'} onClick={(event) => closeModalWindow({ event: event })}>
-                        ×
-                    </span>
-                    <div className={''}>
-                        <InputFieldStyled
-                            id={'modal_search_id'}
-                            value={state.search.value}
-                            placeholder={'ФИО'}
-                            additional_text_value={state.search.additional_text}
-                            error_state={Boolean(state.search.additional_text)}
-                            required={'required'}
-                            onChange={(event) => searchInput(event, 'search')}
-                        />
-                    </div>
-                    {screen_name && searchState.results.length ? (
-                        <>
-                            <ColumnView
-                                {...{
-                                    render_item: RenderItem,
-                                    screen_name: screen_name,
-                                    data_type: data_type,
-                                    primary_key: 'pk',
-                                    fist_container_class: 'container container__view search_results',
-                                    second_container_class: 'container__unlimited',
-                                    item_class: 'search_contact',
-                                    current_data_type: data_type,
-                                    onClick: onClickItemInList,
-                                    // history: history,
-                                }}
-                            />
-                        </>
-                    ) : (
-                        <></>
-                    )}
-                </div>
-                {app_state.platform !== 'web' ? <OverMenu history={history} /> : <></>}
-            </div>
-        </div>
-        </div>
-        </div>
-        </div>
-`;
+        import React from 'react';
+import { storage } from '../helpers/storage';
+import { bindActionCreators } from 'redux';
+import { withRouter } from 'react-router-dom';
+import { connect } from 'react-redux';
+import OverMenu from './OverMenu';
+import { store, store_actions } from '../reducers';
+import * as DateTimePicker from 'react-datetime';
+import { makeFunctionalNameString } from '../helpers/tools';
+import moment from 'moment';
 
-const second_str = `
-<div className={\`modal_window__container {additional_class}\`} onClick={(event) => closeModalWindow(event)}>
-    <div
-        className={\`card modal_window__view modal_window_notify {modal_view_class} {additional_view_class}\`}
-        /*native visible={modal_visibility} native*/
-        /*native animationType={\`{animation_type}\`} native*/
-        /*native onRequestClose={(event) => closeModalWindow(event)} native*/
-        /*native onDismiss={(event) => closeModalWindow(event)} native*/
-        /*native presentationStyle={\`{presentation_style}\`} native*/
-        /*native {...dynamic_props} native*/
-    >
-        <div className={'modal_window__content justify_content_between flex_grow'}>
-            <span className={'close_rect'} onClick={(event) => closeModalWindow(event)}>
-                ×
-            </span>
-            <div>
-                {type === 'user_actions' ? (
-                    <div className={'logo justify_content_center'}>
-                        <Avatar to={avatar_url} src={avatar} type={avatar_type} alt={avatar_alt} />
-                    </div>
-                ) : (
-                    <></>
-                )}
-            </div>
-            <div>
-                <p className={'text_centered text_weight_500'}>{message}</p>
-            </div>
-            <div className={'text_centered margin_bottom_st_x2'}>
-                <SimpleButton
-                    title={translator('OK', app_state.language)}
-                    additional_class={'small size-changing blue'}
-                    onClick={(event) => closeModalWindow(event)}
-                />
-            </div>
-        </div>
-    </div>
-</div>
+const ModalWindowDateTimePicker = ({ modalsState, actions, history, className, ...props }) => {
+    console.log('ModalWindowDateTimePicker');
+    const store_state = store.getState();
+    const app_state = store_state.app_settings;
+
+    const locale = app_state.language;
+
+    const additional_class = modalsState.date_time_picker_state ? 'modal_window__active' : '';
+    /*native const modal_visibility = !!additional_class; native*/
+
+    const screen_name = modalsState.date_time_picker_state ? modalsState.date_time_picker_state.screen_name : '';
+    const data_type = modalsState.date_time_picker_state ? modalsState.date_time_picker_state.data_type : '';
+    const date_property_name =
+        modalsState.date_time_picker_state && modalsState.date_time_picker_state.date_property_name
+            ? modalsState.date_time_picker_state.date_property_name
+            : '';
+    const picker_view_mode =
+        modalsState.date_time_picker_state && modalsState.date_time_picker_state.picker_view_mode
+            ? modalsState.date_time_picker_state.picker_view_mode
+            : 'days';
+
+    let date_format;
+    if (picker_view_mode === 'years') {
+        date_format = 'YYYY';
+    }
+    const current_page_state = screen_name && data_type ? store_state[`${screen_name}_${data_type}`] : {};
+
+    const date_property_value =
+        picker_view_mode === 'days'
+            ? moment(current_page_state[date_property_name])
+            : moment(current_page_state[`${date_property_name}_value`]);
+
+    const {
+        modal_view_class,
+        // screen_name,
+        presentation_style = 'pageSheet',
+        transparent = false,
+        /*native type = 'user_actions',
+        animation_type = 'slide', native*/
+    } = storage.getData({
+        key: 'modal_message',
+    })
+        ? storage.getData({ key: 'modal_message' })
+        : {};
+
+    let additional_view_class = app_state.platform === 'web' ? 'modal_datetime_picker' : 0;
+    let dynamic_props = {};
+    if (presentation_style !== 'pageSheet' && presentation_style !== 'formSheet') {
+        dynamic_props.transparent = transparent;
+    } else {
+        additional_view_class += ' page_sheet';
+    }
+
+    const closeModalWindow = ({ event, on_dismiss }) => {
+        if (app_state.platform !== 'web' || (event && event.target === event.currentTarget) || on_dismiss) {
+            if (event) {
+                event.preventDefault();
+            }
+            if (modalsState.date_time_picker_state) {
+                console.log('ModalWindowSearch modals_state.modal_window_state');
+                actions.setAppModalsData({ date_time_picker_state: '' });
+            }
+        }
+    };
+
+    const onChangePicker = (event) => {
+        console.log('onChangePicker');
+
+        const value_text =
+            picker_view_mode !== 'years' ? new Date(event.format('YYYY-MM-DD')).toLocaleDateString() : event.year();
+
+        let value_date = new Date(event.format('YYYY-MM-DD'));
+        const new_date = {};
+        new_date[date_property_name] = value_text;
+        // actions.setAppModalsData({ date_time_picker_state: date_start_value });
+        actions.updateAppModalsState({});
+    };
+    const picker_props =
+        app_state.platform === 'web'
+            ? {
+                  timeFormat: false,
+                  input: false,
+                  open: true,
+                  dateFormat: date_format,
+                  viewMode: picker_view_mode,
+                  value: date_property_value,
+              }
+            : {
+                  mode: picker_view_mode,
+                  value: date_property_value,
+              };
+    return (
+        
+    );
+};
+
+const mapStateToProps = (state) => ({
+    modalsState: state.app_modals,
+});
+const mapDispatchToProps = (dispatch) => ({ actions: bindActionCreators({ ...store_actions }, dispatch) });
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ModalWindowDateTimePicker));
+
 `
 
 // transformVariables(variables);
@@ -115,5 +135,4 @@ const second_str = `
 
 // removeFormTags(mainApp, ['form']);
 // findCloseModalTag(mainApp);
-transformModalToNative(mainApp);
-
+// transformModalToNative(mainApp);

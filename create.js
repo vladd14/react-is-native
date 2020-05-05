@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { spawn } = require('child_process');
-const { startAppWebToNativeApp } = require('./transform');
+const { startAppWebToNativeApp } = require('./transformations');
 const { fileFrom, dirFrom, dirTo, copyFile, copyFilesFromDirectory } = require('./helpers');
 const { project_name, project_dir, project_folder_with_tools, } = require('./constants');
 
@@ -27,6 +27,9 @@ const yarn_modules = [
     '@react-native-community/masked-view',
     '@react-native-community/async-storage',
     '@react-native-community/picker',
+    '@react-native-community/datetimepicker',
+    'moment@2.24.0',
+    'moment-timezone',
 ];
 
 const copyWebStormProjectSettings = () => {

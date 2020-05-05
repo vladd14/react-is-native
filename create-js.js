@@ -2,7 +2,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 // const { startAppWebToNativeApp } = require('./transform');
 const { fileFrom, dirFrom, dirTo, copyFile, copyFilesFromDirectory, copyFileByStream, copyFilesFromDirectoryByStream, deleteFolder } = require('./helpers');
-const { project_name_js, project_folder_with_prettier, project_dir, project_folder_with_js_source_files, project_folder_with_tools, } = require('./constants');
+const { project_name_js, project_folder_with_prettier, project_dir, project_folder_with_js_source_files, from_folder, project_folder_with_tools, } = require('./constants');
 
 const project_name = project_name_js;
 // const project_dir = '/Users/admin/PycharmProjects/';
@@ -28,6 +28,8 @@ const yarn_modules = [
     '@reduxjs/toolkit',
     'node-sass',
     'react-router-dom',
+    'prettier',
+    'moment@2.24.0',
     'moment-timezone',
     'react-datetime',
 ];
@@ -52,6 +54,7 @@ const copyWebStormProjectSettings = () => {
     ];
     const copy_folders = [
         '.idea',
+        'scripts',
     ];
 
     copy_files.forEach((file_name) => {
@@ -80,11 +83,6 @@ const copyGitDirStream = () => {
         deleteFolder(dirTo(`${project_dir}${project_name}`, dir_name));
     });
 
-    // copy_folders.forEach((dir_name) => {
-    //     copyFilesFromDirectoryByStream(
-    //         dirFrom(`${project_dir}${project_folder_with_js_source_files}`, dir_name),
-    //         dirTo(`${project_dir}${project_name}`, dir_name));
-    // });
     copy_folders.forEach((dir_name) => {
         copyFilesFromDirectory(
             dirFrom(`${project_dir}${project_folder_with_js_source_files}`, dir_name),
@@ -95,6 +93,14 @@ const copyGitDirStream = () => {
     copyWebStormProjectSettings();
 }
 
+const copyCustomScripts = () => {
+    copyFile(`${project_dir}${project_folder_with_js_source_files}scripts/`, `${project_dir}${project_name}/scripts/`, 'build_scss.zsh' );
+
+    console.log(`build_scss.zsh have copied`);
+    console.log(`start copy the Git folder`);
+    copyGitDirStream();
+};
+
 const copyProjectFiles = () => {
     copy_project_dirs.forEach((dir_name) => {
         copyFilesFromDirectory(
@@ -103,10 +109,8 @@ const copyProjectFiles = () => {
     });
 
     console.log(`Project files have copied`);
-
-    console.log(`start copy the Git folder`);
-    // copyWebStormProjectSettings();
-    copyGitDirStream();
+    console.log(`start copy custom scripts`);
+    copyCustomScripts();
 };
 
 const removeJestLinks = () => {
@@ -145,7 +149,7 @@ const addPrettierCustomSettings = () => {
     let file = fileFrom(dirFrom(project_dir, project_name), 'package.json');
     let file_buffer = fs.readFileSync(file, 'utf-8');
     if (file_buffer) {
-
+        file_buffer = file_buffer.replace(/['"`]eslintConfig.+?}[,]\n*/gsi, '');
         file_buffer = file_buffer.replace(/(})(\s+})/gi, (match, p1, p2) => {
             return p1 + add_lines.join('\n') + p2;
         });
@@ -161,7 +165,7 @@ const addPrettierCustomSettings = () => {
 const copyNativePrettierFiles = () => {
     copy_prettier_dirs.forEach((dir_name) => {
         copyFilesFromDirectory(
-            dirFrom(`${project_dir}${project_folder_with_prettier}`, dir_name),
+            dirFrom(`${project_dir}${from_folder}${project_folder_with_prettier}`, dir_name),
             dirTo(`${project_dir}${project_name}/node_modules`, dir_name));
     });
 
@@ -195,9 +199,13 @@ const addYarnModules = () => {
 
 const yarnEject = () => {
 
-    const process = spawn('yarn', ['add',].concat(yarn_modules), { cwd: dirTo(project_dir, project_name_js) });
+    const process = spawn('yarn', ['eject', 'yes'], { cwd: dirTo(project_dir, project_name) });
     process.stdout.on('data', (data) => {
         console.log(`stdout: ${data}`);
+        if (data.includes('y/N')) {
+            process.stdin.setEncoding('utf-8');
+            process.stdin.write('yes\n');
+        }
     });
 
     process.stderr.on('data', (data) => {
@@ -207,7 +215,6 @@ const yarnEject = () => {
     process.on('close', (code) => {
         if (!code) {
             console.log(`yarn was successfully ejected`);
-            // console.log(`call pod install`);
             addYarnModules();
         }
         else {

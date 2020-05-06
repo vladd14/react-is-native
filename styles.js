@@ -303,14 +303,14 @@ const propertiesSplitter = (property, number_value, value_string) => {
             object[`${property}Horizontal`] = splitVariable(array[1]);
         }
         if (array.length === 1) {
-            if (array[0].toLowerCase() !== 'auto') {
-                object[`${property}`] = splitVariable(array[0]);
-            } else {
+            // if (array[0].toLowerCase() !== 'auto') {
+            //     object[`${property}`] = splitVariable(array[0]);
+            // } else {
                 object[`${property}Top`] =  splitVariable(array[0]); // all properties are variables like 0.5rem and etc or 0
                 object[`${property}Right`] = splitVariable(array[0]);
                 object[`${property}Bottom`] = splitVariable(array[0]);
                 object[`${property}Left`] = splitVariable(array[0]);
-            }
+            // }
         }
     }
     // console.log(object);

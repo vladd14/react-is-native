@@ -6,11 +6,11 @@ const {
     withRouterDelete, importNotRequired, historyToNavigationTransform, removeFormTags, addFlowTags,
     platformTransforms, changePlatform, createAppJs, removeFunctionCall, changeTagName, addScreenDimensionListener,
     replaceStyleAfterFlowFunction, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody, replaceHtmlForWithFocus,
-    changeNextTag, addRunAfterInteractionsWrapper, transformModalToNative
+    changeNextTag, addRunAfterInteractionsWrapper, transformModalToNative, deleteJSRequires,
 } = require('./codeTransformations');
 
 let mainApp = `
-        import React from 'react';
+import React from 'react';
 import { storage } from '../helpers/storage';
 import { bindActionCreators } from 'redux';
 import { withRouter } from 'react-router-dom';
@@ -18,7 +18,6 @@ import { connect } from 'react-redux';
 import OverMenu from './OverMenu';
 import { store, store_actions } from '../reducers';
 import * as DateTimePicker from 'react-datetime';
-import { makeFunctionalNameString } from '../helpers/tools';
 import moment from 'moment';
 
 const ModalWindowDateTimePicker = ({ modalsState, actions, history, className, ...props }) => {
@@ -27,6 +26,7 @@ const ModalWindowDateTimePicker = ({ modalsState, actions, history, className, .
     const app_state = store_state.app_settings;
 
     const locale = app_state.language;
+    require('moment/locale/{locale.toLowerCase()}');
 
     const additional_class = modalsState.date_time_picker_state ? 'modal_window__active' : '';
     /*native const modal_visibility = !!additional_class; native*/
@@ -46,13 +46,9 @@ const ModalWindowDateTimePicker = ({ modalsState, actions, history, className, .
     if (picker_view_mode === 'years') {
         date_format = 'YYYY';
     }
-    const current_page_state = screen_name && data_type ? store_state[`${screen_name}_${data_type}`] : {};
-
     const date_property_value =
         picker_view_mode === 'days'
             ? moment(current_page_state[date_property_name])
-            : moment(current_page_state[`${date_property_name}_value`]);
-
     const {
         modal_view_class,
         // screen_name,
@@ -113,7 +109,32 @@ const ModalWindowDateTimePicker = ({ modalsState, actions, history, className, .
                   value: date_property_value,
               };
     return (
-        
+        <div
+            onClick={(event) => closeModalWindow({ event: event })}>
+            <div
+                /*native visible={modal_visibility} native*/
+                /*native onRequestClose={(event) => closeModalWindow({ event: event, on_dismiss: true })} native*/
+                /*native onDismiss={(event) => closeModalWindow({ event: event, on_dismiss: true })} native*/
+                /*native {...dynamic_props} native*/
+            >
+                <div className={'modal_window__content datetime_picker_content justify_content_between flex_grow'}>
+                    <div className={'d_flex flex_column'}>
+                        <div className={'d_flex flex_row justify_content_center'}>
+                            <span className={'close_rect'} onClick={(event) => closeModalWindow({ event: event })}>
+                                {app_state.platform === 'web' ? '×' : 'Закрыть'}
+                            </span>
+                            {app_state.platform !== 'web' ? (
+                                <span className={'modal_card_label'}>{'Поиск'}</span>
+                            ) : (
+                                <></>
+                            )}
+                        </div>
+                        <DateTimePicker {...picker_props} onChange={onChangePicker} />
+                    </div>
+                </div>
+                {app_state.platform !== 'web' ? <OverMenu history={history} /> : <></>}
+            </div>
+        </div>
     );
 };
 
@@ -122,7 +143,6 @@ const mapStateToProps = (state) => ({
 });
 const mapDispatchToProps = (dispatch) => ({ actions: bindActionCreators({ ...store_actions }, dispatch) });
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ModalWindowDateTimePicker));
-
 `
 
 // transformVariables(variables);
@@ -136,3 +156,4 @@ export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ModalWind
 // removeFormTags(mainApp, ['form']);
 // findCloseModalTag(mainApp);
 // transformModalToNative(mainApp);
+deleteJSRequires(mainApp, ['moment']);

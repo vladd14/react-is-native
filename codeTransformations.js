@@ -250,7 +250,7 @@ const changePlatform = (str) => {
     // },
     // const regExp = /(initialState:\s*{\s*.*platform:\s*['"`])(.+?)(['"`])/gsi;
     // const regExp = /(initial_state:.+?platform:\s*['"`])(.+?)(['"`])/gsi;
-    const regExp = /(const\s+platform\s*=\s*['"`])(.+?)(['"`])/gi;
+    const regExp = /(export\s+const\s+platform\s*=\s*['"`])(.+?)(['"`])/gi;
     str = str.replace(regExp, replacer);
     console.log(str);
     return str;
@@ -464,7 +464,7 @@ const platformTransforms = (str, filename, nested_level) => {
         const name_import = 'appUrl';
         if (tokens.indexOf(name_import) === (-1)) {
             // tokens.push(name_import);
-            tokens.push({module: `{ ${name_import} }`, path: '../urls'});
+            tokens.push({module: `{ ${name_import} }`, path: `${addPathDots(nested_level)}urls`});
         }
         return p0 + p1 + `${name_import}.get(${p2})`;
     };
@@ -479,7 +479,7 @@ const platformTransforms = (str, filename, nested_level) => {
         const name_import = 'appUrl';
         if (tokens.indexOf(name_import) === (-1)) {
             // tokens.push(name_import);
-            tokens.push({module: `{ ${name_import} }`, path: '../urls'});
+            tokens.push({module: `{ ${name_import} }`, path: `${addPathDots(nested_level)}urls`});
         }
         return 'navigation.navigate(';
     };
@@ -758,8 +758,11 @@ const transformModalToNative = (str) => {
         });
         return match + '\n</Modal>';
     };
-    if (str && str.search(/<.+?visible=\{/gsi) !== -1) {
+    // if (str && str.search(/<.+?visible=\{/gsi) !== -1) {
+    if (str && str.search(/<.+?modal_window=\{/gsi) !== -1) {
+        str = str.replace(/modal_window=\{.+?}\s*/gi, '');
         const pos = str.search(/<div.[^\n]+?modal_window__view(.+?)[^=]>/gsi);
+        // const pos = str.search(/<div.+?modal_window__view(.+?)[^=]>/gsi);
         let cut_str;
         let found = false;
         let step=0;
@@ -797,6 +800,16 @@ const transformModalToNative = (str) => {
     return str;
 }
 
+const deleteJSRequires = (str, array_of_modules) => {
+    if (str) {
+        array_of_modules.forEach((module) => {
+            const regexp = new RegExp(`\\s*require.+?${module}.+?\\n`, 'gi');
+            str = str.replace(regexp, '');
+        });
+    }
+    return str;
+};
+
 module.exports = {
     withRouterDelete,
     historyToNavigationTransform,
@@ -821,4 +834,5 @@ module.exports = {
     addRunAfterInteractionsWrapper,
     addStatusBarConnection,
     transformModalToNative,
+    deleteJSRequires,
 };

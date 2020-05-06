@@ -12,7 +12,7 @@ const { withRouterDelete, historyToNavigationTransform, removeExcessTags,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, changeNavigationHooks, removeTagsWithBody,
     removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage,
-    addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative } = require('./codeTransformations');
+    addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative, deleteJSRequires } = require('./codeTransformations');
 
 const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
@@ -75,9 +75,6 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                         if (file_in_folder === 'StatusBar.js') {
                             addImportLine(`import { StatusBar } from \'react-native\';`);
                         }
-                        if (file_in_folder === 'ModalWindowDateTimePicker.js') {
-                            addImportLine(`import DateTimePicker from '@react-native-community/datetimepicker';`);
-                        }
                         console.log('start addRunAfterInteractionsWrapper');
                         fileBuffer = addRunAfterInteractionsWrapper(fileBuffer);
                         console.log('start addFlowTags');
@@ -86,6 +83,10 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                         fileBuffer = replaceHtmlForWithFocus(fileBuffer);
                         console.log('start replaceStyleAfterFlowFunction');
                         fileBuffer = replaceStyleAfterFlowFunction(fileBuffer);
+                    }
+                    if (file_in_folder === 'ModalWindowDateTimePicker.js') {
+                        addImportLine(`import DateTimePicker from '@react-native-community/datetimepicker';`);
+                        fileBuffer = deleteJSRequires(fileBuffer, ['moment']);
                     }
 
                     console.log('start cutImport');
@@ -122,7 +123,7 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                     console.log('start platformTransforms');
                     fileBuffer = platformTransforms(fileBuffer, file_in_folder, nested_level);
                     console.log('start changePlatform');
-                    if (folder === 'app_structure' && file_in_folder === 'screens.js') {
+                    if (folder === 'settings' && file_in_folder === 'index.js') {
                         fileBuffer = changePlatform(fileBuffer);
                     }
                     // if (folder === 'components_connections') {

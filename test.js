@@ -6,143 +6,282 @@ const {
     withRouterDelete, importNotRequired, historyToNavigationTransform, removeFormTags, addFlowTags,
     platformTransforms, changePlatform, createAppJs, removeFunctionCall, changeTagName, addScreenDimensionListener,
     replaceStyleAfterFlowFunction, addNavigationRoutePropIntoFlowFunction, removeTagsWithBody, replaceHtmlForWithFocus,
-    changeNextTag, addRunAfterInteractionsWrapper, transformModalToNative, deleteJSRequires,
+    changeNextTag, addRunAfterInteractionsWrapper, transformModalToNative, deleteJSRequires, testHtmlTokens,
 } = require('./codeTransformations');
 
 let mainApp = `
 import React from 'react';
-import { storage } from '../helpers/storage';
-import { bindActionCreators } from 'redux';
-import { withRouter } from 'react-router-dom';
-import { connect } from 'react-redux';
-import OverMenu from './OverMenu';
-import { store, store_actions } from '../reducers';
-import * as DateTimePicker from 'react-datetime';
-import moment from 'moment';
+import { isItemHasObjectShape, makeFunctionalNameString, makeStringTitled } from '../../helpers/tools';
+import { screens_by_app_array, screens_by_type_names_array } from '../../app_structure/screens';
+import { references, storage } from '../../helpers/storage';
+import { store, store_actions } from '../../reducers';
+import { useHistory } from 'react-router-dom';
+import { getRef } from '../../helpers/elements_functional_properties';
 
-const ModalWindowDateTimePicker = ({ modalsState, actions, history, className, ...props }) => {
-    console.log('ModalWindowDateTimePicker');
+const StepName = ({ appState, userState, storeState, actions, ...props }) => {
+    const history = useHistory();
+    // onLayout - for native. Keep it here for native
+    let { screen_name, data_type, additional_class, Ref, onLayout } = props;
     const store_state = store.getState();
-    const app_state = store_state.app_settings;
+    const app_storage_state = store_state.app_storage;
+    const screens_state = store_state.app_screens;
+    const current_screen_number = screens_state[screen_name] ? screens_state[screen_name].screen_number : 0;
 
-    const locale = app_state.language;
-    require('moment/locale/{locale.toLowerCase()}');
+    const connection_internet_error = appState.screen_errors
+        ? appState.screen_errors.all.length ||
+          (appState.screen_errors[history.location.pathname] &&
+              appState.screen_errors[history.location.pathname].length)
+            ? 'alert_on'
+            : ''
+        : '';
 
-    const additional_class = modalsState.date_time_picker_state ? 'modal_window__active' : '';
-    /*native const modal_visibility = !!additional_class; native*/
+    const localClick = ({ to_screen_name, to_data_type, item }) => {
+        const store_state = store.getState();
+        const app_storage_state = store_state.app_storage;
+        const current_screen_name = screen_name;
+        const theme_state = store_state[\`{current_screen_name}_theme\`];
+        const current_data_type = screens_by_app_array[current_screen_name][current_screen_number].name;
 
-    const screen_name = modalsState.date_time_picker_state ? modalsState.date_time_picker_state.screen_name : '';
-    const data_type = modalsState.date_time_picker_state ? modalsState.date_time_picker_state.data_type : '';
-    const date_property_name =
-        modalsState.date_time_picker_state && modalsState.date_time_picker_state.date_property_name
-            ? modalsState.date_time_picker_state.date_property_name
-            : '';
-    const picker_view_mode =
-        modalsState.date_time_picker_state && modalsState.date_time_picker_state.picker_view_mode
-            ? modalsState.date_time_picker_state.picker_view_mode
-            : 'days';
+        console.log('current_screen_name=', current_screen_name);
+        console.log('current_data_type=', current_data_type);
 
-    let date_format;
-    if (picker_view_mode === 'years') {
-        date_format = 'YYYY';
-    }
-    const date_property_value =
-        picker_view_mode === 'days'
-            ? moment(current_page_state[date_property_name])
-    const {
-        modal_view_class,
-        // screen_name,
-        presentation_style = 'pageSheet',
-        transparent = false,
-        /*native type = 'user_actions',
-        animation_type = 'slide', native*/
-    } = storage.getData({
-        key: 'modal_message',
-    })
-        ? storage.getData({ key: 'modal_message' })
-        : {};
+        if (!item.static_item) {
+            const to_screen_number = screens_by_type_names_array[current_screen_name].indexOf(to_data_type);
+            const header_height = theme_state.header_height;
+            const current_key = \`{current_screen_name}_{current_data_type}_scroll\`;
+            const next_key = \`{current_screen_name}_{to_data_type}_scroll\`;
+            const scroll_current_position_y =
+                app_storage_state[current_screen_name] &&
+                app_storage_state[current_screen_name][current_data_type] &&
+                app_storage_state[current_screen_name][current_data_type].y
+                    ? app_storage_state[current_screen_name][current_data_type].y
+                    : 0;
 
-    let additional_view_class = app_state.platform === 'web' ? 'modal_datetime_picker' : 0;
-    let dynamic_props = {};
-    if (presentation_style !== 'pageSheet' && presentation_style !== 'formSheet') {
-        dynamic_props.transparent = transparent;
-    } else {
-        additional_view_class += ' page_sheet';
-    }
+            const scroll_next_position_y =
+                app_storage_state[current_screen_name] &&
+                app_storage_state[current_screen_name][to_data_type] &&
+                app_storage_state[current_screen_name][to_data_type].y
+                    ? app_storage_state[current_screen_name][to_data_type].y
+                    : 0;
 
-    const closeModalWindow = ({ event, on_dismiss }) => {
-        if (app_state.platform !== 'web' || (event && event.target === event.currentTarget) || on_dismiss) {
-            if (event) {
-                event.preventDefault();
+            if (scroll_current_position_y < header_height) {
+                const ref = references.getReference(current_key);
+                const behaviour =
+                    current_key === next_key
+                        ? appState.platform !== 'web'
+                            ? true
+                            : 'smooth'
+                        : appState.platform !== 'web'
+                        ? false
+                        : 'auto';
+                if (appState.platform !== 'web') {
+                    ref.scrollToOffset({ offset: header_height, animated: behaviour });
+                } else if (ref) {
+                    let animated_property = storage.getData({ key: \`{current_screen_name}_header\` }).animated_property;
+                    if (animated_property < header_height) {
+                        animated_property = header_height;
+                        storage.setDataSpread({
+                            key: \`{current_screen_name}_header\`,
+                            ...{
+                                ...storage.getData({ key: \`{current_screen_name}_header\` }),
+                                animated_property: animated_property,
+                            },
+                        });
+                    }
+                    ref.scroll({ left: 0, top: header_height, behavior: behaviour });
+                }
             }
-            if (modalsState.date_time_picker_state) {
-                console.log('ModalWindowSearch modals_state.modal_window_state');
-                actions.setAppModalsData({ date_time_picker_state: '' });
+
+            console.log('scroll_next_position_y=', scroll_next_position_y);
+            console.log('header_height=', header_height);
+            console.log('current_key=', current_key);
+            console.log('next_key=', next_key);
+
+            if (scroll_next_position_y < header_height && current_key !== next_key) {
+                const ref1 = references.getReference(next_key);
+                if (appState.platform !== 'web') {
+                    console.log('ref1=', ref1);
+                    // if data_type was changed (horizontal scroll has changed) set animation value for native)
+                    let animated_property = storage.getData({ key: \`{current_screen_name}_header\` }).animated_property;
+                    if (animated_property._value < header_height) {
+                        animated_property.setValue(-header_height);
+                    }
+                    ref1.scrollToOffset({ offset: header_height, animated: false });
+                } else if (ref1) {
+                    ref1.scroll({ left: 0, top: header_height, behavior: 'auto' });
+                }
+            }
+            // for native. In web it's using css transitions with div class changing
+            if (appState.platform !== 'web') {
+                const ref2 = references.getReference(\`{current_screen_name}_horizontal_container\`);
+                if (ref2) {
+                    const offset = appState.screen_data.width * to_screen_number;
+                    ref2.scrollToOffset({
+                        offset: offset,
+                        animated: false,
+                    });
+                }
+            }
+            // Be sure it's placing here (animating menu buttons)
+            //setState({ ...state, screen_number: to_screen_number });
+            // actions.setMenu
+            actions[\`set{makeFunctionalNameString(to_screen_name)}MenuData\`]({
+                screen_number: to_screen_number,
+            });
+
+            // for web pages updating
+            if (current_key !== next_key) {
+                let current_screen_state = {};
+                current_screen_state[current_screen_name] = {};
+                current_screen_state[current_screen_name].screen_number = to_screen_number;
+                actions.setAppScreensData({
+                    ...current_screen_state,
+                });
+                // change list header position on web platform
+                if (appState.platform === 'web') {
+                    actions[\`update{makeFunctionalNameString(to_screen_name)}ThemeState\`]({});
+                }
+                // if user not authenticated we don't need to render column view at all
+                if (userState.is_authenticated) {
+                    if (
+                        to_data_type !== 'messages' &&
+                        !store_state[\`{to_screen_name}_{to_data_type}\`].results.length
+                    ) {
+                        // if data doesn't exist in column view rerender it.
+                        // In rerender process we check data for this column on server.
+                        actions[
+                            \`update{makeFunctionalNameString(to_screen_name)}{makeStringTitled(to_data_type)}State\`
+                        ]({});
+                    }
+                }
+            } else {
+                actions[\`update{makeFunctionalNameString(to_screen_name)}{makeStringTitled(to_data_type)}State\`]({});
+            }
+        } else if (item.static_item) {
+            // here goes buttons events
+            if (item.name === 'search') {
+                storage.setData({
+                    key: 'modal_message',
+                    ...{
+                        screen_name: current_screen_name,
+                        modal_view_class: 'modal_state_primary',
+                        type: 'actions',
+                        animation_type: 'slide',
+                        presentation_style: 'pageSheet',
+                        transparent: false,
+                    },
+                });
+                actions.setAppModalsData({ modal_window_state: 'search' });
             }
         }
     };
 
-    const onChangePicker = (event) => {
-        console.log('onChangePicker');
-
-        const value_text =
-            picker_view_mode !== 'years' ? new Date(event.format('YYYY-MM-DD')).toLocaleDateString() : event.year();
-
-        let value_date = new Date(event.format('YYYY-MM-DD'));
-        const new_date = {};
-        new_date[date_property_name] = value_text;
-        // actions.setAppModalsData({ date_time_picker_state: date_start_value });
-        actions.updateAppModalsState({});
+    const startCalculation = () => {
+        const store_state = store.getState();
+        const app_storage_state = store_state.app_storage;
+        const storage_data = {};
+        storage_data[screen_name] = app_storage_state[screen_name] ? { ...app_storage_state[screen_name] } : {};
+        storage_data[screen_name].osago_start = true;
+        actions.setAppStorageData({ ...storage_data });
+        actions[\`set{makeFunctionalNameString(screen_name)}HorizontalViewData\`]({
+            ...storage_data,
+        });
+        console.log('start calc');
     };
-    const picker_props =
-        app_state.platform === 'web'
-            ? {
-                  timeFormat: false,
-                  input: false,
-                  open: true,
-                  dateFormat: date_format,
-                  viewMode: picker_view_mode,
-                  value: date_property_value,
-              }
-            : {
-                  mode: picker_view_mode,
-                  value: date_property_value,
-              };
+    const nextClick = (to_screen_number) => {
+        const store_state = store.getState();
+        const app_storage_state = store_state.app_storage;
+        const current_screen_name = screen_name;
+        let current_screen_state = {};
+        current_screen_state[current_screen_name] = {};
+        current_screen_state[current_screen_name].screen_number = to_screen_number;
+
+        if (appState.platform !== 'web') {
+            const ref2 = references.getReference(\`{current_screen_name}_horizontal_container\`);
+            if (ref2) {
+                const offset = appState.screen_data.width * to_screen_number;
+                ref2.scrollToOffset({
+                    offset: offset,
+                    animated: true,
+                });
+            }
+        }
+        actions.setAppScreensData({
+            ...current_screen_state,
+        });
+    };
+
+    additional_class = additional_class ? additional_class : '';
+    const additional_mobile_menu_props = appState.platform !== 'web' ? { showsHorizontalScrollIndicator: false } : {};
+    const active_indicator =
+        app_storage_state && app_storage_state[screen_name] && app_storage_state[screen_name].osago_start
+            ? 'active_indicator'
+            : '';
+
+    const max_steps = 5;
+    const step_info = (() => {
+        if (data_type === 'step_one') {
+            return { step: 0, name: 'транспорт' };
+        } else if (data_type === 'step_two') {
+            return { step: 1, name: 'Страхователь' };
+        } else if (data_type === 'step_three') {
+            return { step: 2, name: 'Собственник' };
+        } else if (data_type === 'step_four') {
+            return { step: 3, name: 'Водители' };
+        } else if (data_type === 'step_five') {
+            return { step: 4, name: 'Расчет' };
+        }
+    })();
     return (
-        <div
-            onClick={(event) => closeModalWindow({ event: event })}>
+        <li className={\`li decoration_header {active_indicator}\`}>
             <div
-                /*native visible={modal_visibility} native*/
-                /*native onRequestClose={(event) => closeModalWindow({ event: event, on_dismiss: true })} native*/
-                /*native onDismiss={(event) => closeModalWindow({ event: event, on_dismiss: true })} native*/
-                /*native {...dynamic_props} native*/
-            >
-                <div className={'modal_window__content datetime_picker_content justify_content_between flex_grow'}>
-                    <div className={'d_flex flex_column'}>
-                        <div className={'d_flex flex_row justify_content_center'}>
-                            <span className={'close_rect'} onClick={(event) => closeModalWindow({ event: event })}>
-                                {app_state.platform === 'web' ? '×' : 'Закрыть'}
-                            </span>
-                            {app_state.platform !== 'web' ? (
-                                <span className={'modal_card_label'}>{'Поиск'}</span>
-                            ) : (
-                                <></>
-                            )}
-                        </div>
-                        <DateTimePicker {...picker_props} onChange={onChangePicker} />
+                className={\`menu_after_header__container menu_after_header__osago_calc align_items_center {additional_class}\`}
+                {...getRef({
+                    screen_name: screen_name,
+                    data_type: data_type,
+                    reducer_name: 'theme',
+                    reducer_property: 'menu_height',
+                })}>
+                <div {...additional_mobile_menu_props} className={'menu_after_header__menu'}>
+                    <div className={'link_underline__container'}>
+                        <span
+                            className={'link_underline__link color_brand'}
+                            onClick={(event) => startCalculation(event)}>
+                            {app_storage_state &&
+                            app_storage_state[screen_name] &&
+                            app_storage_state[screen_name].osago_start
+                                ? step_info.name
+                                : 'поехали'}
+                        </span>
                     </div>
                 </div>
-                {app_state.platform !== 'web' ? <OverMenu history={history} /> : <></>}
+                <div
+                    className={\`decoration_arrow__rhombic decoration_arrow__back_arrow decoration_arrow__{active_indicator} {
+    current_screen_number || 'display_off'
+}\`}
+                    onClick={(event) => nextClick(step_info.step - 1)}>
+                    <span
+                        className={'decoration_arrow__body color_osago text_smaller_p10'}
+                        onClick={(event) => nextClick(step_info.step - 1)}>
+                        {step_info.step}
+                    </span>
+                </div>
+                <div
+                    className={\`decoration_arrow__rhombic decoration_arrow__{active_indicator} {
+    current_screen_number < max_steps - 1 || 'display_off'
+}\`}
+                    onClick={(event) => nextClick(step_info.step + 1)}>
+                    <span className={'decoration_arrow__body'} onClick={(event) => nextClick(step_info.step + 1)}>
+                        {step_info.step + 2}
+                    </span>
+                </div>
             </div>
-        </div>
+            <div>ssss</div>
+        </li>
     );
 };
+export default StepName;
 
-const mapStateToProps = (state) => ({
-    modalsState: state.app_modals,
-});
-const mapDispatchToProps = (dispatch) => ({ actions: bindActionCreators({ ...store_actions }, dispatch) });
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ModalWindowDateTimePicker));
 `
 
 // transformVariables(variables);
@@ -156,4 +295,4 @@ export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ModalWind
 // removeFormTags(mainApp, ['form']);
 // findCloseModalTag(mainApp);
 // transformModalToNative(mainApp);
-deleteJSRequires(mainApp, ['moment']);
+testHtmlTokens(mainApp);

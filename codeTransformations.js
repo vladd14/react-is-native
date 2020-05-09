@@ -347,7 +347,6 @@ const replaceHtmlForWithFocus = (str) => {
             if (match.search(regExpInner) === -1) {
                 // console.warn('\nref not found and we go over\n');
                 useStateObject.hook_using = !useStateObject.hook_using ? true : useStateObject.hook_using;
-                // console.log('PPPPPPP1=', p1);
                 const element_property = WrapElementsFor.includes(makeStringTitled(p1)) ? `Ref` : `ref`;
                 const reference_string = `{(component) => {${p2+tab_symbol}${useStateObject.hook_name}[${element.id}] = component;${p2}}}`;
                 p1 += `${p2}${element_property}=${reference_string}${p2}`;
@@ -386,22 +385,11 @@ const addPathDots = (level = 0) => {
 const platformTransforms = (str, filename, nested_level) => {
     // initImports();
     let tokens = [];
-    const tokenModify = (match, start_tag, possible_tabs_start, token, possible_tabs, empty, empty2, attributes, end_tag) => {
-        // console.log(`match='${match}'`);
-        // console.log(`start_tag='${start_tag}'`);
-
-        // console.log(`possible_tabs_start='${possible_tabs_start}'`);
-        // console.log(`token='${token}'`);
-        // console.log(`possible_tabs='${possible_tabs}'`);
-        // console.log(`attributes='${attributes}'`);
-        // console.log(`empty='${empty}'`);
-        // console.log(`empty2='${empty2}'`);
-        // console.log(`end_tag='${end_tag}'`);
-        // return 0;
-        possible_tabs_start = possible_tabs_start ? possible_tabs_start : '';
-        possible_tabs = possible_tabs ? possible_tabs : space_symbol;
+    const tokenModify = (match, start_tag, token, attributes, end_tag) => {
+        // possible_tabs_start = possible_tabs_start ? possible_tabs_start : '';
+        // possible_tabs = possible_tabs ? possible_tabs : space_symbol;
         const with_type_tag = withoutTypeTag.indexOf(token.toLowerCase()) === -1;
-        let type = start_tag !== '</' && with_type_tag ? `${possible_tabs}tagType={'${token}'}` : '';
+        let type = start_tag !== '</' && with_type_tag ? ` tagType={'${token}'}` : '';
 
         if (divTags.indexOf(token.toLowerCase()) !== -1) {
             token = 'Div';
@@ -424,7 +412,7 @@ const platformTransforms = (str, filename, nested_level) => {
         if (token === 'Img') {
             attributes.replace(/src=\{\s*(.[^.}]+)[.}]*(.[^}]*)\s*}/gi, (match, module_name, property) => {
                 if (property === 'src') {
-                    type = `${possible_tabs}type={${module_name}.type}`;
+                    type = ` type={${module_name}.type}`;
                 }
             });
         } else if (attributes && token === 'Link') {
@@ -440,20 +428,12 @@ const platformTransforms = (str, filename, nested_level) => {
                 return p1 + makeStringTitled(p2);
             });
         }
-        // if (attributes && attributes.search(/(\s)visible=/g) !== -1) {
-        //     // console.warn('Modal has searched');
-        //     token = 'Modal';
-        //     const import_line = `import { Modal } from 'react-native';`;
-        //     addImportLine(import_line);
-        //     attributes = attributes.replace(/\s*(className=[{]*.+([}`]))/gi, '');
-        // }
-        // console.log(start_tag + token + type + (possible_tabs || '') + (attributes || '') + (end_tag || empty2));
-        // return 0;
-        let modified_tag = start_tag + possible_tabs_start + token + type + (attributes ? !with_type_tag ? possible_tabs + attributes : possible_tabs + attributes : '') + (end_tag || empty2);
+
+        let modified_tag = start_tag + token + type + (attributes || '')  + (end_tag);
         modified_tag = modified_tag.replace(/(\w+)( +)(\w+)/g, (match, tag, spaces, attributes) => {
             return tag + spaces.replace(/( )+/, ' ') + attributes;
         });
-        // return start_tag + possible_tabs_start + token + type + (attributes ? type ? possible_tabs + attributes : attributes : '') + (end_tag || empty2);
+
         return modified_tag;
     };
 
@@ -491,7 +471,15 @@ const platformTransforms = (str, filename, nested_level) => {
         htmlTokens.forEach((token) => {
 
             // regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
-            regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^<>]+)([/]*>))`, 'g');
+
+            // regExp = new RegExp(`(<[/]*)(${token})(\\s*)(([/]*>)|(.+?)([/]*>))`, 'g');
+            // str = str.replace(regExp, tokenModify);
+
+            regExp = new RegExp(`(<)(${token})()(>)`, 'gs');
+            str = str.replace(regExp, tokenModify);
+            regExp = new RegExp(`(<[/])(${token})()(>)`, 'gs');
+            str = str.replace(regExp, tokenModify);
+            regExp = new RegExp(`(<)(${token})(.+?)([^=\\w]>)`, 'gs');
             str = str.replace(regExp, tokenModify);
         });
 
@@ -810,6 +798,37 @@ const deleteJSRequires = (str, array_of_modules) => {
     return str;
 };
 
+const testHtmlTokens = (str) => {
+    // const tokenModify = (match, start_tag, token, attributes, end_tag) => {
+    const tokenModify2 = (match, start_tag, token, attributes, end_tag) => {
+        console.log(`match='${match}'`);
+        console.log(`start_tag='${start_tag}'`);
+        console.log(`token='${token}'`);
+        console.log(`attributes='${attributes}'`);
+        console.log(`end_tag='${end_tag}'`);
+    }
+    if (str) {
+        const htmlTokens = divTags.concat(textTags, inputsType, listTags, withoutTypeTag, linkTags);
+        // console.log('htmlTokens=', htmlTokens);
+        let regExp;
+        htmlTokens.forEach((token) => {
+            console.log('token=', token);
+            // regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
+            // regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^<>]+?)([/]*>))`, 'g');
+            // regExp = new RegExp(`(<)(${token})(.*?)(([^=]>)|([/]>))|<[/]${token}>|<${token}>`, 'gs');
+            // regExp = new RegExp(`((<)(${token})(>))|((<[/])(${token})(>))|((<)(${token})(.+?)([^=]>))`, 'gs');
+
+            regExp = new RegExp(`(<)(${token})()(>)`, 'gs');
+            str = str.replace(regExp, tokenModify2);
+            regExp = new RegExp(`(<[/])(${token})()(>)`, 'gs');
+            str = str.replace(regExp, tokenModify2);
+            regExp = new RegExp(`(<)(${token})(.+?)([^=\\w]>)`, 'gs');
+            str = str.replace(regExp, tokenModify2);
+        });
+    }
+    return str;
+}
+
 module.exports = {
     withRouterDelete,
     historyToNavigationTransform,
@@ -835,4 +854,5 @@ module.exports = {
     addStatusBarConnection,
     transformModalToNative,
     deleteJSRequires,
+    testHtmlTokens,
 };

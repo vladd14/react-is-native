@@ -734,11 +734,9 @@ return str;
 };
 
 const transformModalToNative = (str) => {
-    // import { Modal } from 'react-native';
+
     const replacer = (match, p1) => {
-        // console.log('match=', match);
         let modal_class_name;
-        // className={`modal_window__container ${additional_class}`}
         match = match.replace(/(<.+?)(className=[{]*['"`]+.+?[`"']+[}]*)(.+?[^=])>/si, (match, tagName, className, restProps) => {
             modal_class_name = className;
             const str = `<Modal ${restProps}>\n${tagName} ${className}>`
@@ -746,17 +744,16 @@ const transformModalToNative = (str) => {
         });
         return match + '\n</Modal>';
     };
-    // if (str && str.search(/<.+?visible=\{/gsi) !== -1) {
+
     if (str && str.search(/<.+?modal_window=\{/gsi) !== -1) {
         str = str.replace(/modal_window=\{.+?}\s*/gi, '');
         const pos = str.search(/<div.[^\n]+?modal_window__view(.+?)[^=]>/gsi);
-        // const pos = str.search(/<div.+?modal_window__view(.+?)[^=]>/gsi);
         let cut_str;
         let found = false;
         let step=0;
         // console.log(str.substring(pos, 10));
         while (!found && pos !== -1) {
-            cut_str = str.substring(pos, step++);
+            cut_str = str.substring(pos, pos + step++);
             if (cut_str) {
                 let div =0;
                 let close_div=0;
@@ -767,14 +764,11 @@ const transformModalToNative = (str) => {
                     close_div++;
                 })
                 if (div && close_div && div === close_div) {
-                    // console.log('div=',div);
-                    // console.log('close_div=',close_div);
                     found = true;
                     break;
                 }
             }
         }
-        // console.log('cut_str=', cut_str);
         if (cut_str) {
             const new_str = replacer(cut_str);
             if (new_str) {
@@ -788,6 +782,66 @@ const transformModalToNative = (str) => {
     return str;
 }
 
+const addKeyboardAvoidingViewWrapper = (str) => {
+
+    const KeyboardAvoidingView = '<KeyboardAvoidingView behavior={\'padding\'} style={{flex: 1}}>'
+    const replacer = (match) => {
+        return KeyboardAvoidingView + '\n' + match + '\n' + '</KeyboardAvoidingView>\n';
+    };
+
+    // console.log(str);
+
+    //keyboard_avoiding_view={'keyboard_avoiding_view'}
+    const regexp = new RegExp('<\\s*?.+?keyboard_avoiding_view=\\{', 'gsi');
+    if (str && str.search(regexp) !== -1) {
+        // str = str.replace(/modal_window=\{.+?}\s*/gi, '');
+        const pos = str.search(regexp);
+
+        // str = str.replace(regexp, (match) => (console.log('match=', match)));
+        // return ;
+        console.log('pos=', pos);
+        let cut_str;
+        let found = false;
+        let step=1;
+        cut_str = str.substring(pos, pos + 100);
+        // console.log('\n\n', cut_str);
+        // return ;
+        // console.log(str.substring(pos, 10));
+        while (!found && pos && pos !== -1) {
+            cut_str = str.substring(pos, pos + step);
+
+            // console.log('\n\n cut_str=', cut_str);
+            if (cut_str) {
+                let div =0;
+                let close_div=0;
+                cut_str.replace(/<(ul|li|div)/gi, (match) => {
+                    // console.log('match=', match);
+                    div++;
+                })
+                cut_str.replace(/<\/(ul|li|div)>/gi, () => {
+                    close_div++;
+                })
+                if (div && close_div && div === close_div) {
+                    console.log('found true');
+                    found = true;
+                    break;
+                }
+            }
+            step++;
+        }
+        if (cut_str) {
+            // console.log(cut_str);
+            const new_str = replacer(cut_str);
+            if (new_str) {
+                addImportLine('import { KeyboardAvoidingView } from \'react-native\';');
+                str = str.replace(cut_str, new_str);
+            }
+        }
+    }
+    console.log('str=', str);
+    return str;
+}
+
 const deleteJSRequires = (str, array_of_modules) => {
     if (str) {
         array_of_modules.forEach((module) => {
@@ -798,36 +852,36 @@ const deleteJSRequires = (str, array_of_modules) => {
     return str;
 };
 
-const testHtmlTokens = (str) => {
-    // const tokenModify = (match, start_tag, token, attributes, end_tag) => {
-    const tokenModify2 = (match, start_tag, token, attributes, end_tag) => {
-        console.log(`match='${match}'`);
-        console.log(`start_tag='${start_tag}'`);
-        console.log(`token='${token}'`);
-        console.log(`attributes='${attributes}'`);
-        console.log(`end_tag='${end_tag}'`);
-    }
-    if (str) {
-        const htmlTokens = divTags.concat(textTags, inputsType, listTags, withoutTypeTag, linkTags);
-        // console.log('htmlTokens=', htmlTokens);
-        let regExp;
-        htmlTokens.forEach((token) => {
-            console.log('token=', token);
-            // regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
-            // regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^<>]+?)([/]*>))`, 'g');
-            // regExp = new RegExp(`(<)(${token})(.*?)(([^=]>)|([/]>))|<[/]${token}>|<${token}>`, 'gs');
-            // regExp = new RegExp(`((<)(${token})(>))|((<[/])(${token})(>))|((<)(${token})(.+?)([^=]>))`, 'gs');
-
-            regExp = new RegExp(`(<)(${token})()(>)`, 'gs');
-            str = str.replace(regExp, tokenModify2);
-            regExp = new RegExp(`(<[/])(${token})()(>)`, 'gs');
-            str = str.replace(regExp, tokenModify2);
-            regExp = new RegExp(`(<)(${token})(.+?)([^=\\w]>)`, 'gs');
-            str = str.replace(regExp, tokenModify2);
-        });
-    }
-    return str;
-}
+// const testHtmlTokens = (str) => {
+//     // const tokenModify = (match, start_tag, token, attributes, end_tag) => {
+//     const tokenModify2 = (match, start_tag, token, attributes, end_tag) => {
+//         console.log(`match='${match}'`);
+//         console.log(`start_tag='${start_tag}'`);
+//         console.log(`token='${token}'`);
+//         console.log(`attributes='${attributes}'`);
+//         console.log(`end_tag='${end_tag}'`);
+//     }
+//     if (str) {
+//         const htmlTokens = divTags.concat(textTags, inputsType, listTags, withoutTypeTag, linkTags);
+//         // console.log('htmlTokens=', htmlTokens);
+//         let regExp;
+//         htmlTokens.forEach((token) => {
+//             console.log('token=', token);
+//             // regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
+//             // regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^<>]+?)([/]*>))`, 'g');
+//             // regExp = new RegExp(`(<)(${token})(.*?)(([^=]>)|([/]>))|<[/]${token}>|<${token}>`, 'gs');
+//             // regExp = new RegExp(`((<)(${token})(>))|((<[/])(${token})(>))|((<)(${token})(.+?)([^=]>))`, 'gs');
+//
+//             regExp = new RegExp(`(<)(${token})()(>)`, 'gs');
+//             str = str.replace(regExp, tokenModify2);
+//             regExp = new RegExp(`(<[/])(${token})()(>)`, 'gs');
+//             str = str.replace(regExp, tokenModify2);
+//             regExp = new RegExp(`(<)(${token})(.+?)([^=\\w]>)`, 'gs');
+//             str = str.replace(regExp, tokenModify2);
+//         });
+//     }
+//     return str;
+// }
 
 module.exports = {
     withRouterDelete,
@@ -854,5 +908,6 @@ module.exports = {
     addStatusBarConnection,
     transformModalToNative,
     deleteJSRequires,
-    testHtmlTokens,
+    // testHtmlTokens,
+    addKeyboardAvoidingViewWrapper,
 };

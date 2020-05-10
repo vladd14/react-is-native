@@ -12,7 +12,7 @@ const { withRouterDelete, historyToNavigationTransform, removeExcessTags,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, changeNavigationHooks, removeTagsWithBody,
     removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage,
-    addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative, deleteJSRequires } = require('./codeTransformations');
+    addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative, deleteJSRequires, addKeyboardAvoidingViewWrapper } = require('./codeTransformations');
 
 const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
@@ -60,6 +60,8 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                     console.log('start transformModalToNative');
                     fileBuffer = transformModalToNative(fileBuffer);
 
+                    console.log('start addKeyboardAvoidingViewWrapper');
+                    fileBuffer = addKeyboardAvoidingViewWrapper(fileBuffer);
 
                     console.log('start addNavigationRouteProps');
                     fileBuffer = addNavigationRouteProps(fileBuffer);

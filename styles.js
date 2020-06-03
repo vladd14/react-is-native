@@ -225,7 +225,9 @@ const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
             filled_object[name_property] = 0;
         }
     }
-    else if (arg1 !== undefined && arg1 !== null && arg2 && !not_expression) {
+    else if (arg1 !== '' && arg1 !== undefined && arg1 !== null && arg2 && typeof arg2 !== "object" && !not_expression) {
+        console.log('arg1=', arg1);
+        console.log('arg2=', arg2);
         const expression = eval(arg1 + '*' + arg2);
         filled_object[name_property] = expression;
         if (!not_round_properties.includes(name_property) && typeof filled_object[name_property] === "number") {

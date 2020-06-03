@@ -55,8 +55,7 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
 
                     console.log('start removeNativeComments');
                     fileBuffer = removeNativeComments(fileBuffer);
-                    // console.log('start closeModalTags');
-                    // fileBuffer = changeNextTag(fileBuffer);
+
                     console.log('start transformModalToNative');
                     fileBuffer = transformModalToNative(fileBuffer);
 
@@ -77,6 +76,7 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                         if (file_in_folder === 'StatusBar.js') {
                             addImportLine(`import { StatusBar } from \'react-native\';`);
                         }
+
                         console.log('start addRunAfterInteractionsWrapper');
                         fileBuffer = addRunAfterInteractionsWrapper(fileBuffer);
                         console.log('start addFlowTags');
@@ -89,6 +89,10 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                     if (file_in_folder === 'ModalWindowDateTimePicker.js') {
                         addImportLine(`import DateTimePicker from '@react-native-community/datetimepicker';`);
                         fileBuffer = deleteJSRequires(fileBuffer, ['moment']);
+                    }
+                    if (file_in_folder === 'CheckSwitch.js') {
+                        addImportLine(`import { Switch } from \'react-native\';`);
+                        fileBuffer = fileBuffer.replace('<switch', '<Switch');
                     }
 
                     console.log('start cutImport');

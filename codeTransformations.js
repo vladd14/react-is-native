@@ -429,7 +429,7 @@ const platformTransforms = (str, filename, nested_level) => {
             });
         }
 
-        let modified_tag = start_tag + token + type + (attributes || '')  + (end_tag);
+        let modified_tag = start_tag + token + type + ' ' + (attributes || '')  + (end_tag);
         modified_tag = modified_tag.replace(/(\w+)( +)(\w+)/g, (match, tag, spaces, attributes) => {
             return tag + spaces.replace(/( )+/, ' ') + attributes;
         });
@@ -479,7 +479,7 @@ const platformTransforms = (str, filename, nested_level) => {
             str = str.replace(regExp, tokenModify);
             regExp = new RegExp(`(<[/])(${token})()(>)`, 'gs');
             str = str.replace(regExp, tokenModify);
-            regExp = new RegExp(`(<)(${token})(.+?)([^=\\w]>)`, 'gs');
+            regExp = new RegExp(`(<)(${token})\\s+(.+?)([^=\\w]>)`, 'gs');
             str = str.replace(regExp, tokenModify);
         });
 

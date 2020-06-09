@@ -22,7 +22,7 @@ const path_to = `${project_dir}${project_name}/`;
 
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'app_structure', 'components', 'components_connections', 'urls', 'requirements'];
 const excess_modules = ['react-router-dom', 'react-datetime'];
-const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar'];
+const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar', 'Linking'];
 const svg_file_name = 'vectors';
 let svg_file = {};
 

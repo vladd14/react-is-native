@@ -494,7 +494,7 @@ const platformTransforms = (str, filename, nested_level) => {
 
         //return history.push(appUrl.get(urls.login.path));
         // regExp = /\s*(history.push\(\s*)(\w*\W[^)]*)(\s*\);)/mig;
-        regExp = /(history.push\()/mig;
+        regExp = /(history.push\()|(navigation.push\()/mig;
         str = str.replace(regExp, changeHistoryToNavigate);
 
         //history.location.pathname

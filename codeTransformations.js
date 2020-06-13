@@ -512,7 +512,7 @@ const platformTransforms = (str, filename, nested_level) => {
         });
 
         //change onClick with onPress;
-        regExp = /(.[^\w])(onClick)(\s*[&={}():,])/mig;
+        regExp = /([^\w])(onClick)(\s*[&={}():,])/smig;
         str = str.replace(regExp, (match, p0, p1, p2) => {return p0 + 'onPress' + p2});
         //Change onKeyDown with onChangeText;
         regExp = /<SimpleCustomField\s*(\w*\W[^={\/]*)(\W[^{\/]*(\w*\W[^}\/]*})+)\s*\/>/mig;
@@ -734,14 +734,25 @@ return str;
 };
 
 const transformModalToNative = (str) => {
-
     const replacer = (match, p1) => {
         let modal_class_name;
-        match = match.replace(/(<.+?)(className=[{]*['"`]+.+?[`"']+[}]*)(.+?[^=])>/si, (match, tagName, className, restProps) => {
+        let class_was_found = false;
+        const class_replacer = (match, tagName, className, restProps) => {
+            class_was_found = true;
             modal_class_name = className;
             const str = `<Modal ${restProps}>\n${tagName} ${className}>`
             return str;
-        });
+        }
+
+        match = match.replace(/(<.+?)(className=[{]*[`].+?[`][}]*)(.+?[^=])>/si, class_replacer);
+        if (!class_was_found) {
+            match = match.replace(/(<.+?)(className=[{]*['"].+?["'][}]*)(.+?[^=])>/si, class_replacer);
+        }
+        // match = match.replace(/(<.+?)(className=[{]*['"`].+?[`"'][}]*)(.+?[^=])>/si, (match, tagName, className, restProps) => {
+        //     modal_class_name = className;
+        //     const str = `<Modal ${restProps}>\n${tagName} ${className}>`
+        //     return str;
+        // });
         return match + '\n</Modal>';
     };
 

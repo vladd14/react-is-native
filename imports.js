@@ -16,7 +16,10 @@ const getArrayItem = (str, prev_array, trace) => {
         console.log('prev_array', prev_array);
         console.log([...prev_array, ...str.split(',').map((element) => element.trim())]);
     }
-    return [...prev_array, ...str.split(',').map((element) => {element = element.trim(); return element.replace(/['"`]/g, '')} )].filter((item, index, array) => index < array.length - 1 && !array.slice(index+1).includes(item) || index === array.length - 1);
+    return [...prev_array, ...str.split(',').map((element) => {
+            element = element.trim(); return element.replace(/['"`]/g, '')
+        }
+    )].filter((item, index, array) => index < array.length - 1 && !array.slice(index+1).includes(item) || index === array.length - 1);
 };
 const cutImport = (str, trace) => {
     const replacer = (match, p1, modules, p2, path_from) => {
@@ -28,12 +31,14 @@ const cutImport = (str, trace) => {
             imports_object[path_from] = {};
             imports_object[path_from].modules_in_curly_braces = [];
             imports_object[path_from].modules = [];
+            imports_object[path_from].modules_with_asterisk = [];
         }
         modules = modules.replace(/\s*\{(.[^}]+)}\s*/gi, (match, p1) => {
             if (trace) {
                 console.log(imports_object[path_from].modules_in_curly_braces);
             }
-            imports_object[path_from].modules_in_curly_braces = getArrayItem(p1, imports_object[path_from].modules_in_curly_braces, trace);
+            imports_object[path_from].modules_in_curly_braces
+                = getArrayItem(p1, imports_object[path_from].modules_in_curly_braces, trace);
             if (trace) {
                 console.log(imports_object[path_from].modules_in_curly_braces);
             }
@@ -42,8 +47,9 @@ const cutImport = (str, trace) => {
         if (modules.charAt(modules.length-1) === ',') {
             modules = modules.slice(0,-1);
         }
-        if (modules) {
-
+        if (modules.includes('*')) {
+            imports_object[path_from].modules_with_asterisk = getArrayItem(modules, imports_object[path_from].modules_with_asterisk);
+        } else if (modules) {
             if (trace) {
                 console.log('modules=',modules);
             }
@@ -95,7 +101,9 @@ const deleteImportModule = (module_params, trace) => {
         }
         if (imports_object[key].modules_in_curly_braces.includes(module_params)) {
             console.log('imports_object[key].modules_in_curly_braces.includes ', module_params);
-            imports_object[key].modules_in_curly_braces.splice(imports_object[key].modules_in_curly_braces.indexOf(module_params), 1);
+            imports_object[key].modules_in_curly_braces.splice(imports_object[key].modules_in_curly_braces
+                .indexOf(module_params), 1);
+
             if (!imports_object[key].modules_in_curly_braces.length) {
                 delete imports_object[key];
             }
@@ -105,18 +113,64 @@ const deleteImportModule = (module_params, trace) => {
 
 const insertImport = (str, trace) => {
 
+    // str = Object.keys(imports_object).map((key) => {
+    //
+    //     // for (let index in imports_object[key].modules_with_asterisk) {
+    //     //     let return_str = 'import ';
+    //     //     return_str += key !== 'self'
+    //     //         ? `${imports_object[key].modules_with_asterisk[index]}`
+    //     //         : `'${imports_object[key].modules_with_asterisk[index]}'`;
+    //     //     return_str += index < imports_object[key].modules_with_asterisk.length - 1
+    //     //         ? ', '
+    //     //         : '';
+    //     //     return_str += `;\n`;
+    //     //     return return_str;
+    //     // }
+    //
+    //
+    // });
+
     str = Object.keys(imports_object).map((key) => {
         let return_str = 'import ';
+        let modules_with_asterisk_was_found = false;
+
+        for (let index in imports_object[key].modules_with_asterisk) {
+            return_str += `${imports_object[key].modules_with_asterisk[index]}`
+            return_str += ` from '${key}';`;
+            modules_with_asterisk_was_found = true;
+        }
+        if (modules_with_asterisk_was_found &&
+            (imports_object[key].modules.length ||
+                imports_object[key].modules_in_curly_braces.length)
+        ) {
+            return_str += 'import ';
+        }
         for (let index in imports_object[key].modules) {
-            return_str += key !== 'self' ? `${imports_object[key].modules[index]}` : `'${imports_object[key].modules[index]}'`;
-            return_str += index < imports_object[key].modules.length - 1 ? ', ' : '';
+            return_str += key !== 'self'
+                ? `${imports_object[key].modules[index]}`
+                : `'${imports_object[key].modules[index]}'`;
+            return_str += index < imports_object[key].modules.length - 1
+                ? ', '
+                : '';
         }
-        return_str += imports_object[key].modules.length && imports_object[key].modules_in_curly_braces.length ? ', { ' : imports_object[key].modules_in_curly_braces.length ? '{ ' : '';
+        return_str += imports_object[key].modules.length && imports_object[key].modules_in_curly_braces.length
+            ? ', { '
+            : imports_object[key].modules_in_curly_braces.length
+            ? '{ '
+            : '';
         for (let index in imports_object[key].modules_in_curly_braces) {
-            return_str += key !== 'self' ? `${imports_object[key].modules_in_curly_braces[index]}` : `'${imports_object[key].modules_in_curly_braces[index]}'`;
-            return_str += index < imports_object[key].modules_in_curly_braces.length - 1 ? ', ' : '';
+            return_str += key !== 'self'
+                ? `${imports_object[key].modules_in_curly_braces[index]}`
+                : `'${imports_object[key].modules_in_curly_braces[index]}'`;
+            return_str += index < imports_object[key].modules_in_curly_braces.length - 1
+                ? ', '
+                : '';
         }
-        return_str += imports_object[key].modules_in_curly_braces.length ? ` } from '${key}';` : key !== 'self' ? ` from '${key}';` : `;`;
+        return_str += imports_object[key].modules_in_curly_braces.length
+            ? ` } from '${key}';`
+            : imports_object[key].modules.length && key !== 'self'
+            ? ` from '${key}';`
+            : imports_object[key].modules.length || imports_object[key].modules_in_curly_braces.length ? `;` : '';
         return return_str;
     }).join('\n') +'\n\n' + str;
 
@@ -132,11 +186,16 @@ const addImportByModuleAndPath = (module, path_from, trace) => {
         imports_object[path_from] = {};
         imports_object[path_from].modules_in_curly_braces = [];
         imports_object[path_from].modules = [];
+        imports_object[path_from].modules_with_asterisk = [];
     }
-    if (module.includes('{')) {
+    if (module.includes('*')) {
+        imports_object[path_from].modules_with_asterisk
+            = getArrayItem(module, imports_object[path_from].modules_with_asterisk, trace);
+    } else if (module.includes('{')) {
         module = module.replace(/[{}]/gi, '');
         module = module.trim();
-        imports_object[path_from].modules_in_curly_braces = getArrayItem(module, imports_object[path_from].modules_in_curly_braces, trace);
+        imports_object[path_from].modules_in_curly_braces
+            = getArrayItem(module, imports_object[path_from].modules_in_curly_braces, trace);
     }
     else {
         imports_object[path_from].modules = getArrayItem(module, imports_object[path_from].modules, trace);

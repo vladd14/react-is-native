@@ -577,11 +577,11 @@ const createAppJs = (str) => {
     let apps = {};
 
     const getAppsFromRoute = (match, path_name, url_name, component_name, params, p5) => {
-        console.log('match=', match);
-        console.log(`path_name=${path_name}`);
-        console.log(`url_name=${url_name}`);
-        console.log(`component_name=${component_name}`);
-        console.log(`params=${params}`);
+        // console.log('match=', match);
+        // console.log(`path_name=${path_name}`);
+        // console.log(`url_name=${url_name}`);
+        // console.log(`component_name=${component_name}`);
+        // console.log(`params=${params}`);
         // console.log(`p4=${p4}`);
         // console.log(`p5=${p5}`);
 

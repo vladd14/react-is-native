@@ -19,7 +19,11 @@ const getArrayItem = (str, prev_array, trace) => {
     return [...prev_array, ...str.split(',').map((element) => {
             element = element.trim(); return element.replace(/['"`]/g, '')
         }
-    )].filter((item, index, array) => index < array.length - 1 && !array.slice(index+1).includes(item) || index === array.length - 1);
+    )].filter(
+        (item, index, array) => index < array.length - 1 &&
+            !array.slice(index + 1).includes(item) ||
+            index === array.length - 1
+    );
 };
 const cutImport = (str, trace) => {
     const replacer = (match, p1, modules, p2, path_from) => {

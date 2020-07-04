@@ -12,7 +12,8 @@ const { withRouterDelete, historyToNavigationTransform, removeExcessTags,
     addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, changeNavigationHooks, removeTagsWithBody,
     removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage,
-    addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative, deleteJSRequires, addKeyboardAvoidingViewWrapper } = require('./codeTransformations');
+    addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative, deleteJSRequires,
+    addKeyboardAvoidingViewWrapper } = require('./codeTransformations');
 
 const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
@@ -20,7 +21,8 @@ const { project_name, project_dir, initial_react_js_project_name, } = require('.
 const path_from = `${project_dir}${initial_react_js_project_name}/src/`;
 const path_to = `${project_dir}${project_name}/`;
 
-const directories = ['helpers', 'settings', 'reducers', 'apps', 'app_structure', 'components', 'components_connections', 'urls', 'requirements'];
+const directories = ['helpers', 'settings', 'reducers', 'apps', 'app_structure', 'components',
+    'components_connections', 'urls', 'requirements', 'share_code'];
 const excess_modules = ['react-router-dom', 'react-datetime'];
 const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar', 'Linking'];
 const svg_file_name = 'vectors';

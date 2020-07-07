@@ -15,7 +15,7 @@ const { withRouterDelete, historyToNavigationTransform, removeExcessTags,
     addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative, deleteJSRequires,
     addKeyboardAvoidingViewWrapper } = require('./codeTransformations');
 
-const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile } = require('./helpers');
+const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile, copyFilesFromDirectory, deleteFolder } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
 
 const path_from = `${project_dir}${initial_react_js_project_name}/src/`;
@@ -27,6 +27,22 @@ const excess_modules = ['react-router-dom', 'react-datetime'];
 const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar', 'Linking'];
 const svg_file_name = 'vectors';
 let svg_file = {};
+
+const directories_just_copy = ['img'];
+
+const copyDirectories = () => {
+    directories_just_copy.forEach((dir_name) => {
+        if (fs.existsSync(fileFrom(`${project_dir}${project_name}`, dir_name))) {
+            deleteFolder(dirTo(`${project_dir}${project_name}`, dir_name));
+        }
+    });
+
+    directories_just_copy.forEach((dir_name) => {
+        copyFilesFromDirectory(
+            dirFrom(`${project_dir}${initial_react_js_project_name}/src/`, dir_name),
+            dirTo(`${project_dir}${project_name}`, dir_name));
+    });
+}
 
 const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
 
@@ -471,6 +487,7 @@ const transferStyles = () => {
 };
 
 const startAppWebToNativeApp = () => {
+    copyDirectories();
     console.log('start copyMainApps');
     copyMainApps({ apps_folder: directories });
     console.log('start createAppFile');

@@ -443,22 +443,18 @@ const platformTransforms = (str, filename, nested_level) => {
         }
         const name_import = 'appUrl';
         if (tokens.indexOf(name_import) === (-1)) {
-            // tokens.push(name_import);
             tokens.push({module: `{ ${name_import} }`, path: `${addPathDots(nested_level)}urls`});
         }
         return p0 + p1 + `${name_import}.get(${p2})`;
     };
     const textInputOnChange = (match, p1,p2,p3,p4) => {
-        // console.log('match=', match);
         match = match.replace(/(onChange=\{)/mig, 'onChangeText={');
-        // console.log(match);
         return match;
     };
     const changeHistoryToNavigate = (match, p1,p2,p3) => {
         // console.log(match);
         const name_import = 'appUrl';
         if (tokens.indexOf(name_import) === (-1)) {
-            // tokens.push(name_import);
             tokens.push({module: `{ ${name_import} }`, path: `${addPathDots(nested_level)}urls`});
         }
         return 'navigation.navigate(';
@@ -562,11 +558,10 @@ const createRootStack = (apps) => {
     return {
         text: str,
         imports: [
-            'import PageHeader from \'./components/PageHeader\'',
             'import { colors } from \'./styles/colors\'',
             'import \'react-native-gesture-handler\';',
             'import { enableScreens } from \'react-native-screens\';',
-            'import { createNativeStackNavigator } from \'@react-navigation/native-stack\'',
+            'import { createNativeStackNavigator } from \'react-native-screens/native-stack\'',
             'import { NavigationContainer } from \'@react-navigation/native\'',
         ],
     }
@@ -627,7 +622,7 @@ const createAppJs = (str) => {
         // return str;
         // console.log('cleanNavigation=\n', str);
 
-        str = `const Stack = createNativeStackNavigator();\n` + str;
+        str = `enableScreens();\nconst Stack = createNativeStackNavigator();\n` + str;
 
         let { ...stackDependencies } = createRootStack(apps);
         str = str.replace('@@STACK_NAVIGATOR_PLACEMENT@@', stackDependencies.text );
@@ -638,7 +633,7 @@ const createAppJs = (str) => {
 
         str = str.replace(remove_blank_lines_regexp, '');
 
-        str = addStringsAfterFlowFunction(str, 'App', 'enableScreens();');
+        // str = addStringsAfterFlowFunction(str, 'App', 'enableScreens();');
     }
 
     // console.log(str);

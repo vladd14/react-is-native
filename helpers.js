@@ -19,7 +19,7 @@ const dirFrom = (path_from, dirname) => {
     if (dir && !dir.endsWith('/')) {
         dir += '/';
     }
-    return dir
+    return dir.replace(/\/\//gi, '/');
 };
 
 const dirTo = (path_to, dirname) => {
@@ -27,7 +27,8 @@ const dirTo = (path_to, dirname) => {
     if (dir && !dir.endsWith('/')) {
         dir += '/';
     }
-    return dir
+    // return dir
+    return dir.replace(/\/\//gi, '/');
 };
 
 const deleteFolder = (path) => {
@@ -89,6 +90,44 @@ const copyFilesFromDirectory = (path_from, path_to) => {
     });
 };
 
+const copyFileWithChangeBody = (path_from, path_to, file_name, change_body, path_includes) => {
+    if (!fs.existsSync(path_to)) {
+        fs.mkdirSync(path_to, { recursive: true });
+    }
+    const file_from = fileFrom(path_from, file_name);
+    const file_to = fileTo(path_to, file_name);
+    let fileBuffer = fs.readFileSync(file_from, 'utf-8');
+    if (fileBuffer.includes(change_body.name) && (!path_includes || path_from.includes(path_includes))) {
+        const regexp = new RegExp(`${change_body.name}`, 'g');
+        fileBuffer = fileBuffer.replace(regexp, change_body.change_name);
+        fs.writeFileSync(file_to, fileBuffer,);
+        console.log(`file ${file_from} was transformed and copied to ${file_to}`);
+    } else {
+        fs.copyFileSync(file_from, file_to);
+        console.log(`file ${file_from} copied to ${file_to}`);
+    }
+};
+
+const copyFilesFromDirectoryWithChangeName = (path_from, path_to, change_name, path_includes) => {
+    if (path_from.includes(change_name.name) && (!path_includes || path_from.includes(path_includes))) {
+        const regexp = new RegExp(`${change_name.name}`, 'g');
+        path_to = path_to.replace(regexp, change_name.change_name);
+    }
+    const files_in_dir = fs.readdirSync(path_from, { withFileTypes: true, });
+    files_in_dir.forEach((file_in_folder) => {
+        if (!file_in_folder.isDirectory()) {
+            copyFileWithChangeBody(path_from, path_to, file_in_folder.name, change_name, path_includes);
+        } else {
+            copyFilesFromDirectoryWithChangeName(
+                dirFrom(path_from, file_in_folder.name),
+                dirTo(path_to, file_in_folder.name),
+                change_name,
+                path_includes,
+            );
+        }
+    });
+};
+
 module.exports = {
     makeStringTitled,
     fileFrom,
@@ -100,4 +139,5 @@ module.exports = {
     copyFileByStream,
     copyFilesFromDirectoryByStream,
     deleteFolder,
+    copyFilesFromDirectoryWithChangeName,
 };

@@ -264,7 +264,6 @@ const brewUpgrade = () => {
 
 const startCreatingProject = () => {
     brewUpgrade();
-    // copyGitDirStream();
 };
 
 startCreatingProject();

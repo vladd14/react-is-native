@@ -2,11 +2,15 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const { startAppWebToNativeApp } = require('./transformations');
 const { fileFrom, dirFrom, dirTo, copyFile, copyFilesFromDirectory, deleteFolder } = require('./helpers');
-const { project_name, project_dir, project_folder_with_tools, } = require('./constants');
+const {
+    project_name,
+    project_dir,
+    project_folder_with_tools,
+    project_folder_with_native_settings,
+    react_native_apps_names,
+} = require('./constants');
+const { startAppsSplitting } = require('./split-to-native-apps');
 
-// const project_name = 'AwesomeProject';
-// const project_dir = '/Users/admin/PycharmProjects/';
-// const project_folder_with_tools = 'insarmApp/';
 
 const copy_platform_dirs = ['platformTransforms', 'fonts', 'containers', 'elements', 'img'];
 
@@ -17,9 +21,7 @@ const yarn_modules = [
     '@reduxjs/toolkit',
     'react-native-svg',
     'react-native-svg-transformer',
-    'react-navigation',
     '@react-navigation/native',
-    '@react-navigation/native-stack',
     'react-native-reanimated',
     'react-native-gesture-handler',
     'react-native-screens',
@@ -30,24 +32,30 @@ const yarn_modules = [
     '@react-native-community/datetimepicker',
     'moment@2.24.0',
     'moment-timezone',
+    'patch-package',
 ];
 
 const iOSCopyIconAndLoadingScreen = () => {
     const copy_folders = [
-        'Base.lproj',
-        'Images.xcassets',
+        `${project_name}`,
     ];
     copy_folders.forEach((dir_name) => {
-        deleteFolder(dirTo(`${project_dir}${project_name}/ios/${project_name}`, dir_name));
+        deleteFolder(dirTo(`${project_dir}${project_name}/ios/`, dir_name));
     });
 
     copy_folders.forEach((dir_name) => {
         copyFilesFromDirectory(
-            dirFrom(`${project_dir}${project_folder_with_tools}/ios/${project_name}`, dir_name),
-            dirTo(`${project_dir}${project_name}/ios/${project_name}`, dir_name));
+            // dirFrom(`${project_dir}${project_folder_with_tools}/ios/${project_name}`, dir_name),
+            dirFrom(`${project_dir}${project_folder_with_native_settings}/ios/`, dir_name),
+            dirTo(`${project_dir}${project_name}`, '/ios/'));
     });
     console.log(`iOS settings have been transfer`);
-    console.log(`\nThat's it!`);
+    if (react_native_apps_names && react_native_apps_names.length) {
+        console.log('start splitting react native custom apps');
+        startAppsSplitting();
+    } else {
+        console.log(`\nThat's it!`);
+    }
 }
 
 const copyWebStormProjectSettings = () => {
@@ -77,7 +85,24 @@ const copyWebStormProjectSettings = () => {
     console.log(`WebStorm settings have copied`);
     iOSCopyIconAndLoadingScreen();
 };
+let patches_exist = false;
+const addPatchesToPackageJSON = () => {
+    const tab = '  ';
+    const add_lines = [
+        `,\n${tab}${tab}"postinstall": "patch-package"`,
+    ];
+    let file = fileFrom(dirFrom(project_dir, project_name), 'package.json');
+    let file_buffer = fs.readFileSync(file, 'utf-8');
+    if (file_buffer) {
 
+        file_buffer = file_buffer.replace(/("scripts":\s+\{)(.+?)(\s+})/gsi, (match, p1, p2, p3) => {
+            return p1 + p2 + add_lines.join('\n') + p3;
+        });
+
+        fs.writeFileSync(file, file_buffer);
+    }
+    copyWebStormProjectSettings();
+}
 const addPrettierCustomSettings = () => {
     const tab = '  ';
     const add_lines = [
@@ -109,6 +134,9 @@ const addPrettierCustomSettings = () => {
     }
 
     console.log(`custom setting for prettier has added`);
+    if (patches_exist) {
+        return addPatchesToPackageJSON();
+    }
     copyWebStormProjectSettings();
 };
 
@@ -163,6 +191,9 @@ const changeBundleToRam = () => {
 }
 
 const addReactNavigationDependencies = () => {
+    // it seems like that's no need anymore
+    return changeBundleToRam();
+
     // https://reactnavigation.org/docs/en/next/getting-started.html
     // To finalize installation of react-native-screens for Android,
     // add the following two lines to dependencies section in android/app/build.gradle:
@@ -216,8 +247,38 @@ const addReactNavigationDependencies = () => {
     }
     console.log(`React Navigation has added`);
     console.log(`start change bundle type to ram-bundle`);
-    changeBundleToRam()
+    changeBundleToRam();
 };
+
+const copyPatches = () => {
+    const dir_name = 'patches';
+    if (fs.existsSync(fileFrom(`${project_dir}${project_folder_with_tools}`, dir_name))) {
+        patches_exist = true;
+        copyFilesFromDirectory(
+            dirFrom(`${project_dir}${project_folder_with_tools}`, dir_name),
+            dirTo(`${project_dir}${project_name}`, dir_name));
+
+        const process = spawn('yarn', ['install'], { cwd: dirTo(project_dir, project_name) });
+        process.stdout.on('data', (data) => {
+            console.log(`stdout: ${data}`);
+        });
+
+        process.stderr.on('data', (data) => {
+            console.error(`stderr: ${data}`);
+        });
+
+        process.on('close', (code) => {
+            if (!code) {
+                console.log(`yarn has installed patches`);
+            }
+            else {
+                console.log(`Process install patches exited with code ${code}`);
+            }
+        });
+    }
+
+    addReactNavigationDependencies();
+}
 
 const copyPlatformTools = () => {
     copy_platform_dirs.forEach((dir_name) => {
@@ -233,7 +294,7 @@ const copyPlatformTools = () => {
     copyFile(`${project_dir}${project_folder_with_tools}`, `${project_dir}${project_name}`, 'metro.config.js' );
 
     console.log(`copyPlatformTools have copied`);
-    addReactNavigationDependencies();
+    copyPatches();
 };
 
 const podInstall = () => {
@@ -298,7 +359,6 @@ const reactNativeProjectInit = () => {
         if (!code) {
             console.log(`copy project directory from temp to destination`);
             addYarnModules();
-            // copyCreatedProjectToDestination();
         }
     });
 };

@@ -606,7 +606,7 @@ const createAppJs = (str) => {
 
         str = cutImport(str);
 
-        const exceedModules = ['./index.scss', 'react-router-dom', './urls'];
+        const exceedModules = ['./index.scss', 'react-router-dom'];
         exceedModules.forEach((module) => deleteImportModule(module));
 
         // <Route path={urls.login.path}>

@@ -278,7 +278,8 @@ const transferStyles = () => {
         'calculations',
         'contacts',
         'insarmic',
-        'param_view'
+        'param_view',
+        'app_appearance',
     ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];

@@ -9,7 +9,7 @@ const { transformVariables, transformStyles, transformMediaMax, transformObjectT
     transformTags, transformColors, transformCustomFontIcons, getSvgPathsFromRequires } = require('./styles');
 const { withRouterDelete, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
-    addScreenDimensionListener, replaceStyleAfterFlowFunction,
+    addScreenDimensionInitializer, addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, changeNavigationHooks, removeTagsWithBody,
     removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage,
     addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative, deleteJSRequires,
@@ -89,6 +89,7 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                     if (folder === 'apps' || folder === 'components') {
                         if (file_in_folder === 'Main.js') {
                             console.log('start addScreenDimensionListener');
+                            fileBuffer = addScreenDimensionInitializer(fileBuffer, 'Main');
                             fileBuffer = addScreenDimensionListener(fileBuffer, 'Main');
                         }
                         if (file_in_folder === 'StatusBar.js') {
@@ -210,20 +211,17 @@ const doPrettier = () => {
     let files = [];
     const dirs_for_prettier = ['apps', 'components', 'components_connections', 'styles', 'styles/at_media', 'styles/css', 'styles/platform_modifiers'];
     dirs_for_prettier.forEach( (folder) => {
-        // console.log(folder);
-        // if (folder === 'apps' || folder === 'components') {
-            const files_in_dir = fs.readdirSync(dirFrom(path_to, folder), {});
-            files_in_dir.forEach((file_in_folder) => {
-
-                if (!file_in_folder.startsWith('.')) {
-                    files.push(fileTo(folder, file_in_folder));
-                }
-            });
-        // }
+        const files_in_dir = fs.readdirSync(dirFrom(path_to, folder), {});
+        files_in_dir.forEach((file_in_folder) => {
+            if (!file_in_folder.startsWith('.')) {
+                files.push(fileTo(folder, file_in_folder));
+            }
+        });
     });
 
-    const process = spawn('yarn', ['prettier', '--write'].concat(files), { cwd: dirTo(project_dir, project_name) });
+    files.push('App.js');
 
+    const process = spawn('yarn', ['prettier', '--write'].concat(files), { cwd: dirTo(project_dir, project_name) });
     process.stdout.on('data', (data) => {
         console.log(`stdout: ${data}`);
     });

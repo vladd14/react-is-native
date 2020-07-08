@@ -206,12 +206,11 @@ const changeNavigationHooks = (str) => {
     return str
 };
 
-const addScreenDimensionListener = (str, functionName) => {
-    // initImports();
+const addScreenDimensionInitializer = (str, functionName) => {
     const dimension_listener = `if (!appState.screen_data) {
-        Screen({ appState, actions });
+        getScreenDimensions({ appState, actions });
     }`;
-    const import_line = `import { Screen } from '../platformTransforms';`;
+    const import_line = `import { getScreenDimensions } from '../platformTransforms/helpers_platform';`;
     const replacer = (match, p1) => {
         // console.log(`match='${match}'`);
         match += dimension_listener + p1;
@@ -219,14 +218,41 @@ const addScreenDimensionListener = (str, functionName) => {
     };
 
     if (str) {
-        // str = cutImport(str);
-        // const regExp = /const\s+PageHeader\s*=\s*\(.+\)\s*.+{(\s*)/ig;
         const regExp = new RegExp(`const\\s+${functionName}\\s*=\\s*\\(.+\\)\\s*.+{(\\s*)`, 'gi');
         str = str.replace(regExp, replacer);
         // Clean file of blanks lines
         str = str.replace(remove_blank_lines_regexp, '');
         addImportLine(import_line);
-        // str = insertImport(str);
+    }
+    // console.log(str);
+    return str;
+};
+
+const addScreenDimensionListener = (str, functionName) => {
+    const dimension_listener = `\nuseEffect(() => {
+        let is_cancelled = false;
+
+        if (!is_cancelled) {
+            Dimensions.addEventListener('change', onChangeScreenDimensions);
+        }
+        return () => {
+            is_cancelled = true;
+            Dimensions.removeEventListener('change', onChangeScreenDimensions);
+        };
+    }, []);\n\n`;
+    const import_line = `import { onChangeScreenDimensions } from '../platformTransforms/helpers_platform';`;
+    const replacer = (match, p1, p2, p3) => {
+
+        return p1 + p2 + dimension_listener + p3;
+    };
+
+    if (str) {
+        const regExp = new RegExp(`(const\\s+${functionName}\\s*=\\s*\\(.+\\)\\s*.+{\\s*)(.+?)(return\\s+)`, 'gsi');
+        str = str.replace(regExp, replacer);
+        // Clean file of blanks lines
+        str = str.replace(remove_blank_lines_regexp, '');
+        addImportLine(import_line);
+        addImportLine('import { Dimensions } from \'react-native\'');
     }
     // console.log(str);
     return str;
@@ -563,6 +589,7 @@ const createRootStack = (apps) => {
             'import { enableScreens } from \'react-native-screens\';',
             'import { createNativeStackNavigator } from \'react-native-screens/native-stack\'',
             'import { NavigationContainer } from \'@react-navigation/native\'',
+            'import { Route } from \'./helpers/fakes\'',
         ],
     }
 };
@@ -606,21 +633,32 @@ const createAppJs = (str) => {
 
         str = cutImport(str);
 
-        const exceedModules = ['./index.scss', 'react-router-dom'];
+        const exceedModules = ['./index.scss', 'react-router-dom', './helpers/fakes'];
         exceedModules.forEach((module) => deleteImportModule(module));
 
-        // <Route path={urls.login.path}>
-        //     <Main screen_name={'login'} />
-        // </Route>
-        // let regExp = /<Route\s*path={((\w*)[.](\w*)[.](\w*\W*[^}])})+>\s*<(\w+)\s*\/>\s*<\/Route>/mig;
-        let regExp = /<Route\s*path=\{(\w+.(\w+).\w+)}\s*>\s*<(\w+)\s*(.+?)\s*\/>\s*<\/Route>/ig;
-        str = str.replace(regExp, getAppsFromRoute);
+        // let regExp = /<Route\s*path=\{(\w+.(\w+).\w+)}\s*>\s*<(\w+)\s*(.+?)\s*\/>\s*<\/Route>/ig;
+        // str = str.replace(regExp, getAppsFromRoute);
 
-        regExp = /(\s*)<(Navigation)>\s*(.\s*)+?(\s*)<\/(Navigation)>/mig;
-        str = str.replace(regExp, cleanNavigation);
-
-        // return str;
-        // console.log('cleanNavigation=\n', str);
+        // const regExp = /(\s*)<(Navigation)>\s*(.\s*)+?(\s*)<\/(Navigation)>/mig;
+        // regExp = /(\s*)<(Navigation)>\s*(.\s*)+?(\s*)<\/(Navigation)>/mig;
+        // str = str.replace(regExp, cleanNavigation);
+        str = str.replace(/(<[/]*)(Navigation)(>)/g, (match, p1, p2, p3) => {
+            return p1 + 'NavigationContainer' + p3;
+        });
+        str = str.replace(/(<)(Switch)(>)/, (match, p1, p2, p3) => {
+            const lines_array = [
+                `\ninitialRouteName={'main'}`,
+                `screenOptions={({ ...props }) => ({`,
+                `title: '',`,
+                `headerTintColor: colors.brand_color,`,
+                `headerShown: false,`,
+                `})}`,
+            ]
+            return p1 + 'Stack.Navigator' + lines_array.join('\n') + p3;
+        });
+        str = str.replace(/(<\/)(Switch)(>)/, (match, p1, p2, p3) => {
+            return p1 + 'Stack.Navigator' + p3;
+        });
 
         str = `enableScreens();\nconst Stack = createNativeStackNavigator();\n` + str;
 
@@ -633,7 +671,6 @@ const createAppJs = (str) => {
 
         str = str.replace(remove_blank_lines_regexp, '');
 
-        // str = addStringsAfterFlowFunction(str, 'App', 'enableScreens();');
     }
 
     // console.log(str);
@@ -844,7 +881,7 @@ const addKeyboardAvoidingViewWrapper = (str) => {
             }
         }
     }
-    console.log('str=', str);
+    // console.log('str=', str);
     return str;
 }
 
@@ -899,6 +936,7 @@ module.exports = {
     changePlatform,
     removeFunctionCall,
     changeTagName,
+    addScreenDimensionInitializer,
     addScreenDimensionListener,
     replaceStyleAfterFlowFunction,
     SimplifyEmptyTags,

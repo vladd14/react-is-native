@@ -32,9 +32,15 @@ const dirTo = (path_to, dirname) => {
     return dir.replace(/\/\//gi, '/');
 };
 
+const deleteFile = (path) => {
+    if (fs.existsSync(path) && !fs.lstatSync(path).isDirectory()) {
+        fs.unlinkSync(path);
+    }
+}
+
 const deleteFolder = (path) => {
-    const files_in_dir = fs.readdirSync(path, { withFileTypes: true, });
-    if (fs.existsSync(path)) {
+    // const files_in_dir = fs.readdirSync(path, { withFileTypes: true, });
+    if (fs.existsSync(path) && fs.lstatSync(path).isDirectory()) {
         const files_in_dest_folder = fs.readdirSync(path, { withFileTypes: true, });
         files_in_dest_folder.forEach((dest_file) => {
             if (!dest_file.isDirectory()) {
@@ -43,31 +49,49 @@ const deleteFolder = (path) => {
                 deleteFolder(fileTo(path, dest_file.name));
             }
         });
+    } else if (fs.existsSync(path) && !fs.lstatSync(path).isDirectory()) {
+        fs.unlinkSync(path);
     }
-    fs.rmdirSync(path);
+    if (fs.existsSync(path)) {
+        fs.rmdirSync(path);
+    }
 }
 
-const copyFileByStream = (path_from, path_to, file_name, options) => {
-    if (!fs.existsSync(path_to)) {
-        fs.mkdirSync(path_to, { recursive: true });
-    }
-    const file_from = fileFrom(path_from, file_name);
-    const file_to = fileTo(path_to, file_name);
-    let fileBuffer = fs.readFileSync(fileFrom(path_from, file_name), options);
-    if (fileBuffer) {
-        fs.writeFileSync(fileTo(path_to, file_name), fileBuffer,);
+// const copyFileByStream = (path_from, path_to, file_name, options) => {
+//     if (!fs.existsSync(path_to)) {
+//         fs.mkdirSync(path_to, { recursive: true });
+//     }
+//     const file_from = fileFrom(path_from, file_name);
+//     const file_to = fileTo(path_to, file_name);
+//     let fileBuffer = fs.readFileSync(fileFrom(path_from, file_name), options);
+//     if (fileBuffer) {
+//         fs.writeFileSync(fileTo(path_to, file_name), fileBuffer,);
+//     }
+// };
+
+const copyFilesFromDirectoryByStream = (path_from, path_to) => {
+    if (fs.existsSync(path_from) && fs.lstatSync(path_from).isDirectory()) {
+        const files_in_dir = fs.readdirSync(path_from, {withFileTypes: true,});
+        files_in_dir.forEach((file_in_folder) => {
+            if (!file_in_folder.isDirectory()) {
+                copyFileByStream(path_from, path_to, file_in_folder.name);
+            } else {
+                copyFilesFromDirectoryByStream(dirFrom(path_from, file_in_folder.name), dirTo(path_to, file_in_folder.name));
+            }
+        });
+    } else if (fs.existsSync(path_from) && !fs.lstatSync(path_from).isDirectory()) {
+        copyFileSimple(path_from, path_to);
     }
 };
 
-const copyFilesFromDirectoryByStream = (path_from, path_to) => {
-    const files_in_dir = fs.readdirSync(path_from, { withFileTypes: true, });
-    files_in_dir.forEach((file_in_folder) => {
-        if (!file_in_folder.isDirectory()) {
-            copyFileByStream(path_from, path_to, file_in_folder.name);
-        } else {
-            copyFilesFromDirectoryByStream(dirFrom(path_from, file_in_folder.name), dirTo(path_to, file_in_folder.name));
-        }
-    });
+const copyFileSimple = (path_from, path_to) => {
+    if (!fs.existsSync(path_to)) {
+        fs.mkdirSync(path_to, { recursive: true });
+    }
+    // const file_from = fileFrom(path_from, file_name);
+    // const file_to = fileTo(path_to, file_name);
+    fs.copyFileSync(path_from, path_to);
+    console.log(`file ${path_from} copied to ${path_to}`);
 };
 
 const copyFile = (path_from, path_to, file_name,) => {
@@ -137,8 +161,10 @@ module.exports = {
     dirTo,
     copyFile,
     copyFilesFromDirectory,
-    copyFileByStream,
+    // copyFileByStream,
     copyFilesFromDirectoryByStream,
     deleteFolder,
     copyFilesFromDirectoryWithChangeName,
+    copyFileSimple,
+    deleteFile,
 };

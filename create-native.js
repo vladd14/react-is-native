@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { startAppWebToNativeApp } = require('./transformations');
-const { fileFrom, dirFrom, dirTo, copyFile, copyFilesFromDirectory, deleteFolder } = require('./helpers');
+const { fileFrom, fileTo, dirFrom, dirTo, copyFile, copyFilesFromDirectory, deleteFolder, copyFileSimple, deleteFile } = require('./helpers');
 const {
     project_name,
     project_dir,
@@ -36,17 +36,35 @@ const yarn_modules = [
 const iOSCopyIconAndLoadingScreen = () => {
     const copy_folders = [
         project_name,
+        'insarmApp.xcodeproj',
+        'insarmApp.xcworkspace',
     ];
     copy_folders.forEach((dir_name) => {
         deleteFolder(dirTo(`${project_dir}${project_name}/ios/`, dir_name));
     });
-
+    copy_folders.splice(1, 2);
+    // console.log('copy_folders=', copy_folders);
     copy_folders.forEach((dir_name) => {
         copyFilesFromDirectory(
-            // dirFrom(`${project_dir}${project_folder_with_tools}/ios/${project_name}`, dir_name),
             dirFrom(`${project_dir}${project_folder_with_native_settings}/ios/`, dir_name),
             dirTo(`${project_dir}${project_name}`, '/ios/'));
     });
+
+    // const files_folders = [
+    //     'insarmApp.xcodeproj',
+    //     'insarmApp.xcworkspace',
+    // ];
+    // files_folders.forEach((dir_name) => {
+    //     deleteFile(fileFrom(`${project_dir}${project_name}/ios/`, dir_name));
+    // });
+
+    // files_folders.forEach((dir_name) => {
+    //     copyFileSimple(
+    //         fileFrom(`${project_dir}${project_folder_with_native_settings}/ios/`, dir_name),
+    //         fileTo(`${project_dir}${project_name}/ios/`, dir_name)
+    //     );
+    // });
+
     console.log(`iOS settings have been transfer`);
     if (react_native_apps_names && react_native_apps_names.length) {
         // console.log('start splitting react native custom apps');

@@ -12,9 +12,9 @@ const {
 
 // const react_native_apps_names = ['vladilen'];
 
-const changeNamesInProjectSettings = (app_name) => {
+const changeNamesInProjectSettings = (app_name, react_native_app_name) => {
     const tab = '  ';
-    let file = fileFrom(dirFrom(project_dir, app_name), '/settings/index.js');
+    let file = fileFrom(dirFrom(project_dir, react_native_app_name), '/settings/index.js');
     let file_buffer = fs.readFileSync(file, 'utf-8');
     if (file_buffer) {
         file_buffer = file_buffer.replace(/(project_name\s*=\s*['"`])(.+?)(["'`])/g, (match, p1, p2, p3) => {
@@ -59,34 +59,36 @@ const changeNameInPackageJSON = (app_name) => {
 
 const startAppsSplitting = () => {
     react_native_apps_names.forEach((app_name) => {
-        if (fs.existsSync(fileFrom(`${project_dir}`, app_name))) {
-            deleteFolder(dirTo(`${project_dir}`, app_name));
+        if (fs.existsSync(fileFrom(`${project_dir}`, app_name.react_native_app_name))) {
+            deleteFolder(dirTo(`${project_dir}`, app_name.react_native_app_name));
         }
-        // copyFilesFromDirectory(
-        //     dirFrom(`${project_dir}`, project_name),
-        //     dirTo(`${project_dir}`, app_name));
+
         copyFilesFromDirectoryWithChangeName(
             dirFrom(`${project_dir}`, project_name),
-            dirTo(`${project_dir}`, app_name),
-            { name: 'insarmApp', change_name: 'vladilen' },
+            dirTo(`${project_dir}`, app_name.react_native_app_name),
+            { name: project_name, change_name: app_name.react_native_app_name },
             'ios',
-            );
+        );
 
         console.log('here we going with transformation functions');
 
-        if (fs.existsSync(fileFrom(`${project_dir}`, app_name))) {
-            deleteFolder(dirTo(`${project_dir}${app_name}/ios/`, app_name));
+        if (fs.existsSync(fileFrom(`${project_dir}${app_name.react_native_app_name}/ios/`, app_name.react_native_app_name))) {
+            deleteFolder(dirTo(`${project_dir}${app_name.react_native_app_name}/ios/`, app_name.react_native_app_name));
         }
         copyFilesFromDirectory(
-            dirFrom(`${project_dir}${project_folder_with_native_settings}/ios/`, app_name),
-            dirTo(`${project_dir}${app_name}`, '/ios/'));
+            dirFrom(`${project_dir}${project_folder_with_native_settings}/ios/`, app_name.react_native_app_name),
+            dirTo(`${project_dir}${app_name.react_native_app_name}`, '/ios/'));
 
         //changing project names in project settings,
-        changeNameInPackageJSON(app_name);
-        changeNamesInAppJSON(app_name);
-        changeNamesInProjectSettings(app_name);
+        console.log('start changeNameInPackageJSON');
+        changeNameInPackageJSON(app_name.react_native_app_name);
+        console.log('start changeNamesInAppJSON');
+        changeNamesInAppJSON(app_name.react_native_app_name);
+        console.log('start changeNamesInProjectSettings');
+        changeNamesInProjectSettings(app_name.project_name, app_name.react_native_app_name);
 
-        const process = spawn('pod', ['install',], { cwd: dirTo(dirTo(project_dir, app_name), 'ios') });
+        console.log('start pod install in created project');
+        const process = spawn('pod', ['install',], { cwd: dirTo(dirTo(project_dir, app_name.react_native_app_name), 'ios') });
 
         process.stdout.on('data', (data) => {
             console.log(`stdout: ${data}`);
@@ -110,7 +112,7 @@ const startAppsSplitting = () => {
     console.log(`\nThat's it!`);
 }
 
-// startAppsSplitting();
+startAppsSplitting();
 
 module.exports = {
     startAppsSplitting,

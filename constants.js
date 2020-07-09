@@ -18,7 +18,17 @@ const project_folder_with_prettier = 'insarmApp/node_modules/';
 const project_name_js = 'insarm-front';
 const project_folder_with_js_source_files = `archive/${project_name_js}/`;
 
-const react_native_apps_names = ['vladilen'];
+// const react_native_apps_names = ['vladilen', 'agro-cons'];
+const react_native_apps_names = [
+    {
+        project_name: 'vladilen',
+        react_native_app_name: 'vladilen',
+    },
+    {
+        project_name: 'agro_cons',
+        react_native_app_name: 'agroCons',
+    }
+];
 
 
 module.exports = {

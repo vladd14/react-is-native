@@ -6,12 +6,14 @@ const makeStringTitled = (str) => {
 
 const fileFrom = (from, filename) => {
     // return from + filename;
-    return from.endsWith('/') ? from + filename : from + '/' + filename;
+    from = from.endsWith('/') ? from + filename : from + '/' + filename;
+    return from.replace(/\/\//gi, '/');
 };
 
 const fileTo = (to, filename) => {
     // return to + filename;
-    return to.endsWith('/') ? to + filename : to + '/' + filename;
+    to = to.endsWith('/') ? to + filename : to + '/' + filename;
+    return to.replace(/\/\//gi, '/');
 };
 
 const dirFrom = (path_from, dirname) => {
@@ -27,7 +29,6 @@ const dirTo = (path_to, dirname) => {
     if (dir && !dir.endsWith('/')) {
         dir += '/';
     }
-    // return dir
     return dir.replace(/\/\//gi, '/');
 };
 

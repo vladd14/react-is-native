@@ -9,8 +9,6 @@ const {
     project_folder_with_native_settings,
     react_native_apps_names,
 } = require('./constants');
-const { startAppsSplitting } = require('./split-to-native-apps');
-
 
 const copy_platform_dirs = ['platformTransforms', 'fonts', 'containers', 'elements', 'img'];
 
@@ -37,7 +35,7 @@ const yarn_modules = [
 
 const iOSCopyIconAndLoadingScreen = () => {
     const copy_folders = [
-        `${project_name}`,
+        project_name,
     ];
     copy_folders.forEach((dir_name) => {
         deleteFolder(dirTo(`${project_dir}${project_name}/ios/`, dir_name));
@@ -51,8 +49,9 @@ const iOSCopyIconAndLoadingScreen = () => {
     });
     console.log(`iOS settings have been transfer`);
     if (react_native_apps_names && react_native_apps_names.length) {
-        console.log('start splitting react native custom apps');
-        startAppsSplitting();
+        // console.log('start splitting react native custom apps');
+        // startAppsSplitting();
+        console.log(`\nThat's it!`);
     } else {
         console.log(`\nThat's it!`);
     }
@@ -101,8 +100,41 @@ const addPatchesToPackageJSON = () => {
 
         fs.writeFileSync(file, file_buffer);
     }
-    copyWebStormProjectSettings();
 }
+const registerFontAssetFile = () => {
+    const add_lines = [
+        '/**',
+        ' * Add fonts directory for React Native',
+        ' *',
+        ' * @format',
+        ' */\n\n',
+        'module.exports = {',
+        '    assets: [\'./fonts\'],',
+        '};\n',
+    ];
+    let file = fileFrom(dirFrom(project_dir, project_name), 'react-native.config.js');
+    fs.writeFileSync(file, add_lines.join('\n'));
+    const process = spawn('react-native', ['link',], { cwd: dirTo(project_dir, project_name) });
+
+    process.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+    });
+
+    process.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+    });
+
+    process.on('close', (code) => {
+        if (!code) {
+            console.log(`custom font directory has registered`);
+            copyWebStormProjectSettings();
+        }
+        else {
+            console.log(`Process registerFontAssetFile exited with code ${code}`);
+        }
+    });
+};
+
 const addPrettierCustomSettings = () => {
     const tab = '  ';
     const add_lines = [
@@ -135,43 +167,12 @@ const addPrettierCustomSettings = () => {
 
     console.log(`custom setting for prettier has added`);
     if (patches_exist) {
-        return addPatchesToPackageJSON();
+        addPatchesToPackageJSON();
     }
-    copyWebStormProjectSettings();
-};
-
-const registerFontAssetFile = () => {
-    const add_lines = [
-        '/**',
-        ' * Add fonts directory for React Native',
-        ' *',
-        ' * @format',
-        ' */\n\n',
-        'module.exports = {',
-        '    assets: [\'./fonts\'],',
-        '};\n',
-    ];
-    let file = fileFrom(dirFrom(project_dir, project_name), 'react-native.config.js');
-    fs.writeFileSync(file, add_lines.join('\n'));
-    const process = spawn('react-native', ['link',], { cwd: dirTo(project_dir, project_name) });
-
-    process.stdout.on('data', (data) => {
-        console.log(`stdout: ${data}`);
-    });
-
-    process.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
-    });
-
-    process.on('close', (code) => {
-        if (!code) {
-            console.log(`custom font directory has registered`);
-            // linkSafeAreaContext();
-        }
-        else {
-            console.log(`Process registerFontAssetFile exited with code ${code}`);
-        }
-    });
+    // callback for successfully finish prettier process which while ends doesn't come here.
+    // There for I pass callback which triggers when prettier done.
+    const callback = registerFontAssetFile;
+    startAppWebToNativeApp(callback);
 };
 
 const changeBundleToRam = () => {
@@ -186,12 +187,12 @@ const changeBundleToRam = () => {
     }
     console.log(`type of bundle has changed`);
     addPrettierCustomSettings();
-    startAppWebToNativeApp();
-    registerFontAssetFile();
+    // startAppWebToNativeApp();
+    // registerFontAssetFile();
 }
 
 const addReactNavigationDependencies = () => {
-    // it seems like that's no need anymore
+    // it seems like that's not need anymore
     return changeBundleToRam();
 
     // https://reactnavigation.org/docs/en/next/getting-started.html
@@ -252,6 +253,7 @@ const addReactNavigationDependencies = () => {
 
 const copyPatches = () => {
     const dir_name = 'patches';
+    patches_exist = false;
     if (fs.existsSync(fileFrom(`${project_dir}${project_folder_with_tools}`, dir_name))) {
         patches_exist = true;
         copyFilesFromDirectory(
@@ -270,14 +272,16 @@ const copyPatches = () => {
         process.on('close', (code) => {
             if (!code) {
                 console.log(`yarn has installed patches`);
+                // if was installed patches and all thing good then go father
+                return addReactNavigationDependencies();
             }
             else {
                 console.log(`Process install patches exited with code ${code}`);
             }
         });
+    } else {
+        addReactNavigationDependencies();
     }
-
-    addReactNavigationDependencies();
 }
 
 const copyPlatformTools = () => {

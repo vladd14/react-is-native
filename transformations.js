@@ -207,7 +207,7 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
     });
 };
 
-const doPrettier = () => {
+const doPrettier = (callback) => {
     let files = [];
     const dirs_for_prettier = ['apps', 'components', 'components_connections', 'styles', 'styles/at_media', 'styles/css', 'styles/platform_modifiers'];
     dirs_for_prettier.forEach( (folder) => {
@@ -233,6 +233,9 @@ const doPrettier = () => {
     process.on('close', (code) => {
         if (!code) {
             console.log(`Prettier OK`);
+            if (callback) {
+                callback();
+            }
         }
         else {
             console.log(`Process Prettier exited with code ${code}`);
@@ -485,7 +488,7 @@ const transferStyles = () => {
     }
 };
 
-const startAppWebToNativeApp = () => {
+const startAppWebToNativeApp = (callback) => {
     copyDirectories();
     console.log('start copyMainApps');
     copyMainApps({ apps_folder: directories });
@@ -495,7 +498,7 @@ const startAppWebToNativeApp = () => {
     transferStyles();
     console.log('transformation complete!');
     console.log('start prettier');
-    doPrettier();
+    doPrettier(callback);
 };
 
 // startAppWebToNativeApp();

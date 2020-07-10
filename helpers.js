@@ -119,11 +119,17 @@ const copyFileWithChangeBody = (path_from, path_to, file_name, change_body, path
     if (!fs.existsSync(path_to)) {
         fs.mkdirSync(path_to, { recursive: true });
     }
+    let file_name_to = file_name;
+    if (file_name.includes(change_body.name)) {
+        const regexp = new RegExp(change_body.name, 'g');
+        file_name_to = file_name_to.replace(regexp, change_body.change_name);
+    }
     const file_from = fileFrom(path_from, file_name);
-    const file_to = fileTo(path_to, file_name);
+    const file_to = fileTo(path_to, file_name_to);
+
     let fileBuffer = fs.readFileSync(file_from, 'utf-8');
     if (fileBuffer.includes(change_body.name) && (!path_includes || path_from.includes(path_includes))) {
-        const regexp = new RegExp(`${change_body.name}`, 'g');
+        const regexp = new RegExp(change_body.name, 'g');
         fileBuffer = fileBuffer.replace(regexp, change_body.change_name);
         fs.writeFileSync(file_to, fileBuffer,);
         console.log(`file ${file_from} was transformed and copied to ${file_to}`);
@@ -135,7 +141,7 @@ const copyFileWithChangeBody = (path_from, path_to, file_name, change_body, path
 
 const copyFilesFromDirectoryWithChangeName = (path_from, path_to, change_name, path_includes) => {
     if (path_from.includes(change_name.name) && (!path_includes || path_from.includes(path_includes))) {
-        const regexp = new RegExp(`${change_name.name}`, 'g');
+        const regexp = new RegExp(change_name.name, 'g');
         path_to = path_to.replace(regexp, change_name.change_name);
     }
     const files_in_dir = fs.readdirSync(path_from, { withFileTypes: true, });

@@ -647,7 +647,7 @@ const createAppJs = (str) => {
         });
         str = str.replace(/(<)(Switch)(>)/, (match, p1, p2, p3) => {
             const lines_array = [
-                `\ninitialRouteName={'main'}`,
+                `\ninitialRouteName={urls.main ? 'main' : 'index'}`,
                 `screenOptions={({ ...props }) => ({`,
                 `title: '',`,
                 `headerTintColor: colors.brand_color,`,

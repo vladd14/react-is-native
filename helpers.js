@@ -69,20 +69,20 @@ const deleteFolder = (path) => {
 //     }
 // };
 
-const copyFilesFromDirectoryByStream = (path_from, path_to) => {
-    if (fs.existsSync(path_from) && fs.lstatSync(path_from).isDirectory()) {
-        const files_in_dir = fs.readdirSync(path_from, {withFileTypes: true,});
-        files_in_dir.forEach((file_in_folder) => {
-            if (!file_in_folder.isDirectory()) {
-                copyFileByStream(path_from, path_to, file_in_folder.name);
-            } else {
-                copyFilesFromDirectoryByStream(dirFrom(path_from, file_in_folder.name), dirTo(path_to, file_in_folder.name));
-            }
-        });
-    } else if (fs.existsSync(path_from) && !fs.lstatSync(path_from).isDirectory()) {
-        copyFileSimple(path_from, path_to);
-    }
-};
+// const copyFilesFromDirectoryByStream = (path_from, path_to) => {
+//     if (fs.existsSync(path_from) && fs.lstatSync(path_from).isDirectory()) {
+//         const files_in_dir = fs.readdirSync(path_from, {withFileTypes: true,});
+//         files_in_dir.forEach((file_in_folder) => {
+//             if (!file_in_folder.isDirectory()) {
+//                 copyFileByStream(path_from, path_to, file_in_folder.name);
+//             } else {
+//                 copyFilesFromDirectoryByStream(dirFrom(path_from, file_in_folder.name), dirTo(path_to, file_in_folder.name));
+//             }
+//         });
+//     } else if (fs.existsSync(path_from) && !fs.lstatSync(path_from).isDirectory()) {
+//         copyFileSimple(path_from, path_to);
+//     }
+// };
 
 const copyFileSimple = (path_from, path_to) => {
     if (!fs.existsSync(path_to)) {
@@ -98,19 +98,34 @@ const copyFile = (path_from, path_to, file_name,) => {
     if (!fs.existsSync(path_to)) {
         fs.mkdirSync(path_to, { recursive: true });
     }
+    // if (!fs.existsSync(fileTo(path_to, file_name))) {
+    //     fs.unlinkSync(fileTo(path_to, file_name));
+    // }
     const file_from = fileFrom(path_from, file_name);
     const file_to = fileTo(path_to, file_name);
     fs.copyFileSync(file_from, file_to);
     console.log(`file ${file_from} copied to ${file_to}`);
 };
 
-const copyFilesFromDirectory = (path_from, path_to) => {
+const pathIncludesExcepts = (path, excepts) => {
+    if (path && excepts && Array.isArray(excepts) && excepts.length) {
+        return excepts.reduce((accumulator, item) => {
+            accumulator += path.includes(item) ? 1 : 0;
+            return accumulator;
+        }, 0);
+    }
+    return false;
+}
+
+const copyFilesFromDirectory = (path_from, path_to, excepts) => {
     const files_in_dir = fs.readdirSync(path_from, { withFileTypes: true, });
     files_in_dir.forEach((file_in_folder) => {
-        if (!file_in_folder.isDirectory()) {
+        if (!file_in_folder.isDirectory() && (!excepts || (excepts && !excepts.includes(file_in_folder.name) && !pathIncludesExcepts(path_from, excepts)))) {
             copyFile(path_from, path_to, file_in_folder.name);
         } else {
-            copyFilesFromDirectory(dirFrom(path_from, file_in_folder.name), dirTo(path_to, file_in_folder.name));
+            if (!excepts || (excepts && !excepts.includes(file_in_folder.name) && !pathIncludesExcepts(path_from, excepts))) {
+                copyFilesFromDirectory(dirFrom(path_from, file_in_folder.name), dirTo(path_to, file_in_folder.name), excepts);
+            }
         }
     });
 };
@@ -139,22 +154,25 @@ const copyFileWithChangeBody = (path_from, path_to, file_name, change_body, path
     }
 };
 
-const copyFilesFromDirectoryWithChangeName = (path_from, path_to, change_name, path_includes) => {
+const copyFilesFromDirectoryWithChangeName = (path_from, path_to, change_name, path_includes, excepts) => {
     if (path_from.includes(change_name.name) && (!path_includes || path_from.includes(path_includes))) {
         const regexp = new RegExp(change_name.name, 'g');
         path_to = path_to.replace(regexp, change_name.change_name);
     }
     const files_in_dir = fs.readdirSync(path_from, { withFileTypes: true, });
     files_in_dir.forEach((file_in_folder) => {
-        if (!file_in_folder.isDirectory()) {
+        if (!file_in_folder.isDirectory() && (!excepts || (excepts && !excepts.includes(file_in_folder.name) && !pathIncludesExcepts(path_from, excepts)))) {
             copyFileWithChangeBody(path_from, path_to, file_in_folder.name, change_name, path_includes);
         } else {
-            copyFilesFromDirectoryWithChangeName(
-                dirFrom(path_from, file_in_folder.name),
-                dirTo(path_to, file_in_folder.name),
-                change_name,
-                path_includes,
-            );
+            if (!excepts || (excepts && !excepts.includes(file_in_folder.name) && !pathIncludesExcepts(path_from, excepts))) {
+                copyFilesFromDirectoryWithChangeName(
+                    dirFrom(path_from, file_in_folder.name),
+                    dirTo(path_to, file_in_folder.name),
+                    change_name,
+                    path_includes,
+                    excepts,
+                );
+            }
         }
     });
 };
@@ -168,7 +186,7 @@ module.exports = {
     copyFile,
     copyFilesFromDirectory,
     // copyFileByStream,
-    copyFilesFromDirectoryByStream,
+    // copyFilesFromDirectoryByStream,
     deleteFolder,
     copyFilesFromDirectoryWithChangeName,
     copyFileSimple,

@@ -2,7 +2,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 // const { startAppWebToNativeApp } = require('./transform');
 const { fileFrom, dirFrom, dirTo, copyFile, copyFilesFromDirectory, copyFileByStream, copyFilesFromDirectoryByStream, deleteFolder } = require('./helpers');
-const { project_name_js, project_folder_with_prettier, project_dir, project_folder_with_js_source_files, from_folder, project_folder_with_tools, } = require('./constants');
+const { project_name_js, project_folder_with_prettier, project_dir, project_folder_with_js_source_files, tools_folder, project_folder_with_tools, } = require('./constants');
 
 const project_name = project_name_js;
 // const project_dir = '/Users/admin/PycharmProjects/';
@@ -165,7 +165,7 @@ const addPrettierCustomSettings = () => {
 const copyNativePrettierFiles = () => {
     copy_prettier_dirs.forEach((dir_name) => {
         copyFilesFromDirectory(
-            dirFrom(`${project_dir}${from_folder}${project_folder_with_prettier}`, dir_name),
+            dirFrom(`${project_dir}${tools_folder}${project_folder_with_prettier}`, dir_name),
             dirTo(`${project_dir}${project_name}/node_modules`, dir_name));
     });
 

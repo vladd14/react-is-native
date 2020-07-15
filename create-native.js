@@ -53,7 +53,6 @@ const iOSCopyIconAndLoadingScreen = () => {
 
     console.log(`iOS settings have been transfer`);
 
-
     // if (react_native_apps_names && react_native_apps_names.length) {
     //     // console.log('start splitting react native custom apps');
     //     // startAppsSplitting();

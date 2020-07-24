@@ -1,7 +1,6 @@
 const fs = require('fs');
 const { spawn } = require('child_process');
 
-
 const { initImports, cutImport, addImportByModuleAndPath, insertImport, deleteImportModule, findModule,
     addImportLine } = require('./imports');
 
@@ -281,6 +280,7 @@ const transferStyles = () => {
         'insarmic',
         'param_view',
         'app_appearance',
+        'agro_cons__styles',
     ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];

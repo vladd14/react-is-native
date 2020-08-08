@@ -2,7 +2,7 @@ const { space_symbol, tab_symbol, } = require('./constants');
 const {variable_expression_regexp, variable_expression_string, change_dash_to_underscore, remove_excess_scss_directives,
     remove_excess_css_directives, class_name_regexp, class_name_string, style_expression_regexp, style_expression_string,
     property_expression_regexp, property_expression_string, media_expression_string, calc_expression_string,
-    media_platform_string, tag_name_string, remove_excess_colors_directives } = require('./regexps');
+    media_platform_string, tag_name_string, remove_excess_colors_directives, media_platform_expression_string } = require('./regexps');
 
 const split_properties = ['border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'flex-flow',
     'padding', 'margin'];
@@ -136,8 +136,7 @@ const splitVariable = (variable) => {
         if (p2) {
             p2 = replace_variable(p2);
         }
-        console.log(p1);
-        console.log(p2);
+
         const expression = p1 && p2 ? eval(`${p1} * ${p2}`) : p1 || p2;
         return expression;
     };
@@ -151,7 +150,6 @@ const splitVariable = (variable) => {
 const calcExpression = (expression) => {
     const replacer = (match, p1) => {
         if (p1) {
-            console.log('splitVariable 555', p1);
             p1 = splitVariable(p1);
             p1 = replace_variable(p1);
             p1 = eval(p1);
@@ -226,8 +224,6 @@ const getVariableExpression = (filled_object, name_property, arg1, arg2) => {
         }
     }
     else if (arg1 !== '' && arg1 !== undefined && arg1 !== null && arg2 && typeof arg2 !== "object" && !not_expression) {
-        console.log('arg1=', arg1);
-        console.log('arg2=', arg2);
         const expression = eval(arg1 + '*' + arg2);
         filled_object[name_property] = expression;
         if (!not_round_properties.includes(name_property) && typeof filled_object[name_property] === "number") {
@@ -337,10 +333,8 @@ const splitTransforms = (str) => {
     const replacer = (match, property, value) => {
         let obj = {};
         property = property.replace(/[,. ]/gi, '');
-        console.log('property=', property);
-        console.log('value=', value);
+
         obj[property] = value && typeof value === "string" && (value.endsWith('%') || (value.endsWith('deg')) ) ? stringifyValue(value) : value;
-        console.log('transforms.push(obj);=', obj);
         transforms.push(obj);
     };
     const regexp = new RegExp(`\\s*(.[^(]+)\\((.[^)]*)\\)`, 'gi');
@@ -354,15 +348,13 @@ const propertiesInnerCorrections = (property, number_value, value_string) => {
         return match;
     };
     value_string = number_value ? number_value + value_string : value_string;
-    console.log('property 555', property);
-    console.log('value_string 555', value_string);
     value_string = calcExpression(value_string);
 
     camel_case_properties.forEach((target_property) => {
         const regexp = new RegExp(`${target_property}`, 'gi');
         value_string = value_string.replace(regexp, replacer);
         value_string = changeSecondsToMs(value_string);
-        console.log('value_string 555', value_string);
+
         if (!value_string.includes('rotate')) {
             value_string = splitVariable(value_string);
         }
@@ -553,6 +545,26 @@ const transformMediaPlatform = (str, styles_name) => {
     };
     //get additional @media rules for single max-width/height expression notation with
     let regexp = new RegExp(media_platform_string, 'gi');
+    str.replace(regexp, replacer);
+    str = Object.keys(style_object).length ? style_object : null;
+
+    return str;
+};
+
+const transformPlatformMediaMax = (str, styles_name) => {
+    let style_object = {};
+    const replacer = (match, platform, p1, p2, p3, p4) => {
+        if (!style_object.hasOwnProperty(p3)) {
+            style_object[[p3]] = {};
+            style_object[p3][platform] = {};
+            style_object[p3][platform] = { ...transformStylesToObj(p4)};
+        }
+        else {
+            style_object[p3][platform] = { ...style_object[p3][platform], ...transformStylesToObj(p4)};
+        }
+    };
+    //get additional @media rules for single max-width/height expression notation with
+    let regexp = new RegExp(media_platform_expression_string, 'gi');
     str.replace(regexp, replacer);
     str = Object.keys(style_object).length ? style_object : null;
 
@@ -770,4 +782,5 @@ module.exports = {
     transformColors,
     transformCustomFontIcons,
     getSvgPathsFromRequires,
+    transformPlatformMediaMax,
 };

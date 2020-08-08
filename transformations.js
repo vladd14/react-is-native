@@ -5,7 +5,7 @@ const { initImports, cutImport, addImportByModuleAndPath, insertImport, deleteIm
     addImportLine } = require('./imports');
 
 const { transformVariables, transformStyles, transformMediaMax, transformObjectToString, transformMediaPlatform,
-    transformTags, transformColors, transformCustomFontIcons, getSvgPathsFromRequires } = require('./styles');
+    transformTags, transformColors, transformCustomFontIcons, getSvgPathsFromRequires, transformPlatformMediaMax } = require('./styles');
 const { withRouterDelete, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
     addScreenDimensionInitializer, addScreenDimensionListener, replaceStyleAfterFlowFunction,
@@ -23,7 +23,21 @@ const path_to = `${project_dir}${project_name}/`;
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'app_structure', 'components',
     'components_connections', 'urls', 'requirements', 'share_code'];
 const excess_modules = ['react-router-dom', 'react-datetime'];
-const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar', 'Linking'];
+const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar', 'Linking', 'ImagePicker', 'PinchGestureHandler', 'PanGestureHandler'];
+const fakes_modules_paths = {
+    ImagePicker: {
+        module: 'module',
+        path: 'react-native-image-picker',
+    },
+    PinchGestureHandler: {
+        module: '{ module }',
+        path: 'react-native-gesture-handler',
+    },
+    PanGestureHandler: {
+        module: '{ module }',
+        path: 'react-native-gesture-handler',
+    },
+}
 const svg_file_name = 'vectors';
 let svg_file = {};
 
@@ -120,7 +134,11 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                     fake_modules.forEach((module) => {
                         if (findModule(module)) {
                             deleteImportModule(module);
-                            addImportLine(`import { ${module} } from \'react-native\';`);
+                            if (fakes_modules_paths[module]) {
+                                addImportLine(`import ${fakes_modules_paths[module].module.replace(/module/gi, module)} from \'${fakes_modules_paths[module].path}\';`);
+                            } else {
+                                addImportLine(`import { ${module} } from \'react-native\';`);
+                            }
                         }
                     });
                     // if (findModule('Animated')) {
@@ -281,6 +299,7 @@ const transferStyles = () => {
         'param_view',
         'app_appearance',
         'agro_cons__styles',
+        'files',
     ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];
@@ -288,6 +307,7 @@ const transferStyles = () => {
     const tags_file = 'tags';
     const tags_mobile_file = 'tags_mobile';
     const at_media_file = 'at_media';
+    const at_media_platform_file = 'at_media_platform';
     const platform_modifiers_file = 'platform_modifiers';
 
     {
@@ -334,7 +354,8 @@ const transferStyles = () => {
     }
     let at_media_chunks = [];
     let platform_modifiers_chunks = [];
-    let at_media_modifiers_chunks = [];
+    // let at_media_modifiers_chunks = [];
+    let at_media_platform_chunks = [];
     remote_folders.forEach((folder) => {
         if (fs.existsSync(dirTo(path_to, `${main_folder}/${folder}`))) {
             const files_in_dest_folder = fs.readdirSync(dirTo(path_to, `${main_folder}/${folder}`), {});
@@ -370,17 +391,22 @@ const transferStyles = () => {
                 fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}/css`), js_file_name), fileBufferCSS);
             }
 
-            if (scss_file_name !== 'modifiers') {
-                let fileBufferAtMedia = transformMediaMax(fileBuffer, `${scss_file_name}_at_media`);
-                if (fileBufferAtMedia) {
-                    at_media_chunks.push(fileBufferAtMedia);
-                }
+            // if (scss_file_name !== 'modifiers') {
+            let fileBufferAtMedia = transformMediaMax(fileBuffer, `${scss_file_name}_at_media`);
+            if (fileBufferAtMedia) {
+                at_media_chunks.push(fileBufferAtMedia);
             }
-            else {
-                let fileBufferAtMedia = transformMediaMax(fileBuffer, `${scss_file_name}_at_media_modifiers`);
-                if (fileBufferAtMedia) {
-                    at_media_modifiers_chunks.push(fileBufferAtMedia);
-                }
+            // }
+            // else {
+            //     let fileBufferAtMedia = transformMediaMax(fileBuffer, `${scss_file_name}_at_media_modifiers`);
+            //     if (fileBufferAtMedia) {
+            //         at_media_modifiers_chunks.push(fileBufferAtMedia);
+            //     }
+            // }
+
+            let fileBufferPlatformAtMedia = transformPlatformMediaMax(fileBuffer, `${scss_file_name}_at_media_platforms`);
+            if (fileBufferPlatformAtMedia) {
+                at_media_platform_chunks.push(fileBufferPlatformAtMedia);
             }
 
             let fileBufferPlatforms = transformMediaPlatform(fileBuffer, `${scss_file_name}_platforms`);
@@ -401,15 +427,15 @@ const transferStyles = () => {
         fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}/at_media`),  `${at_media_file}.js`), at_media_merged_string);
     }
 
-    let at_media_modifiers_merged = at_media_modifiers_chunks.reduce((accumulator, value) => {
+    let at_media_platform_merged = at_media_platform_chunks.reduce((accumulator, value) => {
         Object.keys(value).forEach((key) => {
             accumulator[key] = {...accumulator[key], ...value[key]};
         });
         return accumulator;
     }, {});
-    if (at_media_modifiers_chunks.length) {
-        let at_media_modifiers_merged_string = transformObjectToString(at_media_modifiers_merged, 'at_media_modifiers');
-        fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}/at_media`),  `at_media_modifiers.js`), at_media_modifiers_merged_string);
+    if (at_media_platform_chunks.length) {
+        let at_media_modifiers_merged_string = transformObjectToString(at_media_platform_merged, 'at_media_platform');
+        fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}/at_media`),  `at_media_platform.js`), at_media_modifiers_merged_string);
     }
 
     let platform_modifiers_merged = platform_modifiers_chunks.reduce((accumulator, value) => {
@@ -435,9 +461,12 @@ const transferStyles = () => {
         fileBufferIndexJs += `import { ${at_media_file} } from './at_media/${at_media_file}';\n`;
     }
 
-    if (platform_modifiers_merged) {
-        fileBufferIndexJs += `import { at_media_modifiers } from './at_media/at_media_modifiers';\n`;
+    if (at_media_platform_merged) {
+        fileBufferIndexJs += `import { ${at_media_platform_file} } from './at_media/${at_media_platform_file}';\n`;
     }
+    // if (at_media_modifiers_merged) {
+    //     fileBufferIndexJs += `import { at_media_modifiers } from './at_media/at_media_modifiers';\n`;
+    // }
 
     if (platform_modifiers_merged) {
         fileBufferIndexJs += `import { ${platform_modifiers_file} } from './platform_modifiers/${platform_modifiers_file}';\n`;
@@ -445,7 +474,8 @@ const transferStyles = () => {
 
     fileBufferIndexJs += `\nexport const styles = {`;
     css_files.forEach((css_file_name) => {
-        if (css_file_name !== modifiers_file && css_file_name !== tags_file && css_file_name !== tags_mobile_file) {
+        //if (css_file_name !== modifiers_file && css_file_name !== tags_file && css_file_name !== tags_mobile_file) {
+        if (css_file_name !== tags_file && css_file_name !== tags_mobile_file) {
             fileBufferIndexJs += ` ...${css_file_name},`;
         }
     });
@@ -458,17 +488,23 @@ const transferStyles = () => {
         fileBufferIndexJs += ` };\n`;
     }
 
-    if (platform_modifiers_merged) {
-        fileBufferIndexJs += `export const styles_at_media_modifiers = {`;
-        fileBufferIndexJs += ` ...at_media_modifiers`;
+    if (at_media_platform_merged) {
+        fileBufferIndexJs += `export const styles_at_media_platform = {`;
+        fileBufferIndexJs += ` ...${at_media_platform_file}`;
         fileBufferIndexJs += ` };\n`;
     }
 
-    if (modifiers_file) {
-        fileBufferIndexJs += `export const styles_modifiers = {`;
-        fileBufferIndexJs += ` ...${modifiers_file}`;
-        fileBufferIndexJs += ` };\n`;
-    }
+    // if (platform_modifiers_merged) {
+    //     fileBufferIndexJs += `export const styles_at_media_modifiers = {`;
+    //     fileBufferIndexJs += ` ...at_media_modifiers`;
+    //     fileBufferIndexJs += ` };\n`;
+    // }
+
+    // if (modifiers_file) {
+    //     fileBufferIndexJs += `export const styles_modifiers = {`;
+    //     fileBufferIndexJs += ` ...${modifiers_file}`;
+    //     fileBufferIndexJs += ` };\n`;
+    // }
 
     if (platform_modifiers_merged) {
         fileBufferIndexJs += `export const styles_platform_modifiers = {`;

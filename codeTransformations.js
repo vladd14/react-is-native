@@ -31,7 +31,7 @@ const withRouterDelete = (str) => {
         str = str.replace(regExp, replacer);
 
     }
-    console.log(str);
+    // console.log(str);
     return str;
 };
 
@@ -278,7 +278,7 @@ const changePlatform = (str) => {
     // const regExp = /(initial_state:.+?platform:\s*['"`])(.+?)(['"`])/gsi;
     const regExp = /(export\s+const\s+platform\s*=\s*['"`])(.+?)(['"`])/gi;
     str = str.replace(regExp, replacer);
-    console.log(str);
+    // console.log(str);
     return str;
 };
 
@@ -488,7 +488,7 @@ const platformTransforms = (str, filename, nested_level) => {
 
     if (str) {
         const htmlTokens = divTags.concat(textTags, inputsType, listTags, withoutTypeTag, linkTags);
-        console.log('htmlTokens=',htmlTokens);
+        // console.log('htmlTokens=',htmlTokens);
         let regExp;
         htmlTokens.forEach((token) => {
 
@@ -817,7 +817,7 @@ const transformModalToNative = (str) => {
             if (new_str) {
                 addImportLine('import { Modal } from \'react-native\';');
                 str = str.replace(cut_str, new_str);
-                console.log('new_str=', new_str);
+                // console.log('new_str=', new_str);
             }
         }
     }
@@ -842,7 +842,7 @@ const addKeyboardAvoidingViewWrapper = (str) => {
 
         // str = str.replace(regexp, (match) => (console.log('match=', match)));
         // return ;
-        console.log('pos=', pos);
+        // console.log('pos=', pos);
         let cut_str;
         let found = false;
         let step=1;
@@ -865,7 +865,7 @@ const addKeyboardAvoidingViewWrapper = (str) => {
                     close_div++;
                 })
                 if (div && close_div && div === close_div) {
-                    console.log('found true');
+                    // console.log('found true');
                     found = true;
                     break;
                 }
@@ -894,37 +894,6 @@ const deleteJSRequires = (str, array_of_modules) => {
     }
     return str;
 };
-
-// const testHtmlTokens = (str) => {
-//     // const tokenModify = (match, start_tag, token, attributes, end_tag) => {
-//     const tokenModify2 = (match, start_tag, token, attributes, end_tag) => {
-//         console.log(`match='${match}'`);
-//         console.log(`start_tag='${start_tag}'`);
-//         console.log(`token='${token}'`);
-//         console.log(`attributes='${attributes}'`);
-//         console.log(`end_tag='${end_tag}'`);
-//     }
-//     if (str) {
-//         const htmlTokens = divTags.concat(textTags, inputsType, listTags, withoutTypeTag, linkTags);
-//         // console.log('htmlTokens=', htmlTokens);
-//         let regExp;
-//         htmlTokens.forEach((token) => {
-//             console.log('token=', token);
-//             // regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^</]+)([/]*>))`, 'g');
-//             // regExp = new RegExp(`(<[/]*)(\\s+\\n\\s+)*(${token})(\\s*)(([/]*>)|(.[^<>]+?)([/]*>))`, 'g');
-//             // regExp = new RegExp(`(<)(${token})(.*?)(([^=]>)|([/]>))|<[/]${token}>|<${token}>`, 'gs');
-//             // regExp = new RegExp(`((<)(${token})(>))|((<[/])(${token})(>))|((<)(${token})(.+?)([^=]>))`, 'gs');
-//
-//             regExp = new RegExp(`(<)(${token})()(>)`, 'gs');
-//             str = str.replace(regExp, tokenModify2);
-//             regExp = new RegExp(`(<[/])(${token})()(>)`, 'gs');
-//             str = str.replace(regExp, tokenModify2);
-//             regExp = new RegExp(`(<)(${token})(.+?)([^=\\w]>)`, 'gs');
-//             str = str.replace(regExp, tokenModify2);
-//         });
-//     }
-//     return str;
-// }
 
 module.exports = {
     withRouterDelete,

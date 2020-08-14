@@ -23,7 +23,7 @@ const path_to = `${project_dir}${project_name}/`;
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'app_structure', 'components',
     'components_connections', 'urls', 'requirements', 'share_code'];
 const excess_modules = ['react-router-dom', 'react-datetime'];
-const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar', 'Linking', 'ImagePicker', 'PinchGestureHandler', 'PanGestureHandler'];
+const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar', 'Linking', 'ImagePicker', 'PinchGestureHandler', 'PanGestureHandler', 'State as GestureState', 'Alert'];
 const fakes_modules_paths = {
     ImagePicker: {
         module: 'module',
@@ -38,6 +38,11 @@ const fakes_modules_paths = {
         path: 'react-native-gesture-handler',
     },
 }
+fakes_modules_paths['State as GestureState'] = {
+    module: '{ module }',
+    path: 'react-native-gesture-handler',
+};
+
 const svg_file_name = 'vectors';
 let svg_file = {};
 
@@ -300,10 +305,11 @@ const transferStyles = () => {
         'app_appearance',
         'agro_cons__styles',
         'files',
+        'columns',
     ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];
-    const modifiers_file = 'modifiers';
+    // const modifiers_file = 'modifiers';
     const tags_file = 'tags';
     const tags_mobile_file = 'tags_mobile';
     const at_media_file = 'at_media';

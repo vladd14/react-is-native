@@ -12,7 +12,7 @@ const camel_case_properties = ['border-radius', 'border-color', 'border-top-colo
     'padding-left', 'padding-right', 'padding-top', 'padding-bottom', 'z-index',
     'align-items', 'justify-content', 'align-content', 'align-self', 'min-height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
     'text-transform', 'font-family', 'font-size', 'line-height', 'font-weight', 'text-shadow', 'box-shadow', 'object-fit',
-    'text-align', 'overflow-x', 'overflow-y'];
+    'text-align', 'overflow-x', 'overflow-y', 'num-columns'];
 const complicated_properties = ['transition', 'text-shadow', 'box-shadow', 'text-decoration', 'transform' ];
 const rename_properties = {
     'text-decoration': 'textDecorationLine',

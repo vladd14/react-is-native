@@ -32,6 +32,7 @@ const yarn_modules = [
     'moment@2.24.0',
     'moment-timezone',
     'react-datetime',
+    'modify-source-webpack-plugin',
 ];
 
 // const copyGitDirStream = () => {

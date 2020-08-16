@@ -10,746 +10,427 @@ const {
 } = require('./codeTransformations');
 
 let mainApp = `
-@charset "UTF-8";
-/* Стандартный цвет отображения шрифта */
-/* Стандартный цвет border */
-.separator_with_label {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  width: 100%;
-}
-.separator_with_label__decoration_line {
-  flex-grow: 1;
-  height: 1px;
-  background-color: rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-}
-.separator_with_label__label {
-  padding: 0 0.25rem 0 0.25rem;
-  font-size: 0.94rem;
-  text-transform: uppercase;
-  font-weight: 500;
-}
-@media (max-width: 1559px) {
-  .separator_with_label__label {
-    font-size: 0.88rem;
-  }
-}
-@media (max-width: 991px) {
-  .separator_with_label__label {
-    font-size: 0.84rem;
-  }
-}
-@media (max-width: 767px) {
-  .separator_with_label__label {
-    font-size: 0.74rem;
-  }
-}
+'use strict';
 
-.form_group {
-  position: relative;
-  display: flex;
-  flex-flow: column nowrap;
-  margin-bottom: 0.5rem;
-}
-.form_group_styled {
-  display: flex;
-  position: relative;
-  border-radius: 0.25rem;
-}
-.form_group_styled__switch {
-  display: flex;
-  flex-flow: row nowrap;
-  flex-grow: 1;
-  min-height: 45px;
-}
-@media (max-width: 767px) {
-  .form_group_styled__switch {
-    min-height: 36px;
-  }
-}
-.form_group__label {
-  white-space: nowrap;
-  margin: 0;
-}
-.form_group__control_container {
-  display: flex;
-  flex-grow: 1;
-  border: 1px solid #a6a6a6;
-  border-radius: 0.25rem;
-}
-.form_group__control {
-  display: flex;
-  flex-grow: 1;
-  position: relative;
-  border: 1px solid transparent;
-  border-radius: calc(0.25rem - 1px);
-  padding: 0.125rem;
-}
-.form_group__input {
-  width: 100%;
-  border: none;
-  outline: none;
-  font-size: 16px;
-  line-height: 1.33;
-  background-color: transparent;
-  padding: 0 8px;
-  margin-top: 8px;
-  margin-bottom: 8px;
-  z-index: 2;
-  color: #4d4d4d;
-}
-@media (max-width: 767px) {
-  .form_group__input {
-    margin-top: 6.4px;
-    margin-bottom: 6.4px;
-    padding: 0 6.4px;
-  }
-}
-@media ios {
-  .form_group__input {
-    line-height: 1.2;
-  }
-}
-.form_group__check {
-  position: absolute;
-  left: -999999rem;
-}
-.form_group__check_appearance {
-  display: flex;
-}
-.form_group__check_switch_container {
-  width: 42px;
-  height: 28px;
-  display: flex;
-  flex-flow: row nowrap;
-  background-color: #e0e0e0;
-  border: 2px solid #e0e0e0;
-  border-radius: 42px;
-  align-items: center;
-  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
-}
-.form_group__check_switch_element {
-  position: relative;
-  display: flex;
-  flex-shrink: 0;
-  background-color: #fcfcfc;
-  width: 24px;
-  height: 24px;
-  border-radius: 28px;
-  box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.1);
-  left: 0;
-  transition: left 0.2s ease-in-out;
-}
-.form_group__additional_text {
-  display: none;
-}
+const fs = require('fs');
+const path = require('path');
+const webpack = require('webpack');
+const resolve = require('resolve');
+const PnpWebpackPlugin = require('pnp-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
+const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const safePostCssParser = require('postcss-safe-parser');
+const ManifestPlugin = require('webpack-manifest-plugin');
+const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin');
+const WorkboxWebpackPlugin = require('workbox-webpack-plugin');
+const WatchMissingNodeModulesPlugin = require('react-dev-utils/WatchMissingNodeModulesPlugin');
+const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
+const paths = require('./paths');
+const modules = require('./modules');
+const getClientEnvironment = require('./env');
+const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin');
+const ForkTsCheckerWebpackPlugin = require('react-dev-utils/ForkTsCheckerWebpackPlugin');
+const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
 
-.form_group_switch {
-  display: flex;
-  flex-flow: row nowrap;
-  align-self: flex-start;
-  min-height: 45px;
-}
-@media (max-width: 767px) {
-  .form_group_switch {
-    min-height: 36px;
-  }
-}
+const postcssNormalize = require('postcss-normalize');
 
-.form_group_switch_control {
-  flex-flow: row nowrap;
-  justify-content: space-between;
-  align-items: center;
-  padding-left: 0.5rem;
-  padding-right: 0.3rem;
-}
-@media (max-width: 519px) {
-  .form_group_switch_control {
-    padding-right: 0.3rem;
-    padding-left: 0.3rem;
-  }
-}
+const appPackageJson = require(paths.appPackageJson);
 
-.check_switch_container_selected {
-  background-color: #4080B8;
-  border-color: #4080B8;
-}
+// Source maps are resource heavy and can cause out of memory issue for large source files.
+const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
+// Some apps do not need the benefits of saving a web request, so not inlining the chunk
+// makes for a smoother build process.
+const shouldInlineRuntimeChunk = process.env.INLINE_RUNTIME_CHUNK !== 'false';
 
-.check_readonly_selected {
-  border-color: gray;
-  background-color: gray;
-}
+const isExtendingEslintConfig = process.env.EXTEND_ESLINT === 'true';
 
-.check_switch_selected {
-  left: calc(100% - 24px);
-}
+const imageInlineSizeLimit = parseInt(
+  process.env.IMAGE_INLINE_SIZE_LIMIT || '10000'
+);
 
-.input_styled_label {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  transform: translateX(0.7rem) translateY(0);
-  margin-left: 0;
-  margin-right: 0;
-  margin-top: auto;
-  margin-bottom: auto;
-  font-size: 16px;
-  height: 16px;
-  line-height: 1;
-  padding-left: 2px;
-  padding-right: 2px;
-  background-color: white;
-  transition: transform 0.15s ease-in;
-  color: #8c8c8c;
-}
-@media (max-width: 767px) {
-  .input_styled_label {
-    font-size: 12.8px;
-    transform: translateX(0.6rem) translateY(15px);
-  }
-}
-@media android {
-  .input_styled_label {
-    transform: translateX(0.6rem) translateY(18px);
-  }
-}
+// Check if TypeScript is setup
+const useTypeScript = fs.existsSync(paths.appTsConfig);
 
-.input_selected {
-  border-color: #4080B8;
-}
-.input_state_error {
-  border-color: #d9534f;
-}
-.input_disabled {
-  border-color: #a6a6a6;
-  color: #a6a6a6 !important;
-}
+// style files regexes
+const cssRegex = /\\.css$/;
+const cssModuleRegex = /\\.module\\.css$/;
+const sassRegex = /\\.(scss|sass)$/;
+const sassModuleRegex = /\\.module\\.(scss|sass)$/;
 
-.label_selected {
-  transform: translateX(0.5rem) translateY(-5.5652173913px);
-  font-size: 12.8px;
-  background-color: white;
-  color: #4080B8;
-  z-index: 1;
-  margin-top: 0;
-}
-@media (max-width: 767px) {
-  .label_selected {
-    transform: translateX(0.25rem) translateY(-6px);
-  }
-}
-@media android {
-  .label_selected {
-    transform: translateX(0.5rem) translateY(-5px);
-  }
-}
+// This is the production and development configuration.
+// It is focused on developer experience, fast rebuilds, and a minimal bundle.
+module.exports = function(webpackEnv) {
+  const isEnvDevelopment = webpackEnv === 'development';
+  const isEnvProduction = webpackEnv === 'production';
 
-.field_readonly {
-  border-color: gray;
-  color: #666666;
-}
+  // Variable used for enabling profiling in Production
+  // passed into alias object. Uses a flag if passed into the build command
+  const isEnvProductionProfile =
+    isEnvProduction && process.argv.includes('--profile');
 
-.additional_text_state_error {
-  display: flex;
-  color: #d9534f;
-}
+  // We will provide \`paths.publicUrlOrPath\` to our app
+  // as %PUBLIC_URL% in \`index.html\` and \`process.env.PUBLIC_URL\` in JavaScript.
+  // Omit trailing slash as %PUBLIC_URL%/xyz looks better than %PUBLIC_URL%xyz.
+  // Get environment variables to inject into our app.
+  const env = getClientEnvironment(paths.publicUrlOrPath.slice(0, -1));
 
-.input_icon {
-  position: absolute;
-  right: 1rem;
-  top: 0.6rem;
-  color: #737373;
-  cursor: pointer;
-}
-@media (max-width: 767px) {
-  .input_icon {
-    font-size: 0.75em;
-    top: 0.7rem;
-    right: 0.6rem;
-  }
-}
+  // common function to get style loaders
+  const getStyleLoaders = (cssOptions, preProcessor) => {
+    const loaders = [
+      isEnvDevelopment && require.resolve('style-loader'),
+      isEnvProduction && {
+        loader: MiniCssExtractPlugin.loader,
+        // css is located in \`static/css\`, use '../../' to locate index.html folder
+        // in production \`paths.publicUrlOrPath\` can be a relative path
+        options: paths.publicUrlOrPath.startsWith('.')
+          ? { publicPath: '../../' }
+          : {},
+      },
+      {
+        loader: require.resolve('css-loader'),
+        options: cssOptions,
+      },
+      {
+        // Options for PostCSS as we reference these options twice
+        // Adds vendor prefixing based on your specified browser support in
+        // package.json
+        loader: require.resolve('postcss-loader'),
+        options: {
+          // Necessary for external CSS imports to work
+          // https://github.com/facebook/create-react-app/issues/2677
+          ident: 'postcss',
+          plugins: () => [
+            require('postcss-flexbugs-fixes'),
+            require('postcss-preset-env')({
+              autoprefixer: {
+                flexbox: 'no-2009',
+              },
+              stage: 3,
+            }),
+            // Adds PostCSS Normalize as the reset css with default options,
+            // so that it honors browserslist config in package.json
+            // which in turn let's users customize the target behavior as per their needs.
+            postcssNormalize(),
+          ],
+          sourceMap: isEnvProduction && shouldUseSourceMap,
+        },
+      },
+    ].filter(Boolean);
+    if (preProcessor) {
+      loaders.push(
+        {
+          loader: require.resolve('resolve-url-loader'),
+          options: {
+            sourceMap: isEnvProduction && shouldUseSourceMap,
+          },
+        },
+        {
+          loader: require.resolve(preProcessor),
+          options: {
+            sourceMap: true,
+          },
+        }
+      );
+    }
+    return loaders;
+  };
 
-.alert {
-  display: none;
-  flex-flow: row nowrap;
-  background-color: #3c3c3c;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  justify-content: center;
-  align-content: center;
-}
-.alert__alert_message {
-  color: rgba(255, 200, 0, 0.96);
-  margin-right: 0.25rem;
-}
+  return {
+    mode: isEnvProduction ? 'production' : isEnvDevelopment && 'development',
+    // Stop compilation early in production
+    bail: isEnvProduction,
+    devtool: isEnvProduction
+      ? shouldUseSourceMap
+        ? 'source-map'
+        : false
+      : isEnvDevelopment && 'cheap-module-source-map',
+    // These are the "entry points" to our application.
+    // This means they will be the "root" imports that are included in JS bundle.
+    entry: [
+      // Include an alternative client for WebpackDevServer. A client's job is to
+      // connect to WebpackDevServer by a socket and get notified about changes.
+      // When you save a file, the client will either apply hot updates (in case
+      // of CSS changes), or refresh the page (in case of JS changes). When you
+      // make a syntax error, this client will display a syntax error overlay.
+      // Note: instead of the default WebpackDevServer client, we use a custom one
+      // to bring better experience for Create React App users. You can replace
+      // the line below with these two lines if you prefer the stock client:
+      // require.resolve('webpack-dev-server/client') + '?/',
+      // require.resolve('webpack/hot/dev-server'),
+      isEnvDevelopment &&
+        require.resolve('react-dev-utils/webpackHotDevClient'),
+      // Finally, this is your app's code:
+      paths.appIndexJs,
+      // We include the app code last so that if there is a runtime error during
+      // initialization, it doesn't blow up the WebpackDevServer client, and
+      // changing JS code would still trigger a refresh.
+    ].filter(Boolean),
+    output: {
+      // The build folder.
+      path: isEnvProduction ? paths.appBuild : undefined,
+      // Add /* filename */ comments to generated require()s in the output.
+      pathinfo: isEnvDevelopment,
+      // There will be one main bundle, and one file per asynchronous chunk.
+      // In development, it does not produce real files.
+      filename: isEnvProduction
+        ? 'static/js/[name].[contenthash:8].js'
+        : isEnvDevelopment && 'static/js/bundle.js',
+      // TODO: remove this when upgrading to webpack 5
+      futureEmitAssets: true,
+      // There are also additional JS chunk files if you use code splitting.
+      chunkFilename: isEnvProduction
+        ? 'static/js/[name].[contenthash:8].chunk.js'
+        : isEnvDevelopment && 'static/js/[name].chunk.js',
+      // webpack uses \`publicPath\` to determine where the app is being served from.
+      // It requires a trailing slash, or the file assets will get an incorrect path.
+      // We inferred the "public path" (such as / or /my-project) from homepage.
+      publicPath: paths.publicUrlOrPath,
+      // Point sourcemap entries to original disk location (format as URL on Windows)
+      devtoolModuleFilenameTemplate: isEnvProduction
+        ? info =>
+            path
+              .relative(paths.appSrc, info.absoluteResourcePath)
+              .replace(/\\\\/g, '/')
+        : isEnvDevelopment &&
+          (info => path.resolve(info.absoluteResourcePath).replace(/\\\\/g, '/')),
+      // Prevents conflicts when multiple webpack runtimes (from different apps)
+      // are used on the same page.
+      // this defaults to 'window', but by setting it to 'this' then
+      // module chunks which are built will work in web workers as well.
+      globalObject: 'this',
+    },
+    optimization: {
+      minimize: isEnvProduction,
+      minimizer: [
+        // This is only used in production mode
+        new TerserPlugin({
+          terserOptions: {
+            parse: {
+              // We want terser to parse ecma 8 code. However, we don't want it
+              // to apply any minification steps that turns valid ecma 5 code
+              // into invalid ecma 5 code. This is why the 'compress' and 'output'
+              // sections only apply transformations that are ecma 5 safe
+              // https://github.com/facebook/create-react-app/pull/4234
+              ecma: 8,
+            },
+            compress: {
+              ecma: 5,
+              warnings: false,
+              // Disabled because of an issue with Uglify breaking seemingly valid code:
+              // https://github.com/facebook/create-react-app/issues/2376
+              // Pending further investigation:
+              // https://github.com/mishoo/UglifyJS2/issues/2011
+              comparisons: false,
+              // Disabled because of an issue with Terser breaking valid code:
+              // https://github.com/facebook/create-react-app/issues/5250
+              // Pending further investigation:
+              // https://github.com/terser-js/terser/issues/120
+              inline: 2,
+            },
+            mangle: {
+              safari10: true,
+            },
+            // Added for profiling in devtools
+            keep_classnames: isEnvProductionProfile,
+            keep_fnames: isEnvProductionProfile,
+            output: {
+              ecma: 5,
+              comments: false,
+              // Turned on because emoji and regex is not minified properly using default
+              // https://github.com/facebook/create-react-app/issues/2488
+              ascii_only: true,
+            },
+          },
+          sourceMap: shouldUseSourceMap,
+        }),
+        // This is only used in production mode
+        new OptimizeCSSAssetsPlugin({
+          cssProcessorOptions: {
+            parser: safePostCssParser,
+            map: shouldUseSourceMap
+              ? {
+                  // \`inline: false\` forces the sourcemap to be output into a
+                  // separate file
+                  inline: false,
+                  // \`annotation: true\` appends the sourceMappingURL to the end of
+                  // the css file, helping the browser find the sourcemap
+                  annotation: true,
+                }
+              : false,
+          },
+          cssProcessorPluginOptions: {
+            preset: ['default', { minifyFontValues: { removeQuotes: false } }],
+          },
+        }),
+      ],
+      // Automatically split vendor and commons
+      // https://twitter.com/wSokra/status/969633336732905474
+      // https://medium.com/webpack/webpack-4-code-splitting-chunk-graph-and-the-splitchunks-optimization-be739a861366
+      splitChunks: {
+        chunks: 'all',
+        name: false,
+      },
+      // Keep the runtime chunk separated to enable long term caching
+      // https://twitter.com/wSokra/status/969679223278505985
+      // https://github.com/facebook/create-react-app/issues/5358
+      runtimeChunk: {
+      },
+    },
+    resolve: {
+      // This allows you to set a fallback for where webpack should look for modules.
+      // We placed these paths second because we want \`node_modules\` to "win"
+      // if there are any conflicts. This matches Node resolution mechanism.
+      // https://github.com/facebook/create-react-app/issues/253
+      modules: ['node_modules', paths.appNodeModules].concat(
+        modules.additionalModulePaths || []
+      ),
+      // These are the reasonable defaults supported by the Node ecosystem.
+      // We also include JSX as a common component filename extension to support
+      // some tools, although we do not recommend using it, see:
+      // https://github.com/facebook/create-react-app/issues/290
+      // \`web\` extension prefixes have been added for better support
+      // for React Native Web.
+      extensions: paths.moduleFileExtensions
+        .filter(ext => useTypeScript || !ext.includes('ts')),
+      alias: {
+        // Support React Native Web
+        // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
+        'react-native': 'react-native-web',
+        // Allows for better profiling with ReactDevTools
+        ...(isEnvProductionProfile && {
+          'react-dom$': 'react-dom/profiling',
+          'scheduler/tracing': 'scheduler/tracing-profiling',
+        }),
+        ...(modules.webpackAliases || {}),
+      },
+      plugins: [
+        // Adds support for installing with Plug'n'Play, leading to faster installs and adding
+        // guards against forgotten dependencies and such.
+        PnpWebpackPlugin,
+        // Prevents users from importing files from outside of src/ (or node_modules/).
+        // This often causes confusion because we only process files within src/ with babel.
+        // To fix this, we prevent you from importing files out of src/ -- if you'd like to,
+        // please link the files into your node_modules/ and let module-resolution kick in.
+        // Make sure your source files are compiled, as they will not be processed in any way.
+        new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson]),
+      ],
+    },
+    resolveLoader: {
+      plugins: [
+        // Also related to Plug'n'Play, but this time it tells webpack to load its loaders
+        // from the current package.
+        PnpWebpackPlugin.moduleLoader(module),
+      ],
+    },
+    module: {
+      strictExportPresence: true,
+      rules: [
+        // Disable require.ensure as it's not a standard language feature.
+        { parser: { requireEnsure: false } },
 
-.alert_light {
-  border-top: 4px solid #4080B8;
-  border-bottom: 4px solid #4080B8;
-  background-color: transparent;
-  color: #4080B8;
-}
-.alert_light__alert_message {
-  color: #4080B8;
-}
-
-.alert_on {
-  display: flex;
-}
-
-.login_form {
-  align-self: center;
-  width: 30rem;
-}
-@media (max-width: 519px) {
-  .login_form {
-    width: 100%;
-  }
-}
-
-.block_type {
-  position: absolute;
-  right: 0.5rem;
-  top: 0.25rem;
-  font-size: 0.9rem;
-  color: #8c8c8c;
-  font-weight: 400;
-}
-
-.block_menu {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-  align-items: center;
-  position: absolute;
-  right: 0.5rem;
-  top: 0.375rem;
-  font-size: 1rem;
-  color: #8c8c8c;
-  font-weight: 400;
-  text-align: center;
-  width: 1.6rem;
-  height: 1.6rem;
-}
-.block_menu__round_button {
-  right: 0;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 100rem;
-}
-
-.modal_window__container {
-  position: absolute;
-  display: none;
-  flex-flow: row;
-  justify-content: center;
-  align-items: center;
-}
-.modal_window__active {
-  display: flex;
-  z-index: 999;
-  width: 100%;
-  height: 100%;
-}
-.modal_window__view {
-  position: relative;
-  display: flex;
-  flex-flow: column nowrap;
-  min-width: 16rem;
-  height: auto;
-  min-height: 21.28rem;
-  border-radius: 8px;
-  border: 1px solid #adb5bd;
-  margin-top: auto;
-  margin-right: auto;
-  margin-left: auto;
-  margin-bottom: auto;
-  overflow: hidden;
-  background-color: white;
-  box-shadow: 0 7px 24px rgba(0, 0, 0, 0.48);
-}
-@media (max-width: 519px) {
-  .modal_window__view {
-    margin-top: 0;
-    width: auto;
-    min-width: 100%;
-    max-width: 100%;
-    min-height: 100%;
-    margin-bottom: -0.5rem;
-  }
-}
-.modal_window__max_view {
-  height: 640px;
-}
-@media (max-width: 1559px) {
-  .modal_window__max_view {
-    height: 520px;
-  }
-}
-@media (max-width: 767px) {
-  .modal_window__max_view {
-    height: 80%;
-  }
-}
-.modal_window__content {
-  z-index: 1;
-  position: relative;
-  display: flex;
-  flex-flow: column nowrap;
-  padding: 1.65rem 0.61rem 0.25rem 0.61rem;
-  background-color: white;
-}
-@media (max-width: 519px) {
-  .modal_window__content {
-    padding-top: 0;
-    padding-bottom: 0.5rem;
-    width: 100%;
-  }
-}
-
-.modal_window_transparent {
-  box-shadow: none;
-  border: none;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-@media (max-width: 519px) {
-  .modal_window_transparent {
-    width: 100%;
-    min-width: 100%;
-    max-width: 100%;
-    min-height: 10%;
-    max-height: 200%;
-    padding-bottom: 0;
-    margin-bottom: 0;
-  }
-}
-
-.modal_window_notify {
-  width: 16rem;
-}
-
-.modal_window_search {
-  width: 32rem;
-  min-height: 27.2rem;
-  height: 27.2rem;
-  max-height: 80%;
-}
-
-.datetime_picker_content {
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-}
-@media ios {
-  .datetime_picker_content {
-    height: 100%;
-    padding: 1rem 0.5rem 1.4rem 0.5rem;
-  }
-}
-
-.modal_datetime_picker {
-  width: auto;
-  min-height: 0;
-}
-
-.search_content {
-  padding: 1.85rem 1.22rem 1.4rem 1.22rem;
-  height: 100%;
-  position: relative;
-}
-@media ios {
-  .search_content {
-    padding: 1rem 0.5rem 1.4rem 0.5rem;
-  }
-}
-
-.modal_scroll_content {
-  padding: 1.85rem 0 1.4rem 0;
-  position: relative;
-}
-@media ios {
-  .modal_scroll_content {
-    padding: 0 1rem 0 1.4rem 0;
-  }
-}
-
-.modal_scrollable_content {
-  display: flex;
-  flex-flow: column nowrap;
-  flex-grow: 1;
-  width: 100%;
-}
-@media (max-width: 519px) {
-  .modal_scrollable_content {
-    padding-right: 0.5rem;
-    padding-left: 0.5rem;
-  }
-}
-.modal_scrollable_content_overflowed {
-  position: relative;
-  top: -5%;
-  height: 110%;
-}
-
-.search_results {
-  flex-grow: 1;
-  justify-content: flex-start;
-  max-height: 85%;
-  padding-left: 0.1rem;
-  padding-right: 0.1rem;
-}
-@media ios {
-  .search_results {
-    max-height: 90%;
-  }
-}
-
-.over_menu {
-  z-index: 1000;
-  overflow: hidden;
-  min-height: 16rem;
-}
-@media (max-width: 519px) {
-  .over_menu {
-    min-width: 50%;
-    max-width: 90%;
-    min-height: 40%;
-    max-height: 70%;
-    margin-bottom: auto;
-  }
-}
-.over_menu_header {
-  display: flex;
-  flex-flow: column nowrap;
-  min-height: 60px;
-  text-align: center;
-}
-.over_menu_content {
-  padding-bottom: 2rem;
-}
-@media (max-width: 519px) {
-  .over_menu_content {
-    padding-bottom: 1.5rem;
-  }
-}
-
-.modal_state_success {
-  border-color: #28a745;
-}
-.modal_state_error {
-  border-color: #d9534f;
-}
-.modal_state_primary {
-  border-color: #4080B8;
-}
-.modal_state_over_menu {
-  border-color: transparent;
-}
-
-.page_sheet {
-  border: none;
-  background-color: transparent;
-}
-@media ios {
-  .page_sheet {
-    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-  }
-}
-
-.close_rect_container {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-  margin-left: 0.25rem;
-  margin-right: 0.25rem;
-}
-
-.close_rect {
-  position: absolute;
-  top: 0.125rem;
-  right: 0.5rem;
-}
-@media ios {
-  .close_rect {
-    position: absolute;
-    color: #4080B8;
-    font-size: 1rem;
-    top: 0;
-    right: auto;
-    left: 0;
-  }
-}
-
-.column_menu__item {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: space-between;
-  align-items: center;
-  padding-left: 0.125rem;
-  border-bottom: thin solid rgba(0, 0, 0, 0.2);
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-}
-@media (max-width: 519px) {
-  .column_menu__item {
-    font-size: 0.9rem;
-  }
-}
-
-.item_1 {
-  border-top: thin solid rgba(0, 0, 0, 0.2);
-}
-
-.modal_card_label {
-  color: #4d4d4d;
-  font-size: 1.1rem;
-  font-weight: 500;
-  padding-bottom: 1.5rem;
-}
-@media ios {
-  .modal_card_label {
-    position: relative;
-    top: -1px;
-  }
-}
-
-.modal_window_menu {
-  width: 28.8rem;
-  border: none;
-  max-height: 80%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
-}
-
-.column_osago_calc {
-  min-height: 100%;
-  background-color: white;
-}
-
-.decoration_arrow__rhombic {
-  cursor: pointer;
-  position: absolute;
-  right: 0.7rem;
-  top: -1.9rem;
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-  align-items: center;
-  background-color: white;
-  margin: auto;
-  transform: rotate(0deg) scaleX(0) scaleY(0);
-  transition: transform 0.3s ease-in;
-  width: 2.8rem;
-  height: 2.8rem;
-  border-radius: 0.84rem;
-  border: 0.25rem solid #BA637B;
-}
-@media (max-width: 767px) {
-  .decoration_arrow__rhombic {
-    width: 2.52rem;
-    height: 2.52rem;
-    border-radius: 0.756rem;
-    border: 0.225rem solid #BA637B;
-  }
-}
-.decoration_arrow__back_arrow {
-  right: auto;
-  left: 0.7rem;
-  top: -0.98rem;
-  width: 1.96rem;
-  height: 1.96rem;
-  border-radius: 0.588rem;
-  border: 0.175rem solid #BA637B;
-}
-@media (max-width: 767px) {
-  .decoration_arrow__back_arrow {
-    width: 1.764rem;
-    height: 1.764rem;
-    border-radius: 0.504rem;
-    border: 0.1575rem solid #BA637B;
-  }
-}
-.decoration_arrow__body {
-  cursor: pointer;
-  display: flex;
-  flex-flow: column nowrap;
-  transform: rotate(-45deg);
-  color: #4080B8;
-  font-weight: 500;
-  font-size: 1.2rem;
-}
-@media (max-width: 767px) {
-  .decoration_arrow__body {
-    font-size: 1.08rem;
-  }
-}
-.decoration_arrow__active_indicator {
-  transform: rotate(45deg) scaleX(1) scaleY(1);
-  transition: transform 0.3s ease-in;
-}
-
-.back_arrow_active {
-  transform: rotate(45deg) translateX(-0.25rem) translateY(-100) scaleX(1.1) scaleY(1.1);
-  transition: transform 0.1s ease-out;
-}
-
-.badge {
-  background-color: #a6a6a6;
-  border-radius: 100rem;
-  padding: 0.1875rem 0.375rem 0.15rem 0.375rem;
-}
-.badge_warning {
-  background-color: #f2b500;
-  color: white;
-}
-
-.loader_mobile {
-  display: none;
-  flex-flow: column nowrap;
-  justify-content: center;
-  align-items: center;
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.88);
-}
-.loader_mobile__container {
-  display: flex;
-  flex-flow: column nowrap;
-}
-
-.loader_on {
-  display: flex;
-}
-
-.item_perms {
-  position: absolute;
-  bottom: 0;
-  right: 0.25rem;
-  color: #8c8c8c;
-  font-size: 0.6rem;
-  font-weight: 500;
-  text-transform: uppercase;
-}
-@media (max-width: 519px) {
-  .item_perms {
-    font-size: 0.5rem;
-  }
-}
-
-.input__files {
-  position: absolute;
-  left: -999999rem;
-}
-
-/*# sourceMappingURL=components.css.map */
+        // First, run the linter.
+        // It's important to do this before Babel processes the JS.
+        {
+          test: /\\.(js|mjs|jsx|ts|tsx)$/,
+          enforce: 'pre',
+          use: [
+            {
+              options: {
+                cache: true,
+                formatter: require.resolve('react-dev-utils/eslintFormatter'),
+                eslintPath: require.resolve('eslint'),
+                resolvePluginsRelativeTo: __dirname,
+                
+              },
+              loader: require.resolve('eslint-loader'),
+            },
+          ],
+          include: paths.appSrc,
+        },
+        {
+          // "oneOf" will traverse all following loaders until one will
+          // match the requirements. When no loader matches it will fall
+          // back to the "file" loader at the end of the loader list.
+          oneOf: [
+            // "url" loader works like "file" loader except that it embeds assets
+            // smaller than specified limit in bytes as data URLs to avoid requests.
+            // A missing \`test\` is equivalent to a match.
+            {
+              test: [/\\.bmp$/, /\\.gif$/, /\\.jpe?g$/, /\\.png$/],
+              loader: require.resolve('url-loader'),
+              options: {
+                limit: imageInlineSizeLimit,
+                name: 'static/media/[name].[hash:8].[ext]',
+              },
+            },
+            // Process application JS with Babel.
+            // The preset includes JSX, Flow, TypeScript, and some ESnext features.
+            {
+              test: /\\.(js|mjs|jsx|ts|tsx)$/,
+              include: paths.appSrc,
+              loader: require.resolve('babel-loader'),
+              options: {
+                customize: require.resolve(
+                  'babel-preset-react-app/webpack-overrides'
+                ),
+                
+                plugins: [
+                  [
+                    require.resolve('babel-plugin-named-asset-import'),
+                    {
+                      loaderMap: {
+                        svg: {
+                          ReactComponent:
+                            '@svgr/webpack?-svgo,+titleProp,+ref![path]',
+                        },
+                      },
+                    },
+                  ],
+                ],
+                // This is a feature of \`babel-loader\` for webpack (not Babel itself).
+                // It enables caching results in ./node_modules/.cache/babel-loader/
+                // directory for faster rebuilds.
+                cacheDirectory: true,
+                // See #6846 for context on why cacheCompression is disabled
+                cacheCompression: false,
+                compact: isEnvProduction,
+              },
+            },
+            // Process any JS outside of the app with Babel.
+            // Unlike the application JS, we only compile the standard ES features.
+            {
+              test: /\\.(js|mjs)$/,
+              exclude: /@babel(?:\\/|\\\\{1,2})runtime/,
+              loader: require.resolve('babel-loader'),
+              options: {
+                babelrc: false,
+                configFile: false,
+                compact: false,
+                presets: [
+                  [
+                    require.resolve('babel-preset-react-app/dependencies'),
+                    { helpers: true },
+                  ],
+                ],
+                cacheDirectory: true,
+                // See #6846 for context on why cacheCompression is disabled
+                cacheCompression: false,
+                
+                // Babel sourcemaps are needed for debugging into node_modules
+                // code.  Without the options below, debuggers like VSCode
+                // show incorrect code and set breakpoints on the wrong lines.
+                sourceMaps: shouldUseSourceMap,
+                inputSourceMap: shouldUseSourceMap,
+              },
+            },
+            // "postcss" loader applies autoprefixer to our CSS.
+            // "css" loader resolves paths in CSS and adds assets as dependencies.
+           
 `
 
 // transformVariables(variables);
@@ -765,5 +446,25 @@ let mainApp = `
 // transformModalToNative(mainApp);
 // addKeyboardAvoidingViewWrapper(mainApp);
 
-transformMediaMax(mainApp, true);
+const tab = '  ';
+const add_lines = [
+    `,\n${tab}{`,
+    `${tab}${tab}test: /\\/settings\\/build_settings\\.js$/,`,
+    `${tab}${tab}use: [`,
+    `${tab}{`,
+    `${tab}loader: require.resolve('./buildTypeChangeLoader'),`,
+    `${tab}${tab}options: {`,
+    `${tab}${tab}isEnvProduction: isEnvProduction,`,
+    `${tab}${tab}},`,
+    `${tab}${tab}},`,
+    `${tab}${tab}],`,
+    `${tab}${tab}include: paths.appSrc,`,
+    `${tab}${tab}},`,
+];
 
+mainApp = mainApp.replace(/\{\s*?parser:.+?requireEnsure:.+?},/gi, (match) => {
+    console.log('replace');
+    return match + add_lines.join('\n');
+});
+
+console.log(mainApp);

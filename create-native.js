@@ -6,7 +6,8 @@ const {
     project_name,
     project_dir,
     project_folder_with_tools,
-    project_folder_with_native_settings,
+    project_folder_with_custom_settings,
+    project_folder_with_custom_settings,
     react_native_apps_names,
 } = require('./constants');
 
@@ -48,7 +49,7 @@ const iOSCopyIconAndLoadingScreen = () => {
 
     copy_folders.forEach((dir_name) => {
         copyFilesFromDirectory(
-            dirFrom(`${project_dir}${project_folder_with_native_settings}/ios/`, dir_name),
+            dirFrom(`${project_dir}${project_folder_with_custom_settings}/ios/`, dir_name),
             dirTo(`${project_dir}${project_name}`, '/ios/'));
     });
 

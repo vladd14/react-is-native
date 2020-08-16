@@ -10,7 +10,7 @@ const project_name = 'insarmApp';
 const initial_react_js_project_name = 'insarm-front';
 const project_dir = '/Users/admin/PycharmProjects/';
 const project_folder_with_tools = 'archive/insarmApp/';
-const project_folder_with_native_settings = 'archive/ReactNativeSettings/';
+const project_folder_with_custom_settings = 'archive/CustomSettings/';
 const tools_folder = 'archive/';
 const initial_app_name = '';
 
@@ -43,6 +43,6 @@ module.exports = {
     project_folder_with_prettier,
     tools_folder,
     project_folder_with_js_source_files,
-    project_folder_with_native_settings,
+    project_folder_with_custom_settings,
     react_native_apps_names,
 };

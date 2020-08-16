@@ -2,7 +2,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 // const { startAppWebToNativeApp } = require('./transform');
 const { fileFrom, dirFrom, dirTo, copyFile, copyFilesFromDirectory, copyFileByStream, copyFilesFromDirectoryByStream, deleteFolder } = require('./helpers');
-const { project_name_js, project_folder_with_prettier, project_dir, project_folder_with_js_source_files, tools_folder, project_folder_with_tools, } = require('./constants');
+const { project_name_js, project_folder_with_prettier, project_dir, project_folder_with_js_source_files, tools_folder, project_folder_with_tools, project_folder_with_custom_settings } = require('./constants');
 
 const project_name = project_name_js;
 // const project_dir = '/Users/admin/PycharmProjects/';
@@ -32,21 +32,7 @@ const yarn_modules = [
     'moment@2.24.0',
     'moment-timezone',
     'react-datetime',
-    'modify-source-webpack-plugin',
 ];
-
-// const copyGitDirStream = () => {
-//     const copy_folders = [
-//         '.git',
-//     ];
-//     copy_folders.forEach((dir_name) => {
-//         copyFilesFromDirectoryByStream(
-//             dirFrom(`${project_dir}${project_folder_with_js_source_files}`, dir_name),
-//             dirTo(`${project_dir}${project_name}`, dir_name));
-//     });
-//     console.log(`.Git settings have copied`);
-//     console.log(`\nThat's it!`);
-// }
 
 const copyWebStormProjectSettings = () => {
     const copy_files = [
@@ -94,12 +80,56 @@ const copyGitDirStream = () => {
     copyWebStormProjectSettings();
 }
 
+const addWebpackCustomLoader = () => {
+    const tab = '  ';
+
+
+    const add_lines = [
+        `\n${tab}${tab}${tab}${tab}// custom loader for changing build type in time of compilation`,
+        `${tab}${tab}${tab}${tab}{`,
+        `${tab}${tab}${tab}${tab}${tab}test: /\\/settings\\/index\\.js$/,`,
+        `${tab}${tab}${tab}${tab}${tab}use: [`,
+        `${tab}${tab}${tab}${tab}${tab}${tab}{`,
+        `${tab}${tab}${tab}${tab}${tab}${tab}${tab}loader: require.resolve('./buildTypeChangeLoader'),`,
+        `${tab}${tab}${tab}${tab}${tab}${tab}${tab}${tab}options: {`,
+        `${tab}${tab}${tab}${tab}${tab}${tab}${tab}${tab}${tab}isEnvProduction: isEnvProduction,`,
+        `${tab}${tab}${tab}${tab}${tab}${tab}${tab}${tab}},`,
+        `${tab}${tab}${tab}${tab}${tab}${tab}${tab}},`,
+        `${tab}${tab}${tab}${tab}${tab}],`,
+        `${tab}${tab}${tab}${tab}${tab}include: paths.appSrc,`,
+        `${tab}${tab}${tab}${tab}},`,
+    ];
+
+    let file = fileFrom(dirFrom(project_dir, project_name_js), '/config/webpack.config.js');
+    let file_buffer = fs.readFileSync(file, 'utf-8');
+    if (file_buffer) {
+        //{ parser: { requireEnsure: false } },
+        file_buffer = file_buffer.replace(/\{\s*?parser:.+?requireEnsure:.+?},/gi, (match) => {
+            return match + add_lines.join('\n');
+        });
+
+        fs.writeFileSync(file, file_buffer);
+    }
+
+    console.log(`webpack custom loader has added`);
+    console.log(`start copy the Git folder`);
+    copyGitDirStream();
+};
+
+const copyCustomWebPackLoaderFile = () => {
+    copyFile(`${project_dir}${project_folder_with_custom_settings}web/config/`, `${project_dir}${project_name}/config/`, 'buildTypeChangeLoader.js' );
+
+    console.log(`file copyCustomWebPackLoader.js have copied`);
+    console.log(`start webpack.config.js transformation`);
+    addWebpackCustomLoader();
+};
+
 const copyCustomScripts = () => {
     copyFile(`${project_dir}${project_folder_with_js_source_files}scripts/`, `${project_dir}${project_name}/scripts/`, 'build_scss.zsh' );
 
     console.log(`build_scss.zsh have copied`);
     console.log(`start copy the Git folder`);
-    copyGitDirStream();
+    copyCustomWebPackLoaderFile();
 };
 
 const copyProjectFiles = () => {

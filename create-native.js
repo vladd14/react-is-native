@@ -7,7 +7,6 @@ const {
     project_dir,
     project_folder_with_tools,
     project_folder_with_custom_settings,
-    project_folder_with_custom_settings,
     react_native_apps_names,
 } = require('./constants');
 

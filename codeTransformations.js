@@ -827,59 +827,89 @@ const transformModalToNative = (str) => {
 
 const addKeyboardAvoidingViewWrapper = (str) => {
 
-    const KeyboardAvoidingView = '<KeyboardAvoidingView behavior={\'padding\'} style={{flex: 1}}>'
+    const KeyboardAvoidingView = '<KeyboardAvoidingView>'
     const replacer = (match) => {
         return KeyboardAvoidingView + '\n' + match + '\n' + '</KeyboardAvoidingView>\n';
     };
 
     // console.log(str);
 
-    //keyboard_avoiding_view={'keyboard_avoiding_view'}
-    const regexp = new RegExp('<\\s*?.+?keyboard_avoiding_view=\\{', 'gsi');
+    //keyboard_avoiding_view={{ behavior: 'padding', keyboardVerticalOffset: 54 }}
+    const regexp = new RegExp('<\\w+.[^<]+?keyboard_avoiding_view=\\{', 'gsi');
     if (str && str.search(regexp) !== -1) {
         // str = str.replace(/modal_window=\{.+?}\s*/gi, '');
         const pos = str.search(regexp);
 
-        // str = str.replace(regexp, (match) => (console.log('match=', match)));
-        // return ;
-        // console.log('pos=', pos);
-        let cut_str;
-        let found = false;
-        let step=1;
-        cut_str = str.substring(pos, pos + 100);
-        // console.log('\n\n', cut_str);
-        // return ;
-        // console.log(str.substring(pos, 10));
-        while (!found && pos && pos !== -1) {
-            cut_str = str.substring(pos, pos + step);
+        let step=3;
+        let cut_str = str.substring(pos, pos + step);
 
-            // console.log('\n\n cut_str=', cut_str);
-            if (cut_str) {
+        while (cut_str.length > 2 && (cut_str.charAt(cut_str.length - 2) === '=' || cut_str.charAt(cut_str.length - 1) !== '>')) {
+            cut_str = str.substring(pos, pos + step);
+            step++;
+        }
+    // <ul
+    //     keyboard_avoiding_view={{ behavior: 'padding', keyboardVerticalOffset: 54 }}
+    //     className={`horizontal_container view_position_${current_screen_number + 1}`}
+    //     {...horizontalViewProps({ screen_name: screen_name })}
+    //     {...additional_mobile_props_horizontal_list}
+    //     ref={(component) => {
+    //         references.setReference({
+    //             key: `${screen_name}_horizontal_container`,
+    //             ref: component,
+    //         });
+    //     }}>
+        //<div {...close_on_outside_properties} className={`modal_window__container ${additional_class}`}>
+        console.log('str=', str);
+        console.log('cut_str=', cut_str);
+
+        let tag_name;
+        let keyboard_settings;
+
+        let modified_str = cut_str.replace(/(<)(\w+)(.*?)keyboard_avoiding_view=\{(.+?})}(.*?)/gsi, (match, tag_open, tag, some_attributes, keyboard_attributes, rest) => {
+            console.log('match=', match);
+            tag_name = tag;
+            keyboard_settings = keyboard_attributes;
+            return tag_open + tag + some_attributes + rest;
+        });
+
+        console.log('cut_str2=', modified_str);
+        console.log('tag_name=', tag_name);
+        console.log('keyboard_settings=', keyboard_settings);
+        if (modified_str !== cut_str) {
+            const KeyboardAvoidingView = keyboard_settings ? `<KeyboardAvoidingView {...${keyboard_settings}}>` : '<KeyboardAvoidingView>';
+            modified_str = KeyboardAvoidingView + '\n' + modified_str + '\n';
+        }
+        console.log('modified_str=', modified_str);
+
+        let found = false;
+        step = 1;
+        let whole_cut_str = str.substring(pos, pos + 1);
+        while (!found && pos && pos !== -1) {
+            whole_cut_str = str.substring(pos, pos + step);
+            if (whole_cut_str) {
                 let div =0;
                 let close_div=0;
-                cut_str.replace(/<(ul|li|div)/gi, (match) => {
-                    // console.log('match=', match);
+                whole_cut_str.replace(/<(ul|li|div)/gi, (match) => {
                     div++;
                 })
-                cut_str.replace(/<\/(ul|li|div)>/gi, () => {
+                whole_cut_str.replace(/<\/(ul|li|div)>/gi, () => {
                     close_div++;
                 })
                 if (div && close_div && div === close_div) {
-                    // console.log('found true');
                     found = true;
                     break;
                 }
             }
             step++;
         }
-        if (cut_str) {
-            // console.log(cut_str);
-            const new_str = replacer(cut_str);
-            if (new_str) {
-                addImportLine('import { KeyboardAvoidingView } from \'react-native\';');
-                str = str.replace(cut_str, new_str);
-            }
-        }
+
+        console.log('whole cut_str=', whole_cut_str);
+
+        str = str.replace(whole_cut_str, (match) => {
+            addImportLine('import { KeyboardAvoidingView } from \'react-native\';');
+            match = match.replace(cut_str, modified_str);
+            return match + '\n' + '</KeyboardAvoidingView>';
+        });
     }
     // console.log('str=', str);
     return str;

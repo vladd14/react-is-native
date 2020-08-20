@@ -555,11 +555,13 @@ const transformPlatformMediaMax = (str, styles_name) => {
     let style_object = {};
     const replacer = (match, platform, p1, p2, p3, p4) => {
         if (!style_object.hasOwnProperty(p3)) {
-            style_object[[p3]] = {};
-            style_object[p3][platform] = {};
+            style_object[p3] = {};
             style_object[p3][platform] = { ...transformStylesToObj(p4)};
         }
         else {
+            if (!style_object[p3].hasOwnProperty(platform)) {
+                style_object[p3][platform] = {};
+            }
             style_object[p3][platform] = { ...style_object[p3][platform], ...transformStylesToObj(p4)};
         }
     };

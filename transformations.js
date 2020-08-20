@@ -433,9 +433,21 @@ const transferStyles = () => {
         fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}/at_media`),  `${at_media_file}.js`), at_media_merged_string);
     }
 
-    let at_media_platform_merged = at_media_platform_chunks.reduce((accumulator, value) => {
-        Object.keys(value).forEach((key) => {
-            accumulator[key] = {...accumulator[key], ...value[key]};
+    let at_media_platform_merged = at_media_platform_chunks.reduce((accumulator, screen_chunk) => {
+        // at_media_platform_chunks = [
+        //     { '768': { ios: {} }, '9999': { ios: {} } },
+        //     { '767': { ios: {} }, '991': { ios: {} } }
+        // ]
+        Object.keys(screen_chunk).forEach((screen_size) => {
+            if (!accumulator.hasOwnProperty(screen_size)) {
+                accumulator[screen_size] = {};
+            }
+            Object.keys(screen_chunk[screen_size]).forEach((platform) => {
+                if (!accumulator[screen_size].hasOwnProperty(platform)) {
+                    accumulator[screen_size][platform] = {};
+                }
+                accumulator[screen_size][platform] = { ...accumulator[screen_size][platform], ...screen_chunk[screen_size][platform] };
+            });
         });
         return accumulator;
     }, {});

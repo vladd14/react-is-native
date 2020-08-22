@@ -146,21 +146,12 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                             }
                         }
                     });
-                    // if (findModule('Animated')) {
-                    //     deleteImportModule('Animated');
-                    //     addImportLine('import { Animated } from \'react-native\';');
-                    // }
 
                     console.log('start removeExcessTags');
                     fileBuffer = removeExcessTags(fileBuffer, ['form']);
 
-                    // console.log('start Header');
-                    // fileBuffer = removeTagsWithBody(fileBuffer, ['PageHeader']);
-
                     console.log('start exportConnectionTransform');
                     fileBuffer = withRouterDelete(fileBuffer);
-                    // console.log('start importNotRequired');
-                    // fileBuffer = checkReactRouterDomImports(fileBuffer, 'import { withNavigation } from \'react-navigation\';');
 
                     console.log('start changeWindowLocalStorage');
                     fileBuffer = changeWindowLocalStorage(fileBuffer);
@@ -173,11 +164,7 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                     if (folder === 'settings' && file_in_folder === 'index.js') {
                         fileBuffer = changePlatform(fileBuffer);
                     }
-                    // if (folder === 'components_connections') {
-                    //     // fileBuffer = changePlatform(fileBuffer);
-                    //     fileBuffer = addStatusBarConnection(fileBuffer);
-                    //     addImportLine(`import { StatusBar } from \'react-native\';`);
-                    // }
+
                     console.log('start historyToNavigationTransform');
                     fileBuffer = historyToNavigationTransform(fileBuffer);
 
@@ -309,7 +296,6 @@ const transferStyles = () => {
     ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];
-    // const modifiers_file = 'modifiers';
     const tags_file = 'tags';
     const tags_mobile_file = 'tags_mobile';
     const at_media_file = 'at_media';
@@ -397,18 +383,10 @@ const transferStyles = () => {
                 fs.writeFileSync(fileTo(dirTo(path_to, `${main_folder}/css`), js_file_name), fileBufferCSS);
             }
 
-            // if (scss_file_name !== 'modifiers') {
             let fileBufferAtMedia = transformMediaMax(fileBuffer, `${scss_file_name}_at_media`);
             if (fileBufferAtMedia) {
                 at_media_chunks.push(fileBufferAtMedia);
             }
-            // }
-            // else {
-            //     let fileBufferAtMedia = transformMediaMax(fileBuffer, `${scss_file_name}_at_media_modifiers`);
-            //     if (fileBufferAtMedia) {
-            //         at_media_modifiers_chunks.push(fileBufferAtMedia);
-            //     }
-            // }
 
             let fileBufferPlatformAtMedia = transformPlatformMediaMax(fileBuffer, `${scss_file_name}_at_media_platforms`);
             if (fileBufferPlatformAtMedia) {
@@ -434,6 +412,7 @@ const transferStyles = () => {
     }
 
     let at_media_platform_merged = at_media_platform_chunks.reduce((accumulator, screen_chunk) => {
+        // looks like:
         // at_media_platform_chunks = [
         //     { '768': { ios: {} }, '9999': { ios: {} } },
         //     { '767': { ios: {} }, '991': { ios: {} } }
@@ -482,9 +461,6 @@ const transferStyles = () => {
     if (at_media_platform_merged) {
         fileBufferIndexJs += `import { ${at_media_platform_file} } from './at_media/${at_media_platform_file}';\n`;
     }
-    // if (at_media_modifiers_merged) {
-    //     fileBufferIndexJs += `import { at_media_modifiers } from './at_media/at_media_modifiers';\n`;
-    // }
 
     if (platform_modifiers_merged) {
         fileBufferIndexJs += `import { ${platform_modifiers_file} } from './platform_modifiers/${platform_modifiers_file}';\n`;
@@ -511,18 +487,6 @@ const transferStyles = () => {
         fileBufferIndexJs += ` ...${at_media_platform_file}`;
         fileBufferIndexJs += ` };\n`;
     }
-
-    // if (platform_modifiers_merged) {
-    //     fileBufferIndexJs += `export const styles_at_media_modifiers = {`;
-    //     fileBufferIndexJs += ` ...at_media_modifiers`;
-    //     fileBufferIndexJs += ` };\n`;
-    // }
-
-    // if (modifiers_file) {
-    //     fileBufferIndexJs += `export const styles_modifiers = {`;
-    //     fileBufferIndexJs += ` ...${modifiers_file}`;
-    //     fileBufferIndexJs += ` };\n`;
-    // }
 
     if (platform_modifiers_merged) {
         fileBufferIndexJs += `export const styles_platform_modifiers = {`;
@@ -554,8 +518,6 @@ const startAppWebToNativeApp = (callback) => {
     console.log('start prettier');
     doPrettier(callback);
 };
-
-// startAppWebToNativeApp();
 
 module.exports = {
     startAppWebToNativeApp,

@@ -8,7 +8,7 @@ const { transformVariables, transformStyles, transformMediaMax, transformObjectT
     transformTags, transformColors, transformCustomFontIcons, getSvgPathsFromRequires, transformPlatformMediaMax } = require('./styles');
 const { withRouterDelete, historyToNavigationTransform, removeExcessTags,
     platformTransforms, changePlatform, addFlowTags, createAppJs, removeFunctionCall, changeTagName,
-    addScreenDimensionInitializer, addScreenDimensionListener, replaceStyleAfterFlowFunction,
+    addScreenDimensionListener, replaceStyleAfterFlowFunction,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, changeNavigationHooks, removeTagsWithBody,
     removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage,
     addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative, deleteJSRequires,
@@ -107,7 +107,6 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                     if (folder === 'apps' || folder === 'components') {
                         if (file_in_folder === 'Main.js') {
                             console.log('start addScreenDimensionListener');
-                            fileBuffer = addScreenDimensionInitializer(fileBuffer, 'Main');
                             fileBuffer = addScreenDimensionListener(fileBuffer, 'Main');
                         }
                         if (file_in_folder === 'StatusBar.js') {

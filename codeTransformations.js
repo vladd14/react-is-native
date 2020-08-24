@@ -206,39 +206,47 @@ const changeNavigationHooks = (str) => {
     return str
 };
 
-const addScreenDimensionInitializer = (str, functionName) => {
-    const dimension_listener = `if (!appState.screen_data) {
-        getScreenDimensions({ appState, actions });
-    }`;
-    const import_line = `import { getScreenDimensions } from '../platformTransforms/helpers_platform';`;
-    const replacer = (match, p1) => {
-        // console.log(`match='${match}'`);
-        match += dimension_listener + p1;
-        return match;
-    };
-
-    if (str) {
-        const regExp = new RegExp(`const\\s+${functionName}\\s*=\\s*\\(.+\\)\\s*.+{(\\s*)`, 'gi');
-        str = str.replace(regExp, replacer);
-        // Clean file of blanks lines
-        str = str.replace(remove_blank_lines_regexp, '');
-        addImportLine(import_line);
-    }
+// const addScreenDimensionInitializer = (str, functionName) => {
+    // const dimension_listener = `
+    // const store_state = store.getState();
+    // const app_state = store_state.app_settings;
+    // if (!appState.screen_data) {
+    //     getScreenDimensions({ appState, actions });
+    // }`;
+    // const import_line = `import { getScreenDimensions } from '../platformTransforms/helpers_platform';`;
+    // const replacer = (match, p1) => {
+    //     match += dimension_listener + p1;
+    //     return match;
+    // };
+    //
+    // if (str) {
+    //     const regExp = new RegExp(`const\\s+${functionName}\\s*=\\s*\\(.+\\)\\s*.+{(\\s*)`, 'gi');
+    //     str = str.replace(regExp, replacer);
+    //     // Clean file of blanks lines
+    //     str = str.replace(remove_blank_lines_regexp, '');
+    //     addImportLine(import_line);
+    // }
     // console.log(str);
-    return str;
-};
+    // return str;
+// };
 
 const addScreenDimensionListener = (str, functionName) => {
     const dimension_listener = `\nuseEffect(() => {
         let is_cancelled = false;
 
         if (!is_cancelled) {
-            Dimensions.addEventListener('change', onChangeScreenDimensions);
+            const store_state = store.getState();
+            const app_storage_state = store_state.app_storage;
+            if (!app_storage_state.added_dimension_listener) {
+                Dimensions.addEventListener('change', onChangeScreenDimensions);
+                actions.setAppStorageData({ added_dimension_listener: true });
+            }
         }
         return () => {
             is_cancelled = true;
-            Dimensions.removeEventListener('change', onChangeScreenDimensions);
+            // Dimensions.removeEventListener('change', onChangeScreenDimensions);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);\n\n`;
     const import_line = `import { onChangeScreenDimensions } from '../platformTransforms/helpers_platform';`;
     const replacer = (match, p1, p2, p3) => {
@@ -590,6 +598,7 @@ const createRootStack = (apps) => {
             'import { createNativeStackNavigator } from \'react-native-screens/native-stack\'',
             'import { NavigationContainer } from \'@react-navigation/native\'',
             'import { Route } from \'./helpers/fakes\'',
+            'import { getScreenDimensions } from \'./platformTransforms/helpers_platform\';'
         ],
     }
 };
@@ -660,6 +669,13 @@ const createAppJs = (str) => {
             return p1 + 'Stack.Navigator' + p3;
         });
 
+        const dimension_listener = `
+        const store_state = store.getState();
+        const app_state = store_state.app_settings;
+        if (!app_state.screen_data) {
+            getScreenDimensions();
+        }\n`;
+        str = dimension_listener + str;
         str = `enableScreens();\nconst Stack = createNativeStackNavigator();\n` + str;
 
         let { ...stackDependencies } = createRootStack(apps);
@@ -935,7 +951,7 @@ module.exports = {
     changePlatform,
     removeFunctionCall,
     changeTagName,
-    addScreenDimensionInitializer,
+    // addScreenDimensionInitializer,
     addScreenDimensionListener,
     replaceStyleAfterFlowFunction,
     SimplifyEmptyTags,

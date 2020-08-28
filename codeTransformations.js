@@ -542,7 +542,7 @@ const platformTransforms = (str, filename, nested_level) => {
         });
 
         //change onClick with onPress;
-        regExp = /([^\w])(onClick)(\s*[&={}():,])/smig;
+        regExp = /([^\w])(onClick)(\s*[&={}():;,])/smig;
         str = str.replace(regExp, (match, p0, p1, p2) => {return p0 + 'onPress' + p2});
         //Change onKeyDown with onChangeText;
         regExp = /<SimpleCustomField\s*(\w*\W[^={\/]*)(\W[^{\/]*(\w*\W[^}\/]*})+)\s*\/>/mig;

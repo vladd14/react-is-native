@@ -27,11 +27,19 @@ const yarn_modules = [
     'react-redux',
     '@reduxjs/toolkit',
     'node-sass',
+    'react-router',
     'react-router-dom',
+    'react-router-config',
+    'eslint',
     'prettier',
+    '@react-native-community/eslint-config',
+    // '--dev eslint prettier @react-native-community/eslint-config',
     'moment@2.24.0',
     'moment-timezone',
     'react-datetime',
+];
+const yarn_individual_modules = [
+    // 'eslint prettier @react-native-community/eslint-config',
 ];
 
 const copyWebStormProjectSettings = () => {
@@ -205,6 +213,38 @@ const copyNativePrettierFiles = () => {
     addPrettierCustomSettings();
 };
 
+let module_index = 0;
+const addYarnIndividualModules = () => {
+    const add = ['add', '--dev',];
+    add.push(yarn_individual_modules[module_index]);
+
+    const process = spawn('yarn', add, { cwd: dirTo(project_dir, project_name) });
+    process.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+    });
+
+    process.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+    });
+
+    process.on('close', (code) => {
+        if (!code) {
+            console.log(`yarn has added individual module ${yarn_individual_modules[module_index]}`);
+            module_index++;
+            if (yarn_individual_modules.length && yarn_individual_modules.length < module_index) {
+                console.log(`installing next module`);
+                addYarnIndividualModules();
+            } else {
+                console.log(`copy react_native prettier settings`);
+                copyNativePrettierFiles();
+            }
+        }
+        else {
+            console.log(`Process addYarnModules exited with code ${code}`);
+        }
+    });
+}
+
 const addYarnModules = () => {
 
     const process = spawn('yarn', ['add',].concat(yarn_modules), { cwd: dirTo(project_dir, project_name) });
@@ -218,9 +258,10 @@ const addYarnModules = () => {
 
     process.on('close', (code) => {
         if (!code) {
-            console.log(`yarn has added modules`);
-            console.log(`copy react_native prettier settings`);
-            copyNativePrettierFiles();
+            console.log(`yarn has added main modules`);
+            console.log(`gooing to install individual yarn modules`);
+            addYarnIndividualModules();
+            // copyNativePrettierFiles();
         }
         else {
             console.log(`Process addYarnModules exited with code ${code}`);
@@ -246,6 +287,7 @@ const yarnEject = () => {
     process.on('close', (code) => {
         if (!code) {
             console.log(`yarn was successfully ejected`);
+            console.log(`Start to install yarn modules`);
             addYarnModules();
         }
         else {

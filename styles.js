@@ -499,11 +499,16 @@ const transformStylesToObj = (str, tags_selection) => {
 
 const transformStyles = (str, styles_name) => {
 
-    // console.log(str);
-    //delete all @media first
+    // we left only styles without @media expressions
+    // so we delete simple @media,
+    // then platform common styles @media ios,
+    // and at last we delete platform @media styles
+    // with max expression @media ios and (max-width: $screen-xs-max)
     let regexp = new RegExp(media_expression_string, 'gi');
     str = str.replace(regexp, '');
     regexp = new RegExp(media_platform_string, 'gi');
+    str = str.replace(regexp, '');
+    regexp = new RegExp(media_platform_expression_string, 'gi');
     str = str.replace(regexp, '');
     // console.log(str);
     let style_object = transformStylesToObj(str);

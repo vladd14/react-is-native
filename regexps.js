@@ -32,7 +32,12 @@ const tag_name_string = '((\\w+,*\\s*)*\\s*)\\s+\\{';
 //     }
 // }
 const media_expression_string = `\\@media\\s+\\((max-(\\w+)):\\s+(\\d+)px\\)\\s*{(\\s*(${class_name_string}(\\s*.+\\s*;)+\\s*}\\s*)+\\s*)}`;
-// const media_platform_string = `\\@platform\\s+\\((\\w+)\\)\\s*{(\\s*(${class_name_string}(\\s*.+\\s*;)+\\s*}\\s*)+\\s*)}`;
+
+// @media ios and (max-width: $screen-xs-max) {
+//     font-size: 0.75em;
+//     top: $standard_offset * 1.4;
+//     right: $standard_offset * 1.2;
+// }
 const media_platform_string = `\\@media\\s+(\\w+)\\s*{(\\s*(${class_name_string}(\\s*.+\\s*;)+\\s*}\\s*)+\\s*)}`;
 // @media ios and (max-width: 800px) {
 //

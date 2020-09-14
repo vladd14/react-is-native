@@ -45,7 +45,7 @@ const yarn_individual_modules = [
 const copyWebStormProjectSettings = () => {
     const copy_files = [
         '.gitattributes',
-    //     '.gitignore',
+        '.gitignore',
     ];
     const copy_folders = [
         '.idea',

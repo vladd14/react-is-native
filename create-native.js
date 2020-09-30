@@ -52,7 +52,7 @@ const iOSCopyIconAndLoadingScreen = () => {
             dirTo(`${project_dir}${project_name}`, '/ios/'));
     });
 
-    console.log(`iOS settings have been transfer`);
+    console.log(`iOS settings have been transferred`);
 
     // if (react_native_apps_names && react_native_apps_names.length) {
     //     // console.log('start splitting react native custom apps');

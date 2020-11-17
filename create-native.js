@@ -8,6 +8,7 @@ const {
     project_folder_with_tools,
     project_folder_with_custom_settings,
     react_native_apps_names,
+    build_type_native,
 } = require('./constants');
 
 const copy_platform_dirs = ['platformTransforms', 'fonts', 'containers', 'elements', 'img'];
@@ -32,6 +33,7 @@ const yarn_modules = [
     'moment@2.24.0',
     'moment-timezone',
     'patch-package',
+    'crypto-js@3.3.0',
 ];
 
 const iOSCopyIconAndLoadingScreen = () => {
@@ -182,6 +184,10 @@ const addPrettierCustomSettings = () => {
 };
 
 const changeBundleToRam = () => {
+    if (build_type_native === 'debug') {
+        console.log(`debug native settings — type of bundle doesn't change`);
+        return addPrettierCustomSettings();
+    }
     let file = fileFrom(dirFrom(`${project_dir}${project_name}`, 'node_modules/react-native/scripts/'), 'react-native-xcode.sh');
     let file_buffer = fs.readFileSync(file, 'utf-8');
     if (file_buffer) {

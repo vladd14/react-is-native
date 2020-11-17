@@ -104,6 +104,8 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                     console.log('start changeNavigationHooks');
                     fileBuffer = changeNavigationHooks(fileBuffer);
 
+                    fileBuffer = changeTagName(fileBuffer, 'textarea', {textarea: 'input'});
+
                     if (folder === 'apps' || folder === 'components') {
                         if (file_in_folder === 'Main.js') {
                             console.log('start addScreenDimensionListener');
@@ -181,37 +183,37 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
                 }
             }
         });
-        if (folder === 'requirements') {
-            if (fs.existsSync(fileTo(dirTo(path_to, folder), `${svg_file_name}.js`))) {
-                fs.unlinkSync(fileTo(dirTo(path_to, folder), `${svg_file_name}.js`));
-            }
-            if (fs.existsSync(fileTo(dirFrom(path_from, folder), `${svg_file_name}.js`))) {
-                fs.unlinkSync(fileTo(dirFrom(path_from, folder), `${svg_file_name}.js`));
-            }
-            initImports();
-            let fileBuffer = '';
-            Object.keys(svg_file).forEach((key) => {
-                addImportByModuleAndPath(makeStringTitled(key), svg_file[key]);
-                fileBuffer += `export const ${key} = ${makeStringTitled(key)};\n`;
-            });
-            fileBuffer = insertImport(fileBuffer);
-
-            fs.writeFileSync(fileTo(dirTo(path_to, folder), `${svg_file_name}.js`), fileBuffer);
-            fs.writeFileSync(fileTo(dirFrom(path_from, folder), `${svg_file_name}.js`), fileBuffer);
-
-            fileBuffer = fs.readFileSync(fileFrom(dirFrom(path_from, folder), 'index.js'), 'utf-8');
-            if (fileBuffer) {
-                initImports();
-                fileBuffer = cutImport(fileBuffer);
-                addImportByModuleAndPath('* as svg', `./${svg_file_name}`);
-                fileBuffer = insertImport(fileBuffer);
-                if (!fileBuffer.includes(`export const vectors = { ...svg };`)) {
-                    fileBuffer += `export const vectors = { ...svg };`;
-                }
-                fs.writeFileSync(fileTo(dirTo(path_to, folder), 'index.js'), fileBuffer,);
-                fs.writeFileSync(fileTo(dirFrom(path_from, folder), 'index.js'), fileBuffer,);
-            }
-        }
+        // if (folder === 'requirements') {
+        //     if (fs.existsSync(fileTo(dirTo(path_to, folder), `${svg_file_name}.js`))) {
+        //         fs.unlinkSync(fileTo(dirTo(path_to, folder), `${svg_file_name}.js`));
+        //     }
+        //     if (fs.existsSync(fileTo(dirFrom(path_from, folder), `${svg_file_name}.js`))) {
+        //         fs.unlinkSync(fileTo(dirFrom(path_from, folder), `${svg_file_name}.js`));
+        //     }
+        //     initImports();
+        //     let fileBuffer = '';
+        //     Object.keys(svg_file).forEach((key) => {
+        //         addImportByModuleAndPath(makeStringTitled(key), svg_file[key]);
+        //         fileBuffer += `export const ${key} = ${makeStringTitled(key)};\n`;
+        //     });
+        //     fileBuffer = insertImport(fileBuffer);
+        //
+        //     fs.writeFileSync(fileTo(dirTo(path_to, folder), `${svg_file_name}.js`), fileBuffer);
+        //     fs.writeFileSync(fileTo(dirFrom(path_from, folder), `${svg_file_name}.js`), fileBuffer);
+        //
+        //     fileBuffer = fs.readFileSync(fileFrom(dirFrom(path_from, folder), 'index.js'), 'utf-8');
+        //     if (fileBuffer) {
+        //         initImports();
+        //         fileBuffer = cutImport(fileBuffer);
+        //         addImportByModuleAndPath('* as svg', `./${svg_file_name}`);
+        //         fileBuffer = insertImport(fileBuffer);
+        //         if (!fileBuffer.includes(`export const vectors = { ...svg };`)) {
+        //             fileBuffer += `export const vectors = { ...svg };`;
+        //         }
+        //         fs.writeFileSync(fileTo(dirTo(path_to, folder), 'index.js'), fileBuffer,);
+        //         fs.writeFileSync(fileTo(dirFrom(path_from, folder), 'index.js'), fileBuffer,);
+        //     }
+        // }
     });
 };
 
@@ -292,6 +294,7 @@ const transferStyles = () => {
         'agro_cons__styles',
         'files',
         'columns',
+        'messenger',
     ];
     const main_folder = 'styles';
     const remote_folders = ['css','at_media', 'platform_modifiers'];

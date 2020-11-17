@@ -18,7 +18,7 @@ const rename_properties = {
     'text-decoration': 'textDecorationLine',
     'object-fit': 'resizeMode',
 };
-const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'outline', 'cursor'];
+const unsupported_css_properties = ['objectFit', 'white_space', 'list_style', 'outline', 'cursor', 'resize'];
 const force_stringify_value = ['fontWeight'];
 const not_stringify_value = ['fontFamily', 'transform'];
 const not_round_properties = ['lineHeight', 'fontSize'];

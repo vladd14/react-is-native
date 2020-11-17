@@ -37,6 +37,7 @@ const yarn_modules = [
     'moment@2.24.0',
     'moment-timezone',
     'react-datetime',
+    'crypto-js@3.3.0',
 ];
 const yarn_individual_modules = [
     // 'eslint prettier @react-native-community/eslint-config',
@@ -213,6 +214,25 @@ const copyNativePrettierFiles = () => {
     addPrettierCustomSettings();
 };
 
+const runYarnUpgrade = () => {
+    const process = spawn('yarn', ['upgrade'], { cwd: dirTo(project_dir, project_name) });
+    process.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+    });
+
+    process.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+    });
+
+    process.on('close', (code) => {
+        console.log(`yarnUpgrade process exited with code ${code}`);
+        if (!code) {
+            console.log(`copy react_native prettier settings`);
+            copyNativePrettierFiles();
+        }
+    });
+}
+
 let module_index = 0;
 const addYarnIndividualModules = () => {
     const add = ['add', '--dev',];
@@ -235,8 +255,9 @@ const addYarnIndividualModules = () => {
                 console.log(`installing next module`);
                 addYarnIndividualModules();
             } else {
-                console.log(`copy react_native prettier settings`);
-                copyNativePrettierFiles();
+                console.log(`run yarn upgrade`);
+                // copyNativePrettierFiles();
+                runYarnUpgrade();
             }
         }
         else {

@@ -18,6 +18,8 @@ const project_folder_with_prettier = 'insarmApp/node_modules/';
 const project_name_js = 'insarm-front';
 const project_folder_with_js_source_files = `archive/${project_name_js}/`;
 
+const build_type_native = ''; // debug
+
 const react_native_apps_names = [
     {
         project_name: 'vladilen.js',
@@ -45,4 +47,5 @@ module.exports = {
     project_folder_with_js_source_files,
     project_folder_with_custom_settings,
     react_native_apps_names,
+    build_type_native,
 };

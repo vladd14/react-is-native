@@ -102,21 +102,14 @@ const removeFunctionCall = (str, name) => {
     return str;
 };
 
-const changeTagName = (str, name, attr_to_replace) => {
-    // console.log(name);
+const changeTagName = (str, name, attr_to_replace= {}) => {
     const replacer = (match, p1, p2) => {
-        // console.log(match);
-
         Object.keys(attr_to_replace).forEach((key) => {
             match = match.replace(key, attr_to_replace[key]);
         });
-        // console.log(match);
         return match;
     };
-    //<img className={''} src={avatar} alt={'Avatar'} />
-    // const regExp = /<\s*(img)\s+(\s*(\w*)=\w*\W[^>]*)*\/>/mig;
-    const regExp = new RegExp( `<\\s*(${name})\\s+(\\s*(\\w*)=\\w*\\W[^>]*)*\/>`, 'mig');
-
+    const regExp = new RegExp( `<(${name}).+?>\n`, 'sig');
     str = str.replace(regExp, replacer);
     return str;
 };
@@ -542,7 +535,7 @@ const platformTransforms = (str, filename, nested_level) => {
         });
 
         //change onClick with onPress;
-        regExp = /([^\w])(onClick)(\s*[&={}():;,])/smig;
+        regExp = /([^\w])(onClick)(\s*[&={}():;,?])/smig;
         str = str.replace(regExp, (match, p0, p1, p2) => {return p0 + 'onPress' + p2});
         //Change onKeyDown with onChangeText;
         regExp = /<SimpleCustomField\s*(\w*\W[^={\/]*)(\W[^{\/]*(\w*\W[^}\/]*})+)\s*\/>/mig;

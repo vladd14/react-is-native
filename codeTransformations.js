@@ -873,10 +873,10 @@ const addWrapper = (str, element_wrapper_name, element_key) => {
                 let div =0;
                 let close_div=0;
                 let close_self_element=0;
-                whole_cut_str.replace(/<(ul|li|div)/gi, (match) => {
+                whole_cut_str.replace(/<(ul|li|div|react.fragment)/gi, (match) => {
                     div++;
                 })
-                whole_cut_str.replace(/<\/(ul|li|div)>/gi, () => {
+                whole_cut_str.replace(/<\/(ul|li|div|react.fragment)>/gi, () => {
                     close_div++;
                 })
                 whole_cut_str.replace(/\n\s+\/>/gi, () => {

@@ -834,19 +834,11 @@ const transformModalToNative = (str) => {
     return str;
 }
 
-const addKeyboardAvoidingViewWrapper = (str) => {
-
-    const KeyboardAvoidingView = '<KeyboardAvoidingView>'
-    const replacer = (match) => {
-        return KeyboardAvoidingView + '\n' + match + '\n' + '</KeyboardAvoidingView>\n';
-    };
-
-    // console.log(str);
-
-    //keyboard_avoiding_view={{ behavior: 'padding', keyboardVerticalOffset: 54 }}
-    const regexp = new RegExp('<\\w+.[^<]+?keyboard_avoiding_view=\\{', 'gsi');
+const addWrapper = (str, element_wrapper_name, element_key) => {
+    // element_wrapper_name: KeyboardAvoidingView
+    // element_key: keyboard_avoiding_view
+    let regexp = new RegExp(`<\\w+.[^<]+?${element_key}=\\{`, 'gsi');
     if (str && str.search(regexp) !== -1) {
-        // str = str.replace(/modal_window=\{.+?}\s*/gi, '');
         const pos = str.search(regexp);
 
         let step=3;
@@ -856,39 +848,21 @@ const addKeyboardAvoidingViewWrapper = (str) => {
             cut_str = str.substring(pos, pos + step);
             step++;
         }
-    // <ul
-    //     keyboard_avoiding_view={{ behavior: 'padding', keyboardVerticalOffset: 54 }}
-    //     className={`horizontal_container view_position_${current_screen_number + 1}`}
-    //     {...horizontalViewProps({ screen_name: screen_name })}
-    //     {...additional_mobile_props_horizontal_list}
-    //     ref={(component) => {
-    //         references.setReference({
-    //             key: `${screen_name}_horizontal_container`,
-    //             ref: component,
-    //         });
-    //     }}>
-        //<div {...close_on_outside_properties} className={`modal_window__container ${additional_class}`}>
-        console.log('str=', str);
-        console.log('cut_str=', cut_str);
 
         let tag_name;
         let keyboard_settings;
 
-        let modified_str = cut_str.replace(/(<)(\w+)(.*?)keyboard_avoiding_view=\{(.+?})}(.*?)/gsi, (match, tag_open, tag, some_attributes, keyboard_attributes, rest) => {
-            console.log('match=', match);
+        regexp = new RegExp(`(<)(\\w+)(.*?)${element_key}=\{(.+?})}(.*?)`, 'gsi');
+        let modified_str = cut_str.replace(regexp, (match, tag_open, tag, some_attributes, keyboard_attributes, rest) => {
             tag_name = tag;
             keyboard_settings = keyboard_attributes;
             return tag_open + tag + some_attributes + rest;
         });
 
-        console.log('cut_str2=', modified_str);
-        console.log('tag_name=', tag_name);
-        console.log('keyboard_settings=', keyboard_settings);
         if (modified_str !== cut_str) {
-            const KeyboardAvoidingView = keyboard_settings ? `<KeyboardAvoidingView {...${keyboard_settings}}>` : '<KeyboardAvoidingView>';
-            modified_str = KeyboardAvoidingView + '\n' + modified_str + '\n';
+            const WrapperElement = keyboard_settings ? `<${element_wrapper_name} {...${keyboard_settings}}>` : `<${element_wrapper_name}>`;
+            modified_str = WrapperElement + '\n' + modified_str + '\n';
         }
-        console.log('modified_str=', modified_str);
 
         let found = false;
         step = 1;
@@ -898,13 +872,17 @@ const addKeyboardAvoidingViewWrapper = (str) => {
             if (whole_cut_str) {
                 let div =0;
                 let close_div=0;
+                let close_self_element=0;
                 whole_cut_str.replace(/<(ul|li|div)/gi, (match) => {
                     div++;
                 })
                 whole_cut_str.replace(/<\/(ul|li|div)>/gi, () => {
                     close_div++;
                 })
-                if (div && close_div && div === close_div) {
+                whole_cut_str.replace(/\n\s+\/>/gi, () => {
+                    close_self_element++;
+                })
+                if ((close_self_element === 1 && (!div && !close_div)) || (div && close_div && div === close_div)) {
                     found = true;
                     break;
                 }
@@ -912,7 +890,83 @@ const addKeyboardAvoidingViewWrapper = (str) => {
             step++;
         }
 
-        console.log('whole cut_str=', whole_cut_str);
+        str = str.replace(whole_cut_str, (match) => {
+            addImportLine(`import { ${element_wrapper_name} } from \'react-native\';`);
+            match = match.replace(cut_str, modified_str);
+            return match + '\n' + `</${element_wrapper_name}>`;
+        });
+    }
+    return str;
+}
+
+const addInputAccessoryViewWrapper = (str) => {
+    // (str, element_wrapper_name, element_key)
+    return addWrapper(str, 'InputAccessoryView', 'input_accessory_view')
+}
+
+const addKeyboardAvoidingViewWrapper = (str) => {
+    // (str, element_wrapper_name, element_key)
+    return addWrapper(str, 'KeyboardAvoidingView', 'keyboard_avoiding_view')
+}
+
+const addKeyboardAvoidingViewWrapper2 = (str) => {
+
+    const KeyboardAvoidingView = '<KeyboardAvoidingView>'
+    const replacer = (match) => {
+        return KeyboardAvoidingView + '\n' + match + '\n' + '</KeyboardAvoidingView>\n';
+    };
+    const regexp = new RegExp('<\\w+.[^<]+?keyboard_avoiding_view=\\{', 'gsi');
+    if (str && str.search(regexp) !== -1) {
+        const pos = str.search(regexp);
+
+        let step=3;
+        let cut_str = str.substring(pos, pos + step);
+
+        while (cut_str.length > 2 && (cut_str.charAt(cut_str.length - 2) === '=' || cut_str.charAt(cut_str.length - 1) !== '>')) {
+            cut_str = str.substring(pos, pos + step);
+            step++;
+        }
+
+        let tag_name;
+        let keyboard_settings;
+
+        let modified_str = cut_str.replace(/(<)(\w+)(.*?)keyboard_avoiding_view=\{(.+?})}(.*?)/gsi, (match, tag_open, tag, some_attributes, keyboard_attributes, rest) => {
+            // console.log('match=', match);
+            tag_name = tag;
+            keyboard_settings = keyboard_attributes;
+            return tag_open + tag + some_attributes + rest;
+        });
+
+        if (modified_str !== cut_str) {
+            const KeyboardAvoidingView = keyboard_settings ? `<KeyboardAvoidingView {...${keyboard_settings}}>` : '<KeyboardAvoidingView>';
+            modified_str = KeyboardAvoidingView + '\n' + modified_str + '\n';
+        }
+
+        let found = false;
+        step = 1;
+        let whole_cut_str = str.substring(pos, pos + 1);
+        while (!found && pos && pos !== -1) {
+            whole_cut_str = str.substring(pos, pos + step);
+            if (whole_cut_str) {
+                let div =0;
+                let close_div=0;
+                let close_self_element=0;
+                whole_cut_str.replace(/<(ul|li|div)/gi, (match) => {
+                    div++;
+                })
+                whole_cut_str.replace(/<\/(ul|li|div)>/gi, () => {
+                    close_div++;
+                })
+                whole_cut_str.replace(/\n\s+\/>/gi, () => {
+                    close_self_element++;
+                })
+                if ((close_self_element === 1 && (!div && !close_div)) || (div && close_div && div === close_div)) {
+                    found = true;
+                    break;
+                }
+            }
+            step++;
+        }
 
         str = str.replace(whole_cut_str, (match) => {
             addImportLine('import { KeyboardAvoidingView } from \'react-native\';');
@@ -920,7 +974,6 @@ const addKeyboardAvoidingViewWrapper = (str) => {
             return match + '\n' + '</KeyboardAvoidingView>';
         });
     }
-    // console.log('str=', str);
     return str;
 }
 
@@ -962,4 +1015,5 @@ module.exports = {
     deleteJSRequires,
     // testHtmlTokens,
     addKeyboardAvoidingViewWrapper,
+    addInputAccessoryViewWrapper,
 };

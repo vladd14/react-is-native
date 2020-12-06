@@ -12,7 +12,7 @@ const { withRouterDelete, historyToNavigationTransform, removeExcessTags,
     SimplifyEmptyTags, replaceHtmlForWithFocus, addNavigationRouteProps, changeNavigationHooks, removeTagsWithBody,
     removeExcessFreeLines, removeNativeComments, changeNextTag, changeWindowLocalStorage,
     addRunAfterInteractionsWrapper, addStatusBarConnection, transformModalToNative, deleteJSRequires,
-    addKeyboardAvoidingViewWrapper } = require('./codeTransformations');
+    addKeyboardAvoidingViewWrapper, addInputAccessoryViewWrapper } = require('./codeTransformations');
 
 const { makeStringTitled, fileFrom, fileTo, dirFrom, dirTo, copyFile, copyFilesFromDirectory, deleteFolder } = require('./helpers');
 const { project_name, project_dir, initial_react_js_project_name, } = require('./constants');
@@ -23,7 +23,7 @@ const path_to = `${project_dir}${project_name}/`;
 const directories = ['helpers', 'settings', 'reducers', 'apps', 'app_structure', 'components',
     'components_connections', 'urls', 'requirements', 'share_code'];
 const excess_modules = ['react-router-dom', 'react-datetime'];
-const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar', 'Linking', 'ImagePicker', 'PinchGestureHandler', 'PanGestureHandler', 'State as GestureState', 'Alert'];
+const fake_modules = ['Animated', 'ActivityIndicator', 'StatusBar', 'Linking', 'ImagePicker', 'PinchGestureHandler', 'PanGestureHandler', 'State as GestureState', 'Alert', 'Keyboard', 'LayoutAnimation', 'InputAccessoryView'];
 const fakes_modules_paths = {
     ImagePicker: {
         module: 'module',
@@ -97,6 +97,9 @@ const copyMainApps = ({ apps_folder, nested_level = 0 }) => {
 
                     console.log('start addKeyboardAvoidingViewWrapper');
                     fileBuffer = addKeyboardAvoidingViewWrapper(fileBuffer);
+
+                    console.log('start addInputAccessoryViewWrapper');
+                    fileBuffer = addInputAccessoryViewWrapper(fileBuffer);
 
                     console.log('start addNavigationRouteProps');
                     fileBuffer = addNavigationRouteProps(fileBuffer);

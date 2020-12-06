@@ -33,6 +33,8 @@ const yarn_modules = [
     'eslint',
     'prettier',
     '@react-native-community/eslint-config',
+    '@babel/plugin-syntax-jsx',
+    'yarn add node-sass@4.14.1',
     // '--dev eslint prettier @react-native-community/eslint-config',
     'moment@2.24.0',
     'moment-timezone',
@@ -298,6 +300,8 @@ const yarnEject = () => {
         if (data.includes('y/N')) {
             process.stdin.setEncoding('utf-8');
             process.stdin.write('yes\n');
+        } else if (data.includes('http://goo.gl/forms/Bi6CZjk1EqsdelXk1')) {
+            addYarnModules();
         }
     });
 
